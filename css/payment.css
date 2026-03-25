@@ -1,0 +1,580 @@
+/* =============================================
+   운세ON — css/payment.css
+   카카오페이 결제 UI 전용 스타일
+   ============================================= */
+
+/* ── 테스트 모드 배너 ── */
+.test-mode-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, #fff8e1, #fff3cd);
+  border: 1.5px solid #ffc107;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 24px;
+  font-size: 0.88rem;
+}
+.test-mode-banner i { font-size: 1.3rem; color: #e65100; flex-shrink: 0; }
+.test-mode-banner strong { display: block; color: #e65100; font-weight: 700; margin-bottom: 2px; }
+.test-mode-banner span { color: #6d4c00; }
+
+/* ── 결제 수단 바 ── */
+.pay-method-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #FFFDE7;
+  border: 1.5px solid #FFE812;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 36px;
+}
+.pay-method-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFE812;
+  padding: 8px 16px;
+  border-radius: 8px;
+}
+.pay-method-fallback {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.pay-method-desc { font-size: 0.85rem; color: #666; }
+
+/* ── 카카오페이 버튼 ── */
+.kakao-pay-btn {
+  background: #FFE812 !important;
+  color: #3A1D1D !important;
+  border: none !important;
+  font-weight: 700 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.kakao-pay-btn:hover {
+  background: #F0D800 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(255,232,18,0.5) !important;
+}
+.kakao-pay-btn i { color: #3A1D1D !important; }
+
+.kakao-pay-btn-lg {
+  background: #FFE812;
+  color: #3A1D1D;
+  border: none;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 14px 28px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.kakao-pay-btn-lg:hover {
+  background: #F0D800;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(255,232,18,0.5);
+}
+
+/* ── 직접 금액 입력 ── */
+.custom-amount-section {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin: 32px 0;
+}
+.custom-amount-section h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.custom-amount-section h3 i { color: var(--primary); }
+.custom-amount-section > p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+.custom-amount-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.custom-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--white);
+  flex: 1;
+  min-width: 180px;
+}
+.custom-prefix {
+  background: var(--bg-base);
+  padding: 0 14px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  height: 52px;
+  display: flex;
+  align-items: center;
+  border-right: 1.5px solid var(--border);
+}
+.custom-amount-input {
+  border: none;
+  outline: none;
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 0 16px;
+  height: 52px;
+  width: 100%;
+  font-family: var(--font-main);
+  color: var(--text-dark);
+}
+.bonus-guide {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.bonus-item {
+  background: var(--primary-pale);
+  color: var(--primary);
+  font-size: 0.8rem;
+  padding: 5px 12px;
+  border-radius: 20px;
+}
+.bonus-item strong { font-weight: 700; }
+
+/* ── 결제 안전 안내 ── */
+.payment-safety {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin: 32px 0;
+  padding: 20px;
+  background: var(--bg-base);
+  border-radius: 12px;
+}
+.safety-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.safety-item i { color: var(--primary); font-size: 1rem; }
+
+/* ── 모달 오버레이 ── */
+.kp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* ── 카카오페이 확인 모달 ── */
+.kp-modal {
+  background: var(--white);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 440px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: kpSlideUp 0.3s ease;
+}
+@keyframes kpSlideUp {
+  from { opacity:0; transform:translateY(30px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.kp-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.kp-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+.kp-icon { font-size: 1.5rem; color: #FFE812; text-shadow: 0 0 0 #3A1D1D; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2)); }
+.kp-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.kp-close-btn:hover { background: var(--bg-base); }
+.kp-test-badge {
+  background: #fff3cd;
+  color: #856404;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kp-modal-body { padding: 20px 24px; }
+.kp-order-info {
+  background: var(--bg-base);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+.kp-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.kp-info-row:last-child { border-bottom: none; }
+.kp-label { color: var(--text-muted); }
+.kp-value { font-weight: 600; color: var(--text-dark); }
+.kp-amount { font-size: 1.1rem; color: var(--primary); }
+.kp-point { color: #d4af37; font-weight: 700; }
+
+/* 결제 수단 선택 */
+.kp-pay-methods { }
+.kp-method-title { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; }
+.kp-method-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.kp-method-item { cursor: pointer; }
+.kp-method-item input { display: none; }
+.kp-method-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.kp-method-item input:checked + .kp-method-box {
+  border-color: #FFE812;
+  background: #FFFDE7;
+}
+.kp-modal-footer {
+  padding: 16px 24px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.kp-pay-confirm-btn {
+  background: #FFE812;
+  color: #3A1D1D;
+  border: none;
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s;
+}
+.kp-pay-confirm-btn:hover { background: #F0D800; transform: translateY(-1px); }
+.kp-cancel-btn {
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.kp-cancel-btn:hover { background: var(--bg-base); }
+.kp-safe-notice {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+/* ── 테스트 카카오페이 팝업 ── */
+.kp-test-window {
+  background: #fff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 360px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  animation: kpSlideUp 0.3s ease;
+}
+.kp-test-header {
+  background: #FFE812;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.kp-test-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #3A1D1D;
+}
+.kp-test-label {
+  font-size: 0.75rem;
+  background: rgba(58,29,29,0.15);
+  color: #3A1D1D;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.kp-test-body { padding: 20px; }
+.kp-test-merchant {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kp-test-amount-box {
+  background: var(--bg-base);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.kp-test-amount-label { font-size: 0.85rem; color: var(--text-muted); }
+.kp-test-amount-val { font-size: 1.4rem; font-weight: 800; color: var(--text-dark); }
+.kp-test-info-list { margin-bottom: 16px; }
+.kp-test-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border);
+}
+.kp-test-info-row span:first-child { color: var(--text-muted); }
+.kp-test-info-row span:last-child { font-weight: 600; }
+.kp-test-method-select {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.kp-test-method {
+  flex: 1;
+  padding: 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.kp-test-method.active { border-color: #FFE812; background: #FFFDE7; }
+.kp-test-notice-box {
+  background: #fff3cd;
+  color: #856404;
+  font-size: 0.78rem;
+  padding: 10px 14px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kp-test-footer {
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.kp-test-confirm-btn {
+  background: #FFE812;
+  color: #3A1D1D;
+  border: none;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.kp-test-confirm-btn:hover { background: #F0D800; }
+.kp-test-cancel-btn {
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* ── 성공 모달 ── */
+.kp-success-modal {
+  background: var(--white);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 420px;
+  padding: 36px 32px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: kpSlideUp 0.3s ease;
+}
+.kp-success-icon { font-size: 3.5rem; margin-bottom: 12px; }
+.kp-success-modal h3 { font-size: 1.5rem; font-weight: 800; color: var(--text-dark); margin-bottom: 20px; }
+.success-detail { text-align: left; }
+.success-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+.success-row span { color: var(--text-muted); }
+.success-row strong { color: var(--text-dark); }
+.point-highlight { color: var(--primary) !important; font-size: 1.1rem; }
+.bonus-row strong { color: #d4af37 !important; }
+.total-row { border-bottom: none; padding-top: 14px; }
+.total-row strong { font-size: 1.2rem; color: var(--primary) !important; }
+.success-order {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  text-align: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.test-notice {
+  background: #fff3cd;
+  color: #856404;
+  font-size: 0.78rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 10px;
+  text-align: center;
+}
+.kp-success-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+/* ── 로딩 오버레이 ── */
+#kakaoLoadingOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kp-loading-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 36px 48px;
+  text-align: center;
+}
+.kp-loading-spinner {
+  width: 44px; height: 44px;
+  border: 4px solid #FFE812;
+  border-top-color: #3A1D1D;
+  border-radius: 50%;
+  animation: kpSpin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes kpSpin { to { transform: rotate(360deg); } }
+.kp-loading-box p {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+/* ── 토스트 ── */
+.kp-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  z-index: 99999;
+  animation: kpFadeInOut 3s ease;
+}
+@keyframes kpFadeInOut {
+  0%,100% { opacity:0; }
+  15%,85% { opacity:1; }
+}
+
+/* ── 이용 내역 배지 ── */
+.hist-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+.hist-charge { background: #e8f5f0; color: #2c5f4f; }
+.hist-use { background: #fce4ec; color: #c62828; }
+.hist-plus { color: #2c5f4f; font-weight: 700; }
+.hist-minus { color: #c62828; font-weight: 700; }
+
+/* ── 반응형 ── */
+@media (max-width: 600px) {
+  .custom-amount-section { padding: 20px 16px; }
+  .custom-amount-row { flex-direction: column; }
+  .kakao-pay-btn-lg { width: 100%; justify-content: center; }
+  .kp-method-grid { grid-template-columns: repeat(2, 1fr); }
+  .payment-safety { gap: 16px; }
+  .kp-modal, .kp-success-modal { border-radius: 16px; }
+  .pay-method-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
