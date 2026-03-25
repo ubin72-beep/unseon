@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>결제 처리 중 — 운세ON</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/payment.css"/>
+  <style>
+    body { background: var(--bg-base); display: flex; flex-direction: column; min-height: 100vh; }
+    .complete-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .complete-card {
+      background: #fff;
+      border-radius: 24px;
+      padding: 48px 40px;
+      text-align: center;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 8px 40px rgba(44,95,79,0.12);
+    }
+    .complete-icon { font-size: 4rem; margin-bottom: 16px; }
+    .complete-title { font-size: 1.6rem; font-weight: 800; color: var(--text-dark); margin-bottom: 8px; }
+    .complete-sub { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 28px; }
+    .complete-info {
+      background: var(--bg-base);
+      border-radius: 14px;
+      padding: 20px 24px;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+    .complete-info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .complete-info-row:last-child { border-bottom: none; }
+    .complete-info-row span:first-child { color: var(--text-muted); }
+    .complete-info-row strong { color: var(--text-dark); }
+    .complete-actions { display: flex; flex-direction: column; gap: 10px; }
+    .complete-actions .btn { justify-content: center; }
+    .processing-anim {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+    }
+    .processing-spinner {
+      width: 56px; height: 56px;
+      border: 5px solid #FFE812;
+      border-top-color: #3A1D1D;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .processing-text { font-size: 1rem; font-weight: 600; color: var(--text-dark); }
+    .processing-sub { font-size: 0.85rem; color: var(--text-muted); }
+    .fail-card .complete-icon { filter: grayscale(0.3); }
+    .cancel-card .complete-icon { }
+    .point-big { font-size: 2rem; font-weight: 900; color: var(--primary); }
+    .order-no { font-size: 0.75rem; color: var(--text-light); margin-top: 8px; }
+    .test-notice-bar {
+      background: #fff3cd;
+      color: #856404;
+      font-size: 0.8rem;
+      padding: 10px 16px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header" id="siteHeader" style="position:relative">
+  <div class="container header-inner">
+    <a href="index.html" class="logo">운세<span class="logo-on">ON</span></a>
+    <div class="header-actions">
+      <div class="point-display">
+        <i class="fas fa-coins"></i> <span id="headerPointVal">0</span>P
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="complete-wrap">
+  <div class="complete-card" id="completeCard">
+    <!-- JS로 렌더링 -->
+    <div class="processing-anim" id="processingAnim">
+      <div class="processing-spinner"></div>
+      <div class="processing-text">결제 처리 중입니다...</div>
+      <div class="processing-sub">잠시만 기다려주세요</div>
+    </div>
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script src="js/kakaopay.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // 헤더 포인트
+  const pts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+  document.getElementById('headerPointVal').textContent = pts.toLocaleString();
+
+  // URL 파라미터 확인
+  const params = new URLSearchParams(window.location.search);
+  const result = params.get('result');
+  const pgToken = params.get('pg_token');
+
+  setTimeout(() => {
+    if (result === 'success') {
+      renderSuccess(pgToken);
+    } else if (result === 'fail') {
+      renderFail();
+    } else if (result === 'cancel') {
+      renderCancel();
+    } else {
+      // 파라미터 없으면 pricing으로 이동
+      window.location.href = 'pricing.html';
+    }
+  }, 1000);
+});
+
+function renderSuccess(pgToken) {
+  const pending = JSON.parse(sessionStorage.getItem('kakao_pending_plan') || 'null');
+  const card = document.getElementById('completeCard');
+
+  if (!pending) {
+    renderFail();
+    return;
+  }
+
+  // 포인트 지급
+  const currentPts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+  const newPts = currentPts + pending.plan.point;
+  localStorage.setItem('sajuon_points', String(newPts));
+
+  // 이용 내역 저장
+  const hist = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
+  hist.unshift({
+    date: new Date().toLocaleString('ko-KR'),
+    type: '충전',
+    point: `+${pending.plan.point.toLocaleString()}P`,
+    memo: `카카오페이 · ${pending.plan.name}`,
+    orderId: pending.orderId,
+    amount: pending.plan.amount,
+    pgToken: pgToken,
+    status: '결제완료'
+  });
+  localStorage.setItem('sajuon_history', JSON.stringify(hist));
+
+  // 헤더 업데이트
+  document.getElementById('headerPointVal').textContent = newPts.toLocaleString();
+
+  // 세션 정리
+  sessionStorage.removeItem('kakao_pending_plan');
+  sessionStorage.removeItem('kakao_tid');
+  sessionStorage.removeItem('kakao_order_id');
+
+  const isTest = pending.pgToken && String(pending.pgToken).startsWith('KAKAO_TEST');
+
+  card.innerHTML = `
+    <div class="complete-icon">🎉</div>
+    <div class="complete-title">결제 완료!</div>
+    <div class="complete-sub">포인트가 즉시 지급되었습니다</div>
+    ${isTest ? `<div class="test-notice-bar"><i class="fas fa-flask"></i> 테스트 결제입니다 (실제 결제 아님)</div>` : ''}
+    <div class="complete-info">
+      <div class="complete-info-row">
+        <span>결제 금액</span>
+        <strong>₩${pending.plan.amount.toLocaleString()}</strong>
+      </div>
+      <div class="complete-info-row">
+        <span>지급 포인트</span>
+        <strong class="point-big">+${pending.plan.point.toLocaleString()}P</strong>
+      </div>
+      ${pending.plan.bonus > 0 ? `
+      <div class="complete-info-row">
+        <span>보너스 포인트</span>
+        <strong style="color:#d4af37">+${pending.plan.bonus.toLocaleString()}P ✨</strong>
+      </div>` : ''}
+      <div class="complete-info-row">
+        <span>현재 보유 포인트</span>
+        <strong style="color:var(--primary)">${newPts.toLocaleString()}P</strong>
+      </div>
+      <div class="complete-info-row">
+        <span>결제 수단</span>
+        <strong>카카오페이</strong>
+      </div>
+    </div>
+    <div class="order-no">주문번호: ${pending.orderId}</div>
+    <div class="complete-actions" style="margin-top:20px">
+      <a href="chat.html" class="btn btn-primary btn-lg">
+        <i class="fas fa-comments"></i> 지금 바로 상담하러 가기
+      </a>
+      <a href="pricing.html" class="btn btn-outline">
+        <i class="fas fa-history"></i> 이용 내역 확인
+      </a>
+    </div>
+  `;
+}
+
+function renderFail() {
+  const card = document.getElementById('completeCard');
+  card.classList.add('fail-card');
+  card.innerHTML = `
+    <div class="complete-icon">😢</div>
+    <div class="complete-title">결제에 실패했습니다</div>
+    <div class="complete-sub">결제 처리 중 오류가 발생했습니다.<br/>다시 시도하거나 고객센터로 문의해주세요.</div>
+    <div class="complete-actions">
+      <a href="pricing.html" class="btn btn-primary">
+        <i class="fas fa-redo"></i> 다시 시도
+      </a>
+      <a href="index.html" class="btn btn-outline">
+        <i class="fas fa-home"></i> 메인으로
+      </a>
+    </div>
+    <p style="margin-top:20px;font-size:0.82rem;color:var(--text-muted)">
+      문의: sajuon@gmail.com · 0502-1909-7788
+    </p>
+  `;
+}
+
+function renderCancel() {
+  const card = document.getElementById('completeCard');
+  card.classList.add('cancel-card');
+  card.innerHTML = `
+    <div class="complete-icon">🙅</div>
+    <div class="complete-title">결제가 취소되었습니다</div>
+    <div class="complete-sub">결제를 취소하셨습니다.<br/>언제든지 다시 충전하실 수 있습니다.</div>
+    <div class="complete-actions">
+      <a href="pricing.html" class="btn btn-primary">
+        <i class="fas fa-coins"></i> 충전 페이지로
+      </a>
+      <a href="index.html" class="btn btn-outline">
+        <i class="fas fa-home"></i> 메인으로
+      </a>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
