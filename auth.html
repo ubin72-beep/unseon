@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>로그인 / 회원가입 — 운세ON</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/auth.css"/>
+</head>
+<body class="auth-body">
+
+<div class="auth-wrapper">
+
+  <!-- 왼쪽 브랜드 패널 -->
+  <div class="auth-brand-panel">
+    <div class="auth-brand-inner">
+      <a href="index.html" class="auth-logo">운세<span>ON</span></a>
+      <h2 class="auth-brand-title">궁금할 때<br/>바로 묻는<br/>운세 상담</h2>
+      <p class="auth-brand-sub">연애·궁합·사업·직업·이름까지<br/>30가지 분야를 AI로 즉시 해석</p>
+      <div class="auth-brand-features">
+        <div class="auth-feat"><i class="fas fa-gift"></i> 가입 즉시 <strong>500P 무료 지급</strong></div>
+        <div class="auth-feat"><i class="fas fa-bolt"></i> 24시간 언제든 AI 상담 가능</div>
+        <div class="auth-feat"><i class="fas fa-shield-alt"></i> 개인정보 안전하게 보호</div>
+        <div class="auth-feat"><i class="fas fa-redo"></i> 충전 포인트 유효기간 없음</div>
+      </div>
+      <div class="auth-brand-reviews">
+        <div class="auth-mini-review">"재회 상담 후 실제로 연락이 왔어요!" — 김지현</div>
+        <div class="auth-mini-review">"개업일 상담 후 진짜 잘 됐습니다!" — 최동현</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 오른쪽 폼 패널 -->
+  <div class="auth-form-panel">
+    <div class="auth-form-inner">
+
+      <!-- 탭 -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">로그인</button>
+        <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">회원가입</button>
+      </div>
+
+      <!-- 로그인 폼 -->
+      <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
+        <h2 class="auth-form-title">다시 오셨군요! 👋</h2>
+        <p class="auth-form-sub">이메일과 비밀번호로 로그인하세요</p>
+
+        <div class="auth-field">
+          <label><i class="fas fa-envelope"></i> 이메일</label>
+          <input type="email" id="loginEmail" class="auth-input" placeholder="example@email.com" required autocomplete="email"/>
+          <span class="auth-field-error" id="loginEmailErr"></span>
+        </div>
+
+        <div class="auth-field">
+          <label><i class="fas fa-lock"></i> 비밀번호</label>
+          <div class="auth-input-wrap">
+            <input type="password" id="loginPw" class="auth-input" placeholder="비밀번호 입력" required autocomplete="current-password"/>
+            <button type="button" class="pw-toggle" onclick="togglePw('loginPw', this)"><i class="fas fa-eye"></i></button>
+          </div>
+          <span class="auth-field-error" id="loginPwErr"></span>
+        </div>
+
+        <div class="auth-options">
+          <label class="auth-check-label">
+            <input type="checkbox" id="loginRemember"/> <span>로그인 상태 유지</span>
+          </label>
+          <a href="#" class="auth-link" onclick="showForgot()">비밀번호 찾기</a>
+        </div>
+
+        <button type="submit" class="auth-submit-btn" id="loginSubmitBtn">
+          <span id="loginBtnText"><i class="fas fa-sign-in-alt"></i> 로그인</span>
+          <span id="loginBtnLoading" style="display:none"><i class="fas fa-spinner fa-spin"></i> 확인 중...</span>
+        </button>
+
+        <div class="auth-divider"><span>또는</span></div>
+
+        <div class="auth-social">
+          <button type="button" class="social-btn social-btn--kakao" onclick="socialLogin('kakao')">
+            <i class="fas fa-comment"></i> 카카오로 로그인
+          </button>
+          <button type="button" class="social-btn social-btn--naver" onclick="socialLogin('naver')">
+            <span class="naver-n">N</span> 네이버로 로그인
+          </button>
+        </div>
+
+        <p class="auth-switch">계정이 없으신가요? <a href="#" onclick="switchTab('register')">회원가입</a></p>
+      </form>
+
+      <!-- 회원가입 폼 -->
+      <form class="auth-form" id="registerForm" style="display:none" onsubmit="handleRegister(event)">
+        <h2 class="auth-form-title">운세ON과 함께해요 🔮</h2>
+        <p class="auth-form-sub">가입 즉시 <strong style="color:var(--accent-dark)">500P 무료</strong> 드립니다!</p>
+
+        <div class="auth-form-2col">
+          <div class="auth-field">
+            <label><i class="fas fa-user"></i> 이름 (닉네임)</label>
+            <input type="text" id="regName" class="auth-input" placeholder="홍길동" required maxlength="20" autocomplete="name"/>
+            <span class="auth-field-error" id="regNameErr"></span>
+          </div>
+          <div class="auth-field">
+            <label><i class="fas fa-birthday-cake"></i> 생년월일 <span class="label-opt">(선택)</span></label>
+            <input type="date" id="regBirth" class="auth-input" autocomplete="bday"/>
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label><i class="fas fa-envelope"></i> 이메일</label>
+          <div style="display:flex;gap:8px">
+            <input type="email" id="regEmail" class="auth-input" placeholder="example@email.com" required autocomplete="username" style="flex:1"/>
+            <button type="button" class="verify-btn" id="verifyEmailBtn" onclick="sendEmailVerify()">인증 발송</button>
+          </div>
+          <span class="auth-field-error" id="regEmailErr"></span>
+        </div>
+
+        <div class="auth-field" id="verifyCodeField" style="display:none">
+          <label><i class="fas fa-key"></i> 인증 코드</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="regVerifyCode" class="auth-input" placeholder="6자리 코드 입력" maxlength="6" style="flex:1" autocomplete="one-time-code"/>
+            <button type="button" class="verify-btn" onclick="checkEmailVerify()">확인</button>
+          </div>
+          <span class="auth-field-success" id="verifySuccess"></span>
+          <span class="auth-field-error" id="verifyErr"></span>
+        </div>
+
+        <div class="auth-field">
+          <label><i class="fas fa-lock"></i> 비밀번호</label>
+          <div class="auth-input-wrap">
+            <input type="password" id="regPw" class="auth-input" placeholder="8자 이상, 영문+숫자 조합" required minlength="8" autocomplete="new-password" oninput="checkPwStrength(this.value)"/>
+            <button type="button" class="pw-toggle" onclick="togglePw('regPw', this)"><i class="fas fa-eye"></i></button>
+          </div>
+          <div class="pw-strength-bar"><div class="pw-strength-fill" id="pwStrengthFill"></div></div>
+          <span class="pw-strength-label" id="pwStrengthLabel"></span>
+          <span class="auth-field-error" id="regPwErr"></span>
+        </div>
+
+        <div class="auth-field">
+          <label><i class="fas fa-lock"></i> 비밀번호 확인</label>
+          <div class="auth-input-wrap">
+            <input type="password" id="regPwConfirm" class="auth-input" placeholder="비밀번호 재입력" required autocomplete="new-password"/>
+            <button type="button" class="pw-toggle" onclick="togglePw('regPwConfirm', this)"><i class="fas fa-eye"></i></button>
+          </div>
+          <span class="auth-field-error" id="regPwConfirmErr"></span>
+        </div>
+
+        <div class="auth-field">
+          <label><i class="fas fa-phone"></i> 휴대폰 번호 <span class="label-opt">(선택)</span></label>
+          <input type="tel" id="regPhone" class="auth-input" placeholder="010-0000-0000" maxlength="13" oninput="formatPhone(this)" autocomplete="tel"/>
+        </div>
+
+        <!-- 성별 -->
+        <div class="auth-field">
+          <label><i class="fas fa-venus-mars"></i> 성별 <span class="label-opt">(선택)</span></label>
+          <div class="gender-group">
+            <label class="gender-opt"><input type="radio" name="gender" value="female"/> <span>여성</span></label>
+            <label class="gender-opt"><input type="radio" name="gender" value="male"/> <span>남성</span></label>
+            <label class="gender-opt"><input type="radio" name="gender" value="none" checked/> <span>선택 안 함</span></label>
+          </div>
+        </div>
+
+        <!-- 약관 동의 -->
+        <div class="auth-agree-wrap">
+          <label class="agree-all-label">
+            <input type="checkbox" id="agreeAll" onchange="toggleAllAgree(this)"/>
+            <span class="agree-all-text">전체 동의</span>
+          </label>
+          <div class="agree-list">
+            <label class="agree-item">
+              <input type="checkbox" id="agreeTerms" required onchange="checkAllAgree()"/>
+              <span>[필수] <a href="terms.html" target="_blank" class="auth-link">이용약관</a> 동의</span>
+            </label>
+            <label class="agree-item">
+              <input type="checkbox" id="agreePrivacy" required onchange="checkAllAgree()"/>
+              <span>[필수] <a href="privacy.html" target="_blank" class="auth-link">개인정보 처리방침</a> 동의</span>
+            </label>
+            <label class="agree-item">
+              <input type="checkbox" id="agreeAge" required onchange="checkAllAgree()"/>
+              <span>[필수] 만 14세 이상입니다</span>
+            </label>
+            <label class="agree-item">
+              <input type="checkbox" id="agreeMarketing" onchange="checkAllAgree()"/>
+              <span>[선택] 마케팅 정보 수신 동의 (이벤트·포인트 혜택 알림)</span>
+            </label>
+            <label class="agree-item">
+              <input type="checkbox" id="agreeRefund" required onchange="checkAllAgree()"/>
+              <span>[필수] <a href="refund.html" target="_blank" class="auth-link">환불 정책</a> 확인 및 동의</span>
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="auth-submit-btn" id="regSubmitBtn">
+          <span id="regBtnText"><i class="fas fa-user-plus"></i> 회원가입 완료</span>
+          <span id="regBtnLoading" style="display:none"><i class="fas fa-spinner fa-spin"></i> 처리 중...</span>
+        </button>
+
+        <p class="auth-switch">이미 계정이 있으신가요? <a href="#" onclick="switchTab('login')">로그인</a></p>
+      </form>
+
+      <!-- 비밀번호 찾기 폼 -->
+      <div class="auth-form" id="forgotForm" style="display:none">
+        <h2 class="auth-form-title">비밀번호 찾기 🔑</h2>
+        <p class="auth-form-sub">가입한 이메일로 재설정 링크를 보내드립니다</p>
+        <div class="auth-field">
+          <label><i class="fas fa-envelope"></i> 가입 이메일</label>
+          <input type="email" id="forgotEmail" class="auth-input" placeholder="example@email.com"/>
+        </div>
+        <button type="button" class="auth-submit-btn" onclick="handleForgot()">
+          <i class="fas fa-paper-plane"></i> 재설정 링크 발송
+        </button>
+        <p class="auth-switch"><a href="#" onclick="switchTab('login')">← 로그인으로 돌아가기</a></p>
+      </div>
+
+      <!-- 회원가입 완료 화면 -->
+      <div class="auth-success-screen" id="registerSuccess" style="display:none">
+        <div class="success-icon">🎉</div>
+        <h2>가입을 환영합니다!</h2>
+        <p class="success-name" id="successNameLabel"></p>
+        <div class="success-point-box">
+          <i class="fas fa-coins"></i>
+          <span><strong>500P</strong>가 지급되었습니다!</span>
+        </div>
+        <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:24px">지금 바로 AI 상담을 시작해보세요</p>
+        <a href="chat.html" class="auth-submit-btn" style="text-decoration:none;display:flex;justify-content:center">
+          <i class="fas fa-comments"></i> 첫 상담 시작하기
+        </a>
+        <a href="index.html" class="auth-link" style="display:block;text-align:center;margin-top:14px">메인으로 돌아가기</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- 토스트 -->
+<div class="auth-toast" id="authToast"></div>
+
+<!-- 사업자 정보 바 -->
+<div class="biz-info-bar">
+  <div class="container">
+    <span><strong>운세ON</strong> (운영: 큐브박스)</span>
+    <span class="sep">|</span><span>대표 김미화</span>
+    <span class="sep">|</span><span>사업자등록번호 537-08-03349</span>
+    <span class="sep">|</span><span>서울 송파구 송파대로14길 7-10 2층 201</span>
+    <span class="sep">|</span><span>📞 0502-1909-7788</span>
+    <span class="sep">|</span><span>✉ sajuon@gmail.com</span>
+    <span class="sep">|</span><span class="biz-links">
+      <a href="terms.html">이용약관</a>
+      <a href="privacy.html">개인정보처리방침</a>
+      <a href="refund.html">환불정책</a>
+    </span>
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI 상담 — 운세ON</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/chat.css"/>
+</head>
+<body class="chat-page">
+
+<!-- HEADER -->
+<header class="site-header" id="siteHeader">
+  <div class="container header-inner">
+    <a href="index.html" class="logo">운세<span class="logo-on">ON</span></a>
+    <nav class="main-nav" id="mainNav">
+      <a href="index.html" class="nav-link">홈</a>
+      <a href="chat.html" class="nav-link active">AI 상담</a>
+      <a href="pricing.html" class="nav-link">요금 충전</a>
+      <a href="admin.html" class="nav-link nav-admin"><i class="fas fa-cog"></i> 관리자</a>
+    </nav>
+    <div class="header-actions">
+      <div class="point-display" id="headerPoints">
+        <i class="fas fa-coins"></i> <span id="headerPointVal">0</span>P
+      </div>
+      <a href="pricing.html" class="btn btn-charge">충전하기</a>
+      <button class="hamburger" id="hamburger" aria-label="메뉴">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- CHAT LAYOUT -->
+<div class="chat-layout">
+
+  <!-- 사이드바 -->
+  <aside class="chat-sidebar" id="chatSidebar">
+    <div class="sidebar-header">
+      <span>상담 분야</span>
+      <button class="sidebar-close" id="sidebarClose" aria-label="닫기"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="sidebar-inner" id="sidebarInner">
+      <!-- JS로 렌더링 -->
+    </div>
+  </aside>
+
+  <!-- 채팅 메인 -->
+  <main class="chat-main">
+    <!-- 채팅 상단 -->
+    <div class="chat-topbar">
+      <button class="chat-menu-btn" id="chatMenuBtn" aria-label="메뉴">
+        <i class="fas fa-th-large"></i>
+      </button>
+      <div class="chat-current-cat" id="chatCurrentCat">
+        <span class="cat-icon-sm" id="catIconSm">🔮</span>
+        <span id="catNameLabel">종합 운세 상담</span>
+      </div>
+      <button class="chat-reset-btn" onclick="resetChat()" title="새 대화 시작">
+        <i class="fas fa-redo-alt"></i>
+      </button>
+    </div>
+
+    <!-- 메시지 영역 -->
+    <div class="chat-messages" id="chatMessages">
+      <!-- JS로 초기 메시지 렌더링 -->
+    </div>
+
+    <!-- 입력 영역 -->
+    <div class="chat-input-area">
+      <div class="chat-input-inner">
+        <div class="chat-point-info" id="chatPointInfo">
+          <i class="fas fa-coins"></i>
+          보유 <strong id="chatPointVal">0</strong>P
+          · 이 상담 <strong id="chatCostVal">200</strong>P 차감
+        </div>
+        <div class="chat-input-row">
+          <textarea
+            id="chatInput"
+            class="chat-textarea"
+            placeholder="질문을 입력하세요... (예: 그 사람이 저를 좋아하는 것 같은데, 확인해도 될까요?)"
+            rows="1"
+          ></textarea>
+          <button class="chat-send-btn" id="chatSendBtn" onclick="sendMessage()">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+        <p class="chat-disclaimer">운세ON은 참고·오락 목적으로 제공됩니다. 중요한 결정은 전문가와 상담하세요.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 포인트 부족 모달 -->
+<div class="modal-overlay" id="modalOverlay" style="display:none">
+  <div class="modal">
+    <div class="modal-icon">💳</div>
+    <h3>포인트가 부족합니다</h3>
+    <p>현재 보유 포인트: <strong id="modalCurrentPt">0</strong>P<br/>필요한 포인트: <strong id="modalNeedPt">200</strong>P</p>
+    <div class="modal-actions">
+      <a href="pricing.html" class="btn btn-primary">포인트 충전하러 가기</a>
+      <button class="btn btn-outline" onclick="closeModal()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 사업자 정보 바 -->
+<div class="biz-info-bar">
+  <div class="container">
+    <span><strong>운세ON</strong> (운영: 큐브박스)</span>
+    <span class="sep">|</span><span>대표 김미화</span>
+    <span class="sep">|</span><span>사업자등록번호 537-08-03349</span>
+    <span class="sep">|</span><span>서울 송파구 송파대로14길 7-10 2층 201</span>
+    <span class="sep">|</span><span>📞 0502-1909-7788</span>
+    <span class="sep">|</span><span>✉ sajuon@gmail.com</span>
+    <span class="sep">|</span><span class="biz-links">
+      <a href="terms.html">이용약관</a>
+      <a href="privacy.html">개인정보처리방침</a>
+      <a href="refund.html">환불정책</a>
+    </span>
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script src="js/main.js"></script>
+<script src="js/chat.js"></script>
+<script>document.addEventListener('DOMContentLoaded', initAuthHeader);</script>
+</body>
+</html>

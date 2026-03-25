@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>포인트 충전 — 운세ON</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/pricing.css"/>
+</head>
+<body>
+
+<header class="site-header" id="siteHeader">
+  <div class="container header-inner">
+    <a href="index.html" class="logo">운세<span class="logo-on">ON</span></a>
+    <nav class="main-nav" id="mainNav">
+      <a href="index.html" class="nav-link">홈</a>
+      <a href="chat.html" class="nav-link">AI 상담</a>
+      <a href="pricing.html" class="nav-link active">요금 충전</a>
+      <a href="admin.html" class="nav-link nav-admin"><i class="fas fa-cog"></i> 관리자</a>
+    </nav>
+    <div class="header-actions">
+      <div class="point-display">
+        <i class="fas fa-coins"></i> <span id="headerPointVal">0</span>P
+      </div>
+      <a href="pricing.html" class="btn btn-charge">충전하기</a>
+      <button class="hamburger" id="hamburger" aria-label="메뉴">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="pricing-page" style="margin-top:var(--header-h); padding: 60px 0 100px;">
+  <div class="container">
+
+    <!-- 현재 포인트 -->
+    <div class="my-point-card">
+      <div class="my-point-info">
+        <div class="my-point-label"><i class="fas fa-coins"></i> 현재 보유 포인트</div>
+        <div class="my-point-val" id="myPointVal">0P</div>
+      </div>
+      <a href="chat.html" class="btn btn-primary"><i class="fas fa-comments"></i> 상담 시작</a>
+    </div>
+
+    <!-- 충전 플랜 -->
+    <div class="pricing-section-header">
+      <h2>포인트 충전</h2>
+      <p>많이 충전할수록 보너스가 더 붙습니다</p>
+    </div>
+
+    <div class="plan-grid">
+      <div class="plan-card" data-plan="basic" onclick="selectPlan('basic')">
+        <div class="plan-name">베이직</div>
+        <div class="plan-amount">₩10,000</div>
+        <div class="plan-point">10,000P</div>
+        <div class="plan-bonus-tag">기본 충전</div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check"></i> 타로 상담 100회</li>
+          <li><i class="fas fa-check"></i> 연애운·직업 상담 50회</li>
+          <li><i class="fas fa-check"></i> 사업운·이름 상담 33회</li>
+        </ul>
+        <button class="plan-btn" onclick="event.stopPropagation();chargePlan('basic')">
+          <i class="fas fa-bolt"></i> 충전하기
+        </button>
+      </div>
+
+      <div class="plan-card plan-card--best" data-plan="standard" onclick="selectPlan('standard')">
+        <div class="plan-badge">가장 인기</div>
+        <div class="plan-name">스탠다드</div>
+        <div class="plan-amount">₩20,000</div>
+        <div class="plan-point">22,000P</div>
+        <div class="plan-bonus-tag plan-bonus-tag--plus">+2,000P 보너스</div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check"></i> 타로 상담 220회</li>
+          <li><i class="fas fa-check"></i> 연애운·직업 상담 110회</li>
+          <li><i class="fas fa-check"></i> 사업운·이름 상담 73회</li>
+          <li><i class="fas fa-check"></i> 10% 보너스 포인트</li>
+        </ul>
+        <button class="plan-btn plan-btn--white" onclick="event.stopPropagation();chargePlan('standard')">
+          <i class="fas fa-bolt"></i> 충전하기
+        </button>
+      </div>
+
+      <div class="plan-card" data-plan="premium" onclick="selectPlan('premium')">
+        <div class="plan-name">프리미엄</div>
+        <div class="plan-amount">₩30,000</div>
+        <div class="plan-point">36,000P</div>
+        <div class="plan-bonus-tag plan-bonus-tag--plus">+6,000P 보너스</div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check"></i> 타로 상담 360회</li>
+          <li><i class="fas fa-check"></i> 연애운·직업 상담 180회</li>
+          <li><i class="fas fa-check"></i> 사업운·이름 상담 120회</li>
+          <li><i class="fas fa-check"></i> 20% 보너스 포인트</li>
+        </ul>
+        <button class="plan-btn" onclick="event.stopPropagation();chargePlan('premium')">
+          <i class="fas fa-bolt"></i> 충전하기
+        </button>
+      </div>
+    </div>
+
+    <p class="free-note"><i class="fas fa-gift"></i> 신규 가입 시 <strong>500P 무료 지급</strong> — 첫 상담은 무료로 시작할 수 있습니다!</p>
+
+    <!-- 차감 기준표 -->
+    <div class="pricing-section-header" style="margin-top:64px;">
+      <h2>상담 유형별 차감 포인트</h2>
+      <p>상담 분야에 따라 차감 포인트가 다릅니다</p>
+    </div>
+    <div class="cost-table-wrap">
+      <table class="cost-table">
+        <thead>
+          <tr>
+            <th>상담 유형</th>
+            <th>포인트 차감</th>
+            <th>포함 분야</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="cost-badge" style="background:#e8f5f0;color:#2c5f4f">기본 상담</span></td>
+            <td class="cost-pt">100P</td>
+            <td>타로 상담, 여행운</td>
+          </tr>
+          <tr>
+            <td><span class="cost-badge" style="background:#fff3e0;color:#e65100">일반 상담</span></td>
+            <td class="cost-pt">200P</td>
+            <td>연애운, 궁합, 직업 상담, 이직운, 승진운, 이사운, 2026 병오년 운세 등</td>
+          </tr>
+          <tr>
+            <td><span class="cost-badge" style="background:#fce4ec;color:#c62828">심화 상담</span></td>
+            <td class="cost-pt">300P</td>
+            <td>사업운, 재물운, 개업 상담, 아이 이름짓기, 개명, 상호명 상담, 동업 궁합 등</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 이용 내역 -->
+    <div class="pricing-section-header" style="margin-top:64px;" id="history">
+      <h2>이용 내역</h2>
+      <p>최근 충전 및 차감 내역을 확인하세요</p>
+    </div>
+    <div class="history-wrap">
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>일시</th>
+              <th>구분</th>
+              <th>변동 포인트</th>
+              <th>메모</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="4" class="empty-row">이용 내역이 없습니다</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- 충전 확인 모달 -->
+<div class="modal-overlay" id="chargeModal" style="display:none">
+  <div class="modal">
+    <div class="modal-icon">💳</div>
+    <h3 id="chargeModalTitle">포인트 충전</h3>
+    <p id="chargeModalBody">충전 정보를 확인해주세요.</p>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="chargeConfirmBtn">결제 완료 처리 (시뮬레이션)</button>
+      <button class="btn btn-outline" onclick="closeChargeModal()">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- 충전 완료 모달 -->
+<div class="modal-overlay" id="successModal" style="display:none">
+  <div class="modal">
+    <div class="modal-icon">🎉</div>
+    <h3>충전 완료!</h3>
+    <p id="successBody">포인트가 충전되었습니다.</p>
+    <div class="modal-actions">
+      <a href="chat.html" class="btn btn-primary"><i class="fas fa-comments"></i> 상담 시작하기</a>
+      <button class="btn btn-outline" onclick="closeSuccessModal()">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- 사업자 정보 바 -->
+<div class="biz-info-bar">
+  <div class="container">
+    <span><strong>운세ON</strong> (운영: 큐브박스)</span>
+    <span class="sep">|</span><span>대표 김미화</span>
+    <span class="sep">|</span><span>사업자등록번호 537-08-03349</span>
+    <span class="sep">|</span><span>서울 송파구 송파대로14길 7-10 2층 201</span>
+    <span class="sep">|</span><span>📞 0502-1909-7788</span>
+    <span class="sep">|</span><span>✉ sajuon@gmail.com</span>
+    <span class="sep">|</span><span class="biz-links">
+      <a href="terms.html">이용약관</a>
+      <a href="privacy.html">개인정보처리방침</a>
+      <a href="refund.html">환불정책</a>
+    </span>
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script src="js/main.js"></script>
+<script src="js/pricing.js"></script>
+<script>document.addEventListener('DOMContentLoaded', initAuthHeader);</script>
+</body>
+</html>
