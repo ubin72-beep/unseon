@@ -1263,7 +1263,7 @@ async function testGeminiKey() {
       const key = localStorage.getItem('sajuon_gemini_key') || '';
       if (!key) { res = { ok: false, msg: '❌ 저장된 API 키가 없습니다' }; }
       else {
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${key}`, {
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ contents:[{role:'user',parts:[{text:'안녕'}]}], generationConfig:{maxOutputTokens:10} })
         });
