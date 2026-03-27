@@ -1253,29 +1253,61 @@ function deleteGeminiKey() {
 
 async function testGeminiKey() {
   const result = document.getElementById('geminiTestResult');
-  if (result) { result.textContent = '⏳ 테스트 중...'; result.style.color = '#666'; }
-  try {
-    let res;
-    if (typeof testGeminiConnection === 'function') {
-      res = await testGeminiConnection();
-    } else {
-      // gemini.js 없을 때 직접 테스트
-      const key = localStorage.getItem('sajuon_gemini_key') || '';
-      if (!key) { res = { ok: false, msg: '❌ 저장된 API 키가 없습니다' }; }
-      else {
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${key}`, {
-          method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ contents:[{role:'user',parts:[{text:'안녕'}]}], generationConfig:{maxOutputTokens:10} })
-        });
-        res = r.ok ? { ok:true, msg:'✅ 연결 성공! Gemini 2.0 Flash' } : { ok:false, msg:`❌ HTTP ${r.status} — 키를 확인하세요` };
-      }
-    }
-    if (result) { result.textContent = res.msg; result.style.color = res.ok ? '#2e7d32' : '#c62828'; }
-    showToast(res.msg);
-  } catch(e) {
-    const errMsg = '❌ 네트워크 오류: ' + e.message;
+  if (result) { result.textContent = '⏳ 연결 테스트 중...'; result.style.color = '#666'; }
+
+  const key = localStorage.getItem('sajuon_gemini_key') || '';
+  if (!key) {
+    const msg = '❌ 저장된 API 키가 없습니다. 먼저 키를 입력하고 저장하세요.';
+    if (result) { result.textContent = msg; result.style.color = '#c62828'; }
+    showToast(msg); return;
+  }
+
+  // 시도할 모델 목록 (순서대로 fallback)
+  const MODELS_TO_TRY = [
+    { ver: 'v1beta', name: 'gemini-1.5-flash-latest' },
+    { ver: 'v1beta', name: 'gemini-1.5-flash' },
+    { ver: 'v1beta', name: 'gemini-1.5-pro-latest' },
+    { ver: 'v1',     name: 'gemini-1.5-flash-latest' },
+    { ver: 'v1',     name: 'gemini-1.5-flash' },
+    { ver: 'v1beta', name: 'gemini-pro' },
+  ];
+
+  const body = JSON.stringify({
+    contents: [{ role: 'user', parts: [{ text: '안녕' }] }],
+    generationConfig: { maxOutputTokens: 10 }
+  });
+
+  let successModel = null;
+  let lastErr = '';
+
+  for (const m of MODELS_TO_TRY) {
+    try {
+      if (result) result.textContent = `⏳ 시도 중: ${m.name} (${m.ver})...`;
+      const url = `https://generativelanguage.googleapis.com/${m.ver}/models/${m.name}:generateContent?key=${key}`;
+      const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body });
+      if (r.ok) { successModel = m; break; }
+      const d = await r.json().catch(() => ({}));
+      lastErr = d?.error?.message || `HTTP ${r.status}`;
+    } catch(e) { lastErr = e.message; }
+  }
+
+  if (successModel) {
+    // 성공한 모델로 gemini.js 설정 업데이트
+    const successMsg = `✅ 연결 성공! 모델: ${successModel.name}`;
+    if (result) { result.textContent = successMsg; result.style.color = '#2e7d32'; }
+    showToast(successMsg);
+    // gemini.js 런타임에도 즉시 반영
+    try {
+      window._GEMINI_MODEL_OVERRIDE = successModel.name;
+      window._GEMINI_VER_OVERRIDE   = successModel.ver;
+    } catch(e) {}
+    // localStorage에 성공 모델 저장
+    localStorage.setItem('sajuon_gemini_model', successModel.name);
+    localStorage.setItem('sajuon_gemini_ver',   successModel.ver);
+  } else {
+    const errMsg = `❌ 모든 모델 연결 실패. 마지막 오류: ${lastErr}`;
     if (result) { result.textContent = errMsg; result.style.color = '#c62828'; }
-    showToast(errMsg);
+    showToast('❌ API 연결 실패 — 오류 내용을 확인하세요');
   }
 }
 
