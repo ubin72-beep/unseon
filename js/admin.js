@@ -62,7 +62,17 @@ function switchSection(key) {
   const content = document.getElementById('adminContent');
   if (content) {
     content.innerHTML = '';
-    s.render(content);
+    try {
+      s.render(content);
+    } catch(err) {
+      console.error('[switchSection] render error:', key, err);
+      content.innerHTML = `<div style="padding:40px;text-align:center;color:#c62828">
+        <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
+        <div style="font-weight:700;margin-bottom:8px">섹션 로드 중 오류가 발생했습니다</div>
+        <div style="font-size:0.85rem;color:#666">${err.message}</div>
+        <button onclick="switchSection('${key}')" style="margin-top:16px;padding:8px 20px;background:var(--primary);color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem">다시 시도</button>
+      </div>`;
+    }
   }
 
   // 해시 업데이트
@@ -1110,125 +1120,95 @@ function createTestMember() {
 // 섹션 10: AI 설정 (Gemini API 관리)
 // =========================================
 function renderAISettings(container) {
-  const currentKey = getGeminiKey ? getGeminiKey() : '';
-  const maskedKey  = currentKey
-    ? currentKey.slice(0, 8) + '••••••••••••••••' + currentKey.slice(-4)
+  // 직접 localStorage에서 읽기 (gemini.js 의존성 제거)
+  var currentKey = '';
+  try { currentKey = localStorage.getItem('sajuon_gemini_key') || ''; } catch(e) {}
+  var isSet = (currentKey.length > 20 && currentKey.indexOf('AIza') === 0);
+  var maskedKey = isSet
+    ? currentKey.slice(0,8) + '••••••••••••••••' + currentKey.slice(-4)
     : '미설정';
-  const isSet = currentKey && currentKey.startsWith('AIza');
 
-  container.innerHTML = `
-    <!-- 상태 카드 -->
-    <div class="stat-grid" style="margin-bottom:24px">
-      <div class="stat-card">
-        <div class="stat-icon" style="background:${isSet ? '#e8f5e9' : '#fce4ec'}">${isSet ? '✅' : '❌'}</div>
-        <div class="stat-val" style="font-size:1rem">${isSet ? '연결됨' : '미설정'}</div>
-        <div class="stat-label">Gemini API 상태</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#e3f2fd">🤖</div>
-        <div class="stat-val" style="font-size:0.85rem">gemini-2.0-flash</div>
-        <div class="stat-label">사용 모델</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#fff8e1">💰</div>
-        <div class="stat-val" style="font-size:0.85rem">무료 (한도 내)</div>
-        <div class="stat-label">Flash 티어</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#f3e5f5">📊</div>
-        <div class="stat-val" style="font-size:0.85rem">1M 토큰</div>
-        <div class="stat-label">컨텍스트 윈도우</div>
-      </div>
-    </div>
+  var statusColor = isSet ? '#e8f5e9' : '#fce4ec';
+  var statusEmoji = isSet ? '✅' : '❌';
+  var statusText  = isSet ? '연결됨' : '미설정';
+  var badgeBg     = isSet ? '#e8f5e9' : '#fce4ec';
+  var badgeColor  = isSet ? '#2e7d32' : '#c62828';
+  var badgeText   = isSet ? '✅ 활성' : '❌ 미설정';
+  var labelText   = isSet ? '새 키로 교체' : 'API 키 입력';
 
-    <!-- API 키 설정 -->
-    <div class="admin-card" style="margin-bottom:20px">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">🔑 Gemini API 키 설정</div>
-          <div class="admin-card-subtitle">Google AI Studio에서 발급한 API 키를 입력합니다</div>
-        </div>
-        ${isSet ? `<span style="background:#e8f5e9;color:#2e7d32;padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:700">✅ 활성</span>` : `<span style="background:#fce4ec;color:#c62828;padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:700">❌ 미설정</span>`}
-      </div>
-      <div style="padding:0 20px 20px">
+  var savedKeyBlock = isSet ? (
+    '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">' +
+      '<div>' +
+        '<div style="font-size:0.78rem;color:#166534;font-weight:600;margin-bottom:2px">현재 저장된 키</div>' +
+        '<code style="font-size:0.88rem;color:#14532d">' + maskedKey + '</code>' +
+      '</div>' +
+      '<button onclick="deleteGeminiKey()" style="padding:6px 14px;background:#fce4ec;color:#c62828;border:1px solid #f48fb1;border-radius:8px;cursor:pointer;font-size:0.82rem;font-weight:600">🗑️ 삭제</button>' +
+    '</div>'
+  ) : '';
 
-        ${isSet ? `
-        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-size:0.78rem;color:#166534;font-weight:600;margin-bottom:2px">현재 저장된 키</div>
-            <code style="font-size:0.88rem;color:#14532d">${maskedKey}</code>
-          </div>
-          <button class="admin-del-btn" onclick="deleteGeminiKey()">🗑️ 삭제</button>
-        </div>
-        ` : ''}
+  container.innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">' +
+      '<div class="stat-card"><div class="stat-icon" style="background:' + statusColor + '">' + statusEmoji + '</div><div class="stat-val" style="font-size:1rem">' + statusText + '</div><div class="stat-label">Gemini API 상태</div></div>' +
+      '<div class="stat-card"><div class="stat-icon" style="background:#e3f2fd">🤖</div><div class="stat-val" style="font-size:0.85rem">gemini-2.5-flash</div><div class="stat-label">사용 모델</div></div>' +
+      '<div class="stat-card"><div class="stat-icon" style="background:#fff8e1">💰</div><div class="stat-val" style="font-size:0.85rem">무료 (한도 내)</div><div class="stat-label">Flash 티어</div></div>' +
+      '<div class="stat-card"><div class="stat-icon" style="background:#f3e5f5">📊</div><div class="stat-val" style="font-size:0.85rem">1M 토큰</div><div class="stat-label">컨텍스트 윈도우</div></div>' +
+    '</div>' +
 
-        <div class="admin-form-row" style="margin-bottom:12px">
-          <label style="margin-bottom:6px;display:block;font-weight:600">${isSet ? '새 키로 교체' : 'API 키 입력'}</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <div style="position:relative;flex:1">
-              <input type="password" id="geminiKeyInput" class="admin-input" placeholder="AIzaSy..." style="width:100%;font-family:monospace;padding-right:44px" />
-              <button id="toggleKeyBtn" type="button" onclick="toggleKeyVisibility()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;font-size:1rem;padding:4px"><i class="fas fa-eye"></i></button>
-            </div>
-            <button class="admin-save-btn" onclick="saveGeminiKey()" style="white-space:nowrap"><i class="fas fa-save"></i> 저장</button>
-          </div>
-          <small id="geminiKeyMsg" style="display:block;margin-top:6px;color:var(--text-muted)">🔒 키는 이 브라우저의 localStorage에만 저장됩니다. 서버로 전송되지 않습니다.</small>
-        </div>
+    '<div class="admin-card" style="margin-bottom:20px">' +
+      '<div class="admin-card-header">' +
+        '<div><div class="admin-card-title">🔑 Gemini API 키 설정</div><div class="admin-card-subtitle">Google AI Studio에서 발급한 API 키를 입력합니다</div></div>' +
+        '<span style="background:' + badgeBg + ';color:' + badgeColor + ';padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:700">' + badgeText + '</span>' +
+      '</div>' +
+      '<div style="padding:0 20px 20px">' +
+        savedKeyBlock +
+        '<div style="margin-bottom:16px">' +
+          '<label style="display:block;margin-bottom:8px;font-weight:600;font-size:0.9rem">' + labelText + '</label>' +
+          '<div style="display:flex;gap:10px;align-items:center">' +
+            '<div style="position:relative;flex:1">' +
+              '<input type="password" id="geminiKeyInput" placeholder="AIzaSy..." style="width:100%;padding:10px 44px 10px 14px;border:1.5px solid #ddd;border-radius:8px;font-family:monospace;font-size:0.9rem;box-sizing:border-box" />' +
+              '<button id="toggleKeyBtn" type="button" onclick="toggleKeyVisibility()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;font-size:1rem">👁️</button>' +
+            '</div>' +
+            '<button onclick="saveGeminiKey()" style="padding:10px 20px;background:#1b5e20;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:600;white-space:nowrap">💾 저장</button>' +
+          '</div>' +
+          '<small id="geminiKeyMsg" style="display:block;margin-top:8px;color:#666">🔒 키는 이 브라우저의 localStorage에만 저장됩니다. 서버로 전송되지 않습니다.</small>' +
+        '</div>' +
+        '<button onclick="testGeminiKey()" style="padding:10px 20px;background:#1565c0;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:600">🔌 연결 테스트</button>' +
+        '<span id="geminiTestResult" style="margin-left:12px;font-size:0.88rem"></span>' +
+      '</div>' +
+    '</div>' +
 
-        <button class="admin-save-btn" onclick="testGeminiKey()" style="background:#1565c0">
-          <i class="fas fa-plug"></i> 연결 테스트
-        </button>
-        <span id="geminiTestResult" style="margin-left:10px;font-size:0.88rem"></span>
-      </div>
-    </div>
+    '<div class="admin-card" style="margin-bottom:20px">' +
+      '<div class="admin-card-header"><div class="admin-card-title">📖 API 키 발급 방법</div></div>' +
+      '<div style="padding:0 20px 20px">' +
+        '<ol style="padding-left:20px;line-height:2.2;color:#444;margin:0 0 16px">' +
+          '<li><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#1b5e20;font-weight:600">aistudio.google.com</a> 접속 (Google 계정 필요)</li>' +
+          '<li>"Create API Key" 클릭 → "Create API key in new project" 선택</li>' +
+          '<li>생성된 키 <code style="background:#f5f5f5;padding:2px 6px;border-radius:4px">AIzaSy...</code> 복사</li>' +
+          '<li>위 입력란에 붙여넣기 후 💾 저장 클릭</li>' +
+        '</ol>' +
+        '<div style="background:#fffde7;border:1px solid #f9a825;border-radius:10px;padding:14px 18px">' +
+          '<strong>💰 비용 안내</strong><br>' +
+          '<span style="font-size:0.85rem;color:#555;line-height:2;display:block;margin-top:4px">' +
+            '• Gemini 2.0 Flash: <strong>무료 티어</strong> — 분당 15회, 일 1,500회 무료<br>' +
+            '• 무료 초과 시: 입력 1M 토큰당 $0.075 (약 100원)<br>' +
+            '• 상담 1건 ≈ 500~800 토큰 → 약 0.07원/건' +
+          '</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
 
-    <!-- API 키 발급 안내 -->
-    <div class="admin-card" style="margin-bottom:20px">
-      <div class="admin-card-header">
-        <div class="admin-card-title">📖 Gemini API 키 발급 방법</div>
-      </div>
-      <div style="padding:0 20px 20px">
-        <ol style="padding-left:20px;line-height:2;color:var(--text-body)">
-          <li><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--primary);font-weight:600">aistudio.google.com</a> 접속 (Google 계정 필요)</li>
-          <li>"Create API Key" 클릭</li>
-          <li>"Create API key in new project" 선택</li>
-          <li>생성된 키 (AIzaSy...) 복사</li>
-          <li>위 입력창에 붙여넣기 후 저장</li>
-        </ol>
-        <div style="background:#fffde7;border:1px solid #f9a825;border-radius:10px;padding:14px 18px;margin-top:12px">
-          <strong>💰 비용 안내</strong><br/>
-          <small style="color:var(--text-body);line-height:1.7">
-            • Gemini 2.0 Flash: <strong>무료 티어</strong> — 분당 15회, 일 1,500회 무료 요청<br/>
-            • 무료 한도 초과 시: 입력 1M 토큰당 $0.075 (약 100원)<br/>
-            • 상담 1건 평균 약 500~800 토큰 → 약 0.07원/건<br/>
-            • 월 10,000건 기준 약 700원 수준으로 매우 저렴
-          </small>
-        </div>
-      </div>
-    </div>
-
-    <!-- 프롬프트 미리보기 -->
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div class="admin-card-title">🧠 AI 사주 상담 프롬프트 설정</div>
-        <div class="admin-card-subtitle">현재 적용 중인 AI 페르소나 및 분석 방식</div>
-      </div>
-      <div style="padding:0 20px 20px">
-        <div style="background:#f8f9fa;border-radius:10px;padding:16px;font-size:0.82rem;line-height:1.8;color:var(--text-body);max-height:300px;overflow-y:auto">
-          <strong>📌 현재 AI 페르소나:</strong><br/>
-          수십 년 경력의 한국 전통 사주명리학 전문가<br/><br/>
-          <strong>📌 분석 방법:</strong><br/>
-          • 천간(天干)·지지(地支)·오행(五行)·십신(十神) 기반 분석<br/>
-          • 사주팔자(四柱八字) 완전 구성 및 오행 비율 계산<br/>
-          • 용신(用神)·기신(忌神) 도출<br/>
-          • 2026년 병오년(丙午年) 세운 흐름 반영<br/>
-          • 대화 연속성 지원 (최대 10턴 기억)<br/><br/>
-          <strong>📌 사용 모델:</strong> gemini-2.0-flash (스트리밍)<br/>
-          <strong>📌 응답 온도:</strong> 0.85 (창의적이되 일관성 있는 응답)<br/>
-          <strong>📌 최대 토큰:</strong> 1,500 토큰/응답
-        </div>
-      </div>
-    </div>
-  `;
+    '<div class="admin-card">' +
+      '<div class="admin-card-header"><div class="admin-card-title">🧠 AI 페르소나 설정</div><div class="admin-card-subtitle">현재 적용 중인 분석 방식</div></div>' +
+      '<div style="padding:0 20px 20px">' +
+        '<div style="background:#f8f9fa;border-radius:10px;padding:16px;font-size:0.85rem;line-height:2;color:#444">' +
+          '<strong>📌 AI 페르소나:</strong> 수십 년 경력의 한국 전통 사주명리학 전문가<br>' +
+          '<strong>📌 분석 방법:</strong> 천간·지지·오행·십신 기반, 사주팔자 완전 구성, 용신·기신 도출<br>' +
+          '<strong>📌 세운 반영:</strong> 2026년 병오년(丙午年) 흐름 적용<br>' +
+          '<strong>📌 사용 모델:</strong> gemini-2.5-flash (스트리밍)<br>' +
+          '<strong>📌 응답 온도:</strong> 0.85 &nbsp;|&nbsp; <strong>최대 토큰:</strong> 1,500/응답' +
+        '</div>' +
+      '</div>' +
+    '</div>';
 }
 
 function saveGeminiKey() {
@@ -1238,16 +1218,17 @@ function saveGeminiKey() {
     if (msg) { msg.textContent = '❌ API 키를 입력해주세요.'; msg.style.color='#c62828'; }
     return;
   }
-  if (!val.startsWith('AIza')) {
+  if (!val.startsWith('AIza') || val.length < 20) {
     if (msg) { msg.textContent = '❌ 올바른 형식이 아닙니다. AIzaSy...로 시작하는 키를 입력하세요.'; msg.style.color='#c62828'; }
     return;
   }
-  setGeminiKey(val);
-  showToast('✅ Gemini API 키가 저장되었습니다! 연결 테스트를 진행합니다...');
+  // gemini.js 함수 또는 직접 저장
+  try { if (typeof setGeminiKey === 'function') setGeminiKey(val); else localStorage.setItem('sajuon_gemini_key', val); } catch(e) { localStorage.setItem('sajuon_gemini_key', val); }
+  showToast('✅ Gemini API 키가 저장되었습니다!');
   // 저장 후 UI 재렌더링
   renderAISettings(document.getElementById('adminContent'));
-  // 저장 후 자동 테스트 (1초 후)
-  setTimeout(() => testGeminiKey(), 1000);
+  // 저장 후 자동 테스트 (800ms 후)
+  setTimeout(() => testGeminiKey(), 800);
 }
 
 function toggleKeyVisibility() {
@@ -1272,13 +1253,30 @@ function deleteGeminiKey() {
 
 async function testGeminiKey() {
   const result = document.getElementById('geminiTestResult');
-  if (result) result.textContent = '⏳ 테스트 중...';
-  const res = await testGeminiConnection();
-  if (result) {
-    result.textContent = res.msg;
-    result.style.color = res.ok ? '#2e7d32' : '#c62828';
+  if (result) { result.textContent = '⏳ 테스트 중...'; result.style.color = '#666'; }
+  try {
+    let res;
+    if (typeof testGeminiConnection === 'function') {
+      res = await testGeminiConnection();
+    } else {
+      // gemini.js 없을 때 직접 테스트
+      const key = localStorage.getItem('sajuon_gemini_key') || '';
+      if (!key) { res = { ok: false, msg: '❌ 저장된 API 키가 없습니다' }; }
+      else {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${key}`, {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ contents:[{role:'user',parts:[{text:'안녕'}]}], generationConfig:{maxOutputTokens:10} })
+        });
+        res = r.ok ? { ok:true, msg:'✅ 연결 성공! Gemini 2.0 Flash' } : { ok:false, msg:`❌ HTTP ${r.status} — 키를 확인하세요` };
+      }
+    }
+    if (result) { result.textContent = res.msg; result.style.color = res.ok ? '#2e7d32' : '#c62828'; }
+    showToast(res.msg);
+  } catch(e) {
+    const errMsg = '❌ 네트워크 오류: ' + e.message;
+    if (result) { result.textContent = errMsg; result.style.color = '#c62828'; }
+    showToast(errMsg);
   }
-  showToast(res.msg);
 }
 
 // =========================================
