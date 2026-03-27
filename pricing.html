@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
   <link rel="stylesheet" href="css/style.css"/>
   <link rel="stylesheet" href="css/pricing.css"/>
+  <link rel="stylesheet" href="css/payment.css"/>
 </head>
 <body>
 
@@ -45,6 +46,28 @@
       <a href="chat.html" class="btn btn-primary"><i class="fas fa-comments"></i> 상담 시작</a>
     </div>
 
+    <!-- 테스트 모드 안내 배너 -->
+    <div class="test-mode-banner" id="testModeBanner">
+      <i class="fas fa-flask"></i>
+      <div>
+        <strong>현재 테스트 결제 모드입니다</strong>
+        <span>실제 결제가 발생하지 않습니다 · 카카오페이 가맹 승인 후 실결제로 전환됩니다</span>
+      </div>
+    </div>
+
+    <!-- 카카오페이 결제 안내 -->
+    <div class="pay-method-bar">
+      <div class="pay-method-item active">
+        <img src="https://developers.kakao.com/assets/img/about/logos/kakaopaylogo.png"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+             alt="카카오페이" style="height:28px"/>
+        <span class="pay-method-fallback" style="display:none">
+          <i class="fas fa-comment" style="color:#FFE812"></i> 카카오페이
+        </span>
+      </div>
+      <span class="pay-method-desc">카드 · 카카오머니 · 계좌이체 모두 가능</span>
+    </div>
+
     <!-- 충전 플랜 -->
     <div class="pricing-section-header">
       <h2>포인트 충전</h2>
@@ -52,6 +75,7 @@
     </div>
 
     <div class="plan-grid">
+      <!-- 베이직 -->
       <div class="plan-card" data-plan="basic" onclick="selectPlan('basic')">
         <div class="plan-name">베이직</div>
         <div class="plan-amount">₩10,000</div>
@@ -62,11 +86,12 @@
           <li><i class="fas fa-check"></i> 연애운·직업 상담 50회</li>
           <li><i class="fas fa-check"></i> 사업운·이름 상담 33회</li>
         </ul>
-        <button class="plan-btn" onclick="event.stopPropagation();chargePlan('basic')">
-          <i class="fas fa-bolt"></i> 충전하기
+        <button class="plan-btn kakao-pay-btn" onclick="event.stopPropagation();startKakaoPay('basic')">
+          <i class="fas fa-comment"></i> 카카오페이로 충전
         </button>
       </div>
 
+      <!-- 스탠다드 -->
       <div class="plan-card plan-card--best" data-plan="standard" onclick="selectPlan('standard')">
         <div class="plan-badge">가장 인기</div>
         <div class="plan-name">스탠다드</div>
@@ -79,11 +104,12 @@
           <li><i class="fas fa-check"></i> 사업운·이름 상담 73회</li>
           <li><i class="fas fa-check"></i> 10% 보너스 포인트</li>
         </ul>
-        <button class="plan-btn plan-btn--white" onclick="event.stopPropagation();chargePlan('standard')">
-          <i class="fas fa-bolt"></i> 충전하기
+        <button class="plan-btn plan-btn--white kakao-pay-btn" onclick="event.stopPropagation();startKakaoPay('standard')">
+          <i class="fas fa-comment"></i> 카카오페이로 충전
         </button>
       </div>
 
+      <!-- 프리미엄 -->
       <div class="plan-card" data-plan="premium" onclick="selectPlan('premium')">
         <div class="plan-name">프리미엄</div>
         <div class="plan-amount">₩30,000</div>
@@ -95,9 +121,31 @@
           <li><i class="fas fa-check"></i> 사업운·이름 상담 120회</li>
           <li><i class="fas fa-check"></i> 20% 보너스 포인트</li>
         </ul>
-        <button class="plan-btn" onclick="event.stopPropagation();chargePlan('premium')">
-          <i class="fas fa-bolt"></i> 충전하기
+        <button class="plan-btn kakao-pay-btn" onclick="event.stopPropagation();startKakaoPay('premium')">
+          <i class="fas fa-comment"></i> 카카오페이로 충전
         </button>
+      </div>
+    </div>
+
+    <!-- 직접 금액 입력 -->
+    <div class="custom-amount-section">
+      <h3><i class="fas fa-keyboard"></i> 직접 금액 입력</h3>
+      <p>원하는 금액을 직접 입력해 충전하세요 (최소 1,000원 · 최대 300,000원)</p>
+      <div class="custom-amount-row">
+        <div class="custom-input-wrap">
+          <span class="custom-prefix">₩</span>
+          <input type="text" id="customAmountInput" class="custom-amount-input"
+                 placeholder="10,000" oninput="formatAmountInput(this)"
+                 maxlength="9"/>
+        </div>
+        <button class="btn kakao-pay-btn-lg" onclick="startCustomAmount()">
+          <i class="fas fa-comment"></i> 카카오페이로 충전
+        </button>
+      </div>
+      <div class="bonus-guide">
+        <span class="bonus-item">₩20,000~ <strong>+10% 보너스</strong></span>
+        <span class="bonus-item">₩50,000~ <strong>+20% 보너스</strong></span>
+        <span class="bonus-item">₩100,000~ <strong>+30% 보너스</strong></span>
       </div>
     </div>
 
@@ -111,11 +159,7 @@
     <div class="cost-table-wrap">
       <table class="cost-table">
         <thead>
-          <tr>
-            <th>상담 유형</th>
-            <th>포인트 차감</th>
-            <th>포함 분야</th>
-          </tr>
+          <tr><th>상담 유형</th><th>포인트 차감</th><th>포함 분야</th></tr>
         </thead>
         <tbody>
           <tr>
@@ -137,6 +181,14 @@
       </table>
     </div>
 
+    <!-- 결제 안전 안내 -->
+    <div class="payment-safety">
+      <div class="safety-item"><i class="fas fa-shield-alt"></i><span>SSL 보안 결제</span></div>
+      <div class="safety-item"><i class="fas fa-lock"></i><span>카드정보 미저장</span></div>
+      <div class="safety-item"><i class="fas fa-undo"></i><span>7일 내 환불 가능</span></div>
+      <div class="safety-item"><i class="fas fa-headset"></i><span>결제 문의 즉시 대응</span></div>
+    </div>
+
     <!-- 이용 내역 -->
     <div class="pricing-section-header" style="margin-top:64px;" id="history">
       <h2>이용 내역</h2>
@@ -146,15 +198,10 @@
       <div class="history-table-wrap">
         <table class="history-table">
           <thead>
-            <tr>
-              <th>일시</th>
-              <th>구분</th>
-              <th>변동 포인트</th>
-              <th>메모</th>
-            </tr>
+            <tr><th>일시</th><th>구분</th><th>변동 포인트</th><th>메모</th><th>주문번호</th></tr>
           </thead>
           <tbody id="historyBody">
-            <tr><td colspan="4" class="empty-row">이용 내역이 없습니다</td></tr>
+            <tr><td colspan="5" class="empty-row">이용 내역이 없습니다</td></tr>
           </tbody>
         </table>
       </div>
@@ -163,27 +210,159 @@
   </div>
 </main>
 
-<!-- 충전 확인 모달 -->
-<div class="modal-overlay" id="chargeModal" style="display:none">
-  <div class="modal">
-    <div class="modal-icon">💳</div>
-    <h3 id="chargeModalTitle">포인트 충전</h3>
-    <p id="chargeModalBody">충전 정보를 확인해주세요.</p>
-    <div class="modal-actions">
-      <button class="btn btn-primary" id="chargeConfirmBtn">결제 완료 처리 (시뮬레이션)</button>
-      <button class="btn btn-outline" onclick="closeChargeModal()">취소</button>
+<!-- ====== 카카오페이 결제 확인 모달 ====== -->
+<div class="modal-overlay kp-modal-overlay" id="kakaoPayModal" style="display:none">
+  <div class="kp-modal">
+    <div class="kp-modal-header">
+      <div class="kp-logo-wrap">
+        <i class="fas fa-comment kp-icon"></i>
+        <span>카카오페이 결제</span>
+      </div>
+      <button class="kp-close-btn" onclick="closeKakaoModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="kp-test-badge" id="kp_testBadge">
+      <i class="fas fa-flask"></i> 테스트 모드 — 실제 결제 아님
+    </div>
+
+    <div class="kp-modal-body">
+      <div class="kp-order-info">
+        <div class="kp-info-row">
+          <span class="kp-label">상품명</span>
+          <span class="kp-value" id="kp_planName">—</span>
+        </div>
+        <div class="kp-info-row">
+          <span class="kp-label">결제 금액</span>
+          <span class="kp-value kp-amount" id="kp_amount">—</span>
+        </div>
+        <div class="kp-info-row">
+          <span class="kp-label">지급 포인트</span>
+          <span class="kp-value kp-point" id="kp_point">—</span>
+        </div>
+        <div class="kp-info-row">
+          <span class="kp-label">보너스 포인트</span>
+          <span class="kp-value" id="kp_bonus">—</span>
+        </div>
+      </div>
+
+      <div class="kp-pay-methods">
+        <div class="kp-method-title">결제 수단 선택</div>
+        <div class="kp-method-grid">
+          <label class="kp-method-item">
+            <input type="radio" name="payMethod" value="kakao_money" checked/>
+            <div class="kp-method-box">
+              <i class="fas fa-comment" style="color:#FFE812"></i>
+              <span>카카오머니</span>
+            </div>
+          </label>
+          <label class="kp-method-item">
+            <input type="radio" name="payMethod" value="card"/>
+            <div class="kp-method-box">
+              <i class="fas fa-credit-card" style="color:#5b67f2"></i>
+              <span>신용/체크카드</span>
+            </div>
+          </label>
+          <label class="kp-method-item">
+            <input type="radio" name="payMethod" value="bank"/>
+            <div class="kp-method-box">
+              <i class="fas fa-university" style="color:#2c5f4f"></i>
+              <span>계좌이체</span>
+            </div>
+          </label>
+          <label class="kp-method-item">
+            <input type="radio" name="payMethod" value="virtual"/>
+            <div class="kp-method-box">
+              <i class="fas fa-building" style="color:#888"></i>
+              <span>가상계좌</span>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="kp-modal-footer">
+      <button class="kp-pay-confirm-btn" onclick="requestKakaoPay()">
+        <i class="fas fa-comment"></i> 카카오페이로 결제하기
+      </button>
+      <button class="kp-cancel-btn" onclick="closeKakaoModal()">취소</button>
+      <p class="kp-safe-notice">
+        <i class="fas fa-shield-alt"></i> SSL 암호화 · 개인정보 안전 보호
+      </p>
     </div>
   </div>
 </div>
 
-<!-- 충전 완료 모달 -->
-<div class="modal-overlay" id="successModal" style="display:none">
-  <div class="modal">
-    <div class="modal-icon">🎉</div>
+<!-- ====== 테스트 카카오페이 팝업 ====== -->
+<div class="modal-overlay kp-modal-overlay" id="kakaoTestPopup" style="display:none">
+  <div class="kp-test-window">
+    <div class="kp-test-header">
+      <div class="kp-test-logo">
+        <i class="fas fa-comment" style="color:#3A1D1D;font-size:1.4rem"></i>
+        <span>카카오페이</span>
+      </div>
+      <span class="kp-test-label">테스트 결제창</span>
+    </div>
+
+    <div class="kp-test-body">
+      <div class="kp-test-merchant">
+        <i class="fas fa-store"></i> 운세ON (큐브박스)
+      </div>
+
+      <div class="kp-test-amount-box">
+        <span class="kp-test-amount-label">결제 금액</span>
+        <span class="kp-test-amount-val" id="kt_amount">—</span>
+      </div>
+
+      <div class="kp-test-info-list">
+        <div class="kp-test-info-row">
+          <span>상품</span><span id="kt_planName">—</span>
+        </div>
+        <div class="kp-test-info-row">
+          <span>지급 포인트</span><span id="kt_point">—</span>
+        </div>
+        <div class="kp-test-info-row">
+          <span>주문번호</span><span id="kt_orderId" style="font-size:0.75rem">—</span>
+        </div>
+      </div>
+
+      <div class="kp-test-method-select">
+        <div class="kp-test-method active">
+          <i class="fas fa-comment" style="color:#FFE812"></i> 카카오머니
+        </div>
+        <div class="kp-test-method">
+          <i class="fas fa-credit-card"></i> 카드
+        </div>
+      </div>
+
+      <div class="kp-test-notice-box">
+        <i class="fas fa-info-circle"></i>
+        테스트 모드입니다. 실제 결제가 발생하지 않습니다.
+      </div>
+    </div>
+
+    <div class="kp-test-footer">
+      <button class="kp-test-confirm-btn" onclick="approveTestPayment()">
+        <i class="fas fa-check"></i> 결제하기
+      </button>
+      <button class="kp-test-cancel-btn" onclick="closeTestPopup()">
+        취소
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 결제 완료 모달 ====== -->
+<div class="modal-overlay kp-modal-overlay" id="successModal" style="display:none">
+  <div class="kp-success-modal">
+    <div class="kp-success-icon">🎉</div>
     <h3>충전 완료!</h3>
-    <p id="successBody">포인트가 충전되었습니다.</p>
-    <div class="modal-actions">
-      <a href="chat.html" class="btn btn-primary"><i class="fas fa-comments"></i> 상담 시작하기</a>
+    <div id="successBody"></div>
+    <div class="kp-success-actions">
+      <a href="chat.html" class="btn btn-primary">
+        <i class="fas fa-comments"></i> 지금 상담하러 가기
+      </a>
       <button class="btn btn-outline" onclick="closeSuccessModal()">확인</button>
     </div>
   </div>
@@ -208,7 +387,43 @@
 
 <script src="js/auth.js"></script>
 <script src="js/main.js"></script>
-<script src="js/pricing.js"></script>
-<script>document.addEventListener('DOMContentLoaded', initAuthHeader);</script>
+<script src="js/kakaopay.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initAuthHeader();
+
+  // 헤더 스크롤
+  const header = document.getElementById('siteHeader');
+  window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 10));
+  document.getElementById('hamburger')?.addEventListener('click', () =>
+    document.getElementById('mainNav')?.classList.toggle('open'));
+
+  // 포인트 표시
+  const pts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+  document.getElementById('myPointVal').textContent = pts.toLocaleString() + 'P';
+  document.getElementById('headerPointVal').textContent = pts.toLocaleString();
+
+  // 이용 내역 렌더링
+  renderHistory();
+});
+
+function renderHistory() {
+  const hist = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
+  const tbody = document.getElementById('historyBody');
+  if (!hist.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-row">이용 내역이 없습니다</td></tr>';
+    return;
+  }
+  tbody.innerHTML = hist.slice(0, 30).map(h => `
+    <tr>
+      <td>${h.date}</td>
+      <td><span class="hist-badge ${h.type === '충전' ? 'hist-charge' : 'hist-use'}">${h.type}</span></td>
+      <td class="${h.type === '충전' ? 'hist-plus' : 'hist-minus'}">${h.point}</td>
+      <td>${h.memo || '—'}</td>
+      <td style="font-size:0.72rem;color:#aaa">${h.orderId || '—'}</td>
+    </tr>
+  `).join('');
+}
+</script>
 </body>
 </html>
