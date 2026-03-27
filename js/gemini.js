@@ -1,1302 +1,274 @@
-/* =========================================
-   운세ON — js/admin.js
-   관리자 대시보드 기능
-   ========================================= */
+/* =========================================================
+   운세ON — js/gemini.js
+   Google Gemini API 연동 + 사주 명리 전문 AI 엔진
+   ========================================================= */
 
-// ===== 섹션 정의 =====
-const SECTIONS = {
-  dash:     { title: '대시보드',         render: renderDash },
-  banner:   { title: '배너·카피 관리',   render: renderBanner },
-  category: { title: '카테고리 관리',    render: renderCategory },
-  pricing:  { title: '요금 정책 관리',   render: renderPricing },
-  reviews:  { title: '후기 관리',        render: renderReviewsAdmin },
-  faq:      { title: 'FAQ 관리',         render: renderFAQAdmin },
-  history:  { title: '이용 내역 조회',   render: renderHistoryAdmin },
-  members:  { title: '회원 관리',        render: renderMembersAdmin },
-  points:   { title: '포인트 조작',      render: renderPointsAdmin },
-  ai:       { title: 'AI 설정',          render: renderAISettings },
+// ===== API 키 관리 =====
+function getGeminiKey() {
+  return localStorage.getItem('sajuon_gemini_key') || '';
+}
+function setGeminiKey(key) {
+  localStorage.setItem('sajuon_gemini_key', key.trim());
+}
+function hasGeminiKey() {
+  const k = getGeminiKey();
+  return k && k.startsWith('AIza') && k.length > 20;
+}
+
+// ===== 모델 설정 (테스트에서 성공한 모델 자동 사용) =====
+function getGeminiModel() {
+  return localStorage.getItem('sajuon_gemini_model') || 'gemini-1.5-flash-latest';
+}
+function getGeminiVer() {
+  return localStorage.getItem('sajuon_gemini_ver') || 'v1beta';
+}
+const GEMINI_API_URL = (key) => {
+  const model = getGeminiModel();
+  const ver   = getGeminiVer();
+  return `https://generativelanguage.googleapis.com/${ver}/models/${model}:streamGenerateContent?alt=sse&key=${key}`;
 };
 
-let currentSection = 'dash';
+// ===== 카테고리별 한글명 =====
+const CAT_KR_GEMINI = {
+  '연애운':'연애운','궁합상담':'궁합 상담','사업운재물운':'사업운·재물운','직업상담':'직업 상담',
+  '썸재회':'썸·재회','결혼운':'결혼운','배우자복':'배우자복','소개팅흐름':'소개팅 흐름',
+  '인간관계갈등':'인간관계 갈등','가족운자녀운':'가족운·자녀운','취업운':'취업운',
+  '이직운':'이직운','승진운':'승진운','직무적성':'직무 적성','시험운합격운':'시험운·합격운',
+  '프리랜서운':'프리랜서 운','재물운':'재물운','개업시기':'개업 시기','개업상담':'개업 상담',
+  '동업궁합':'동업 궁합','상호명상담':'상호명 상담','상호브랜드네이밍':'상호·브랜드 네이밍',
+  '업종추천':'업종 추천','아이이름짓기':'아이 이름짓기','개명상담':'개명 상담',
+  '사주보완이름':'사주 보완 이름','브랜드네이밍':'브랜드 네이밍','이사운':'이사운',
+  '집터운':'집터운','계약시기':'계약 시기','여행운':'여행운','조심할달':'조심할 달',
+  '기회가오는달':'기회가 오는 달','타로상담':'타로 상담','점성술상담':'점성술 상담',
+  '2026병오년운세':'2026 병오년 운세','종합운세상담':'종합 운세 상담',
+};
 
-// ===== 토스트 =====
-function showToast(msg, duration = 2500) {
-  const t = document.getElementById('adminToast');
-  if (!t) return;
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), duration);
+// ===== 시스템 프롬프트 빌더 =====
+function buildSystemPrompt(category) {
+  const catName = CAT_KR_GEMINI[category] || category;
+
+  return `당신은 운세ON 서비스의 전문 사주 명리 상담 AI입니다.
+수십 년 경력의 한국 전통 사주명리학 전문가로서 사용자에게 깊이 있고 따뜻한 운세 상담을 제공합니다.
+
+【현재 상담 분야】: ${catName}
+
+【핵심 원칙】
+1. 사주명리(四柱命理) 기반: 천간(天干)·지지(地支)·오행(五行)·십신(十神) 이론을 정확히 활용하여 분석
+2. 2026년 병오년(丙午年) 맥락: 丙(병화)·午(오화)의 강한 火 기운이 지배하는 해임을 염두에 두고 분석
+3. 사용자가 생년월일시를 제공하면 반드시 사주팔자(四柱八字)를 구성하여 분석
+4. 생년월일 없이 질문할 경우 일반 명리 흐름으로 분석하되, 정보 제공을 자연스럽게 유도
+5. 긍정적이고 희망적인 메시지를 전달하되, 주의사항도 균형 있게 안내
+6. 항상 한국어로 답변하며, 경어체(~습니다/~세요) 사용
+
+【사주팔자 분석 방법】
+- 생년: 연주(年柱) 천간·지지 도출
+- 생월: 월주(月柱) 천간·지지 도출
+- 생일: 일주(日柱) 천간·지지 도출 (일간이 본인의 핵심)
+- 생시: 시주(時柱) 천간·지지 도출
+- 오행 비율 계산 → 용신(用神)·기신(忌神) 도출
+- 대운(大運)·세운(歲運) 흐름 파악
+
+【천간 10개】: 甲(갑목) 乙(을목) 丙(병화) 丁(정화) 戊(무토) 己(기토) 庚(경금) 辛(신금) 壬(임수) 癸(계수)
+【지지 12개】: 子(자수) 丑(축토) 寅(인목) 卯(묘목) 辰(진토) 巳(사화) 午(오화) 未(미토) 申(신금) 酉(유금) 戌(술토) 亥(해수)
+【육십갑자 연도 기준】: 2026=병오, 2025=을사, 2024=갑진, 2023=계묘, 2022=임인, 2021=신축, 2020=경자, 2000=경진, 1990=경오, 1980=경신, 1970=경술, 1960=경자
+
+【출력 형식】
+반드시 아래 구조로 HTML 형식으로 답변하세요:
+
+<h4>[이모지] [분야명] 분석 결과</h4>
+
+[사주팔자가 있을 경우]
+<div class="saju-pillars">
+  <div class="pillar"><span class="pillar-label">연주</span><span class="pillar-gan">[천간]</span><span class="pillar-ji">[지지]</span></div>
+  <div class="pillar"><span class="pillar-label">월주</span><span class="pillar-gan">[천간]</span><span class="pillar-ji">[지지]</span></div>
+  <div class="pillar"><span class="pillar-label">일주</span><span class="pillar-gan">[천간]</span><span class="pillar-ji">[지지]</span></div>
+  <div class="pillar"><span class="pillar-label">시주</span><span class="pillar-gan">[천간]</span><span class="pillar-ji">[지지]</span></div>
+</div>
+<div class="saju-ohaeng">
+  <span class="oh-wood">목(木) [비율]%</span>
+  <span class="oh-fire">화(火) [비율]%</span>
+  <span class="oh-earth">토(土) [비율]%</span>
+  <span class="oh-metal">금(金) [비율]%</span>
+  <span class="oh-water">수(水) [비율]%</span>
+</div>
+
+<p>[핵심 분석 내용 — 2~3문장, 구체적이고 개인화된 내용]</p>
+
+<ul>
+<li>🌟 <strong>[포인트 1 제목]</strong>: [구체적 내용]</li>
+<li>📅 <strong>[포인트 2 제목]</strong>: [구체적 내용]</li>
+<li>⚠️ <strong>[포인트 3 제목]</strong>: [주의사항]</li>
+<li>💡 <strong>[포인트 4 제목]</strong>: [조언]</li>
+<li>🍀 <strong>행운 정보</strong>: 행운의 색 [색상] · 방향 [방향] · 숫자 [숫자]</li>
+</ul>
+
+<p class="saju-closing">[마무리 메시지 — 추가 정보 요청 또는 희망적 마무리]</p>
+
+【주의사항】
+- 의료·법률·재정 결정에 대한 확실한 보장은 절대 하지 마세요
+- 불안감을 조성하는 표현은 피하세요
+- 항상 "참고·오락 목적"임을 자연스럽게 유지하세요
+- 마크다운(**, ##) 대신 반드시 HTML 태그를 사용하세요
+- 응답은 500~800자 내외로 적절히 유지하세요`;
 }
 
-// ===== 네비 초기화 =====
-function initAdminNav() {
-  // 모바일 토글
-  const toggle = document.getElementById('adminMenuToggle');
-  const sidebar = document.getElementById('adminSidebar');
-  if (toggle && sidebar) {
-    toggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      sidebar.classList.toggle('open');
-    });
-    document.addEventListener('click', (e) => {
-      if (sidebar.classList.contains('open') &&
-          !sidebar.contains(e.target) && !toggle.contains(e.target)) {
-        sidebar.classList.remove('open');
-      }
-    });
+// ===== 대화 히스토리 (연속 대화 지원) =====
+let conversationHistory = [];
+
+function resetConversation() {
+  conversationHistory = [];
+}
+
+function addToHistory(role, text) {
+  conversationHistory.push({ role, parts: [{ text }] });
+  // 최대 10턴(20개 메시지)만 유지
+  if (conversationHistory.length > 20) {
+    conversationHistory = conversationHistory.slice(conversationHistory.length - 20);
   }
 }
 
-function switchSection(key) {
-  currentSection = key;
-  const s = SECTIONS[key];
-  if (!s) return;
+// ===== Gemini 스트리밍 API 호출 =====
+async function callGeminiStream(category, userMessage, onChunk, onDone, onError) {
+  const key = getGeminiKey();
+  if (!key) {
+    onError('API 키가 설정되지 않았습니다. 관리자 페이지에서 Gemini API 키를 입력해주세요.');
+    return;
+  }
 
-  document.querySelectorAll('.admin-nav-item').forEach(item => {
-    item.classList.toggle('active', item.dataset.section === key);
-  });
+  // 대화 히스토리에 사용자 메시지 추가
+  addToHistory('user', userMessage);
 
-  const titleEl = document.getElementById('adminPageTitle');
-  if (titleEl) titleEl.textContent = s.title;
+  const systemPrompt = buildSystemPrompt(category);
 
-  const content = document.getElementById('adminContent');
-  if (content) {
-    content.innerHTML = '';
-    try {
-      s.render(content);
-    } catch(err) {
-      console.error('[switchSection] render error:', key, err);
-      content.innerHTML = `<div style="padding:40px;text-align:center;color:#c62828">
-        <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
-        <div style="font-weight:700;margin-bottom:8px">섹션 로드 중 오류가 발생했습니다</div>
-        <div style="font-size:0.85rem;color:#666">${err.message}</div>
-        <button onclick="switchSection('${key}')" style="margin-top:16px;padding:8px 20px;background:var(--primary);color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem">다시 시도</button>
-      </div>`;
+  const requestBody = {
+    system_instruction: {
+      parts: [{ text: systemPrompt }]
+    },
+    contents: conversationHistory,
+    generationConfig: {
+      temperature: 0.85,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 1500,
+      candidateCount: 1,
+    },
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+    ]
+  };
+
+  try {
+    const res = await fetch(GEMINI_API_URL(key), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const errMsg = errData?.error?.message || `HTTP ${res.status}`;
+      if (res.status === 400) onError(`API 요청 오류: ${errMsg}`);
+      else if (res.status === 403) onError('API 키가 유효하지 않습니다. 관리자 페이지에서 키를 확인해주세요.');
+      else if (res.status === 429) onError('요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+      else onError(`Gemini 오류: ${errMsg}`);
+      return;
     }
-  }
 
-  // 해시 업데이트
-  history.replaceState(null, '', '#' + key);
-
-  // 모바일 사이드바 닫기
-  document.getElementById('adminSidebar')?.classList.remove('open');
-}
-
-// ===== 포인트 표시 =====
-function updateAdminPt() {
-  const el = document.getElementById('adminPtVal');
-  if (el) el.textContent = getPoints().toLocaleString();
-}
-
-// =========================================
-// 섹션 1: 대시보드
-// =========================================
-function renderDash(container) {
-  const hist = getHistory();
-  const totalCharge = hist.filter(h => h.amount > 0).reduce((s, h) => s + h.amount, 0);
-  const totalDeduct = Math.abs(hist.filter(h => h.amount < 0).reduce((s, h) => s + h.amount, 0));
-  const totalConsult = hist.filter(h => h.amount < 0).length;
-  const currentPt = getPoints();
-
-  container.innerHTML = `
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#e8f5e9">💰</div>
-        <div class="stat-val">${totalCharge.toLocaleString()}P</div>
-        <div class="stat-label">총 충전 포인트</div>
-        <div class="stat-change">누적 기준</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#fce4ec">📉</div>
-        <div class="stat-val">${totalDeduct.toLocaleString()}P</div>
-        <div class="stat-label">총 차감 포인트</div>
-        <div class="stat-change">상담 이용 합계</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#e3f2fd">💬</div>
-        <div class="stat-val">${totalConsult}</div>
-        <div class="stat-label">총 상담 건수</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:var(--accent-pale)">🪙</div>
-        <div class="stat-val">${currentPt.toLocaleString()}P</div>
-        <div class="stat-label">현재 보유 포인트</div>
-      </div>
-    </div>
-
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">최근 이용 내역 (최근 10건)</div>
-        </div>
-        <button class="admin-add-btn" onclick="switchSection('history')">전체 보기 →</button>
-      </div>
-      ${renderHistoryTable(hist.slice(0, 10))}
-    </div>
-
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div class="admin-card-title">빠른 링크</div>
-      </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <a href="index.html" target="_blank" class="admin-save-btn" style="text-decoration:none"><i class="fas fa-home"></i> 메인 페이지</a>
-        <a href="chat.html" target="_blank" class="admin-save-btn" style="text-decoration:none;background:linear-gradient(135deg,#1565c0,#42a5f5)"><i class="fas fa-comments"></i> 채팅 페이지</a>
-        <a href="pricing.html" target="_blank" class="admin-save-btn" style="text-decoration:none;background:linear-gradient(135deg,var(--accent-dark),var(--accent))"><i class="fas fa-coins"></i> 요금 페이지</a>
-      </div>
-    </div>
-  `;
-}
-
-// =========================================
-// 섹션 2: 배너·카피 관리
-// =========================================
-function renderBanner(container) {
-  let banner = {};
-  try { banner = JSON.parse(localStorage.getItem('sajuon_banner') || '{}'); } catch {}
-
-  container.innerHTML = `
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">히어로 섹션 카피</div>
-          <div class="admin-card-subtitle">메인 화면 상단 문구를 수정합니다</div>
-        </div>
-      </div>
-      <div class="admin-form-row">
-        <label>히어로 뱃지 문구 <span class="hint">(신규 가입 배지 옆 텍스트)</span></label>
-        <input class="admin-input" id="bannerBadge" value="${banner.heroBadge || '신규 가입 시 500P 무료 지급'}" placeholder="예: 신규 가입 시 500P 무료 지급"/>
-      </div>
-      <div class="admin-form-row">
-        <label>시즌 뱃지 문구 <span class="hint">(병오년 옆 배지)</span></label>
-        <input class="admin-input" id="bannerSeasonBadge" value="${banner.seasonBadge || '2026 병오년 운세 오픈'}" placeholder="예: 2026 병오년 운세 오픈"/>
-      </div>
-      <div class="admin-form-row">
-        <label>히어로 타이틀 <span class="hint">(HTML 허용, &lt;br/&gt; 사용 가능)</span></label>
-        <textarea class="admin-textarea" id="bannerTitle" placeholder="예: 지금 이 순간,&lt;br/&gt;당신이 가장 궁금한 것을&lt;br/&gt;바로 물어보세요">${banner.heroTitle || '지금 이 순간,<br/>당신이 가장 궁금한 것을<br/>바로 물어보세요'}</textarea>
-      </div>
-      <div class="admin-form-row">
-        <label>히어로 서브 텍스트</label>
-        <textarea class="admin-textarea" id="bannerSub" placeholder="예: 연애, 궁합, 사업, 직업, 이름까지...">${banner.heroSub || '연애, 궁합, 사업, 직업, 이름까지 — 운세ON이 지금 바로 해석해드립니다'}</textarea>
-      </div>
-      <button class="admin-save-btn" onclick="saveBanner()"><i class="fas fa-save"></i> 저장하기</button>
-    </div>
-
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">병오년 배너 섹션</div>
-        </div>
-      </div>
-      <div class="admin-form-row">
-        <label>배너 제목</label>
-        <input class="admin-input" id="seasonTitle" value="${banner.seasonTitle || '2026년 병오년, 내 운세는?'}" placeholder="예: 2026년 병오년, 내 운세는?"/>
-      </div>
-      <div class="admin-form-row">
-        <label>배너 설명</label>
-        <textarea class="admin-textarea" id="seasonDesc" placeholder="설명 텍스트...">${banner.seasonDesc || '불말띠의 해 — 변화와 에너지가 폭발하는 2026년'}</textarea>
-      </div>
-      <button class="admin-save-btn" onclick="saveBanner()"><i class="fas fa-save"></i> 저장하기</button>
-    </div>
-
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">CTA 하단 배너</div>
-        </div>
-      </div>
-      <div class="admin-form-row">
-        <label>CTA 제목</label>
-        <input class="admin-input" id="ctaTitle" value="${banner.ctaTitle || '지금 바로 상담을 시작해보세요'}" placeholder="예: 지금 바로 상담을 시작해보세요"/>
-      </div>
-      <div class="admin-form-row">
-        <label>CTA 설명</label>
-        <input class="admin-input" id="ctaSub" value="${banner.ctaSub || '신규 가입 시 500P 무료 지급 · 첫 질문 언제든 가능'}" placeholder="예: 신규 가입 시 500P 무료 지급"/>
-      </div>
-      <button class="admin-save-btn" onclick="saveBanner()"><i class="fas fa-save"></i> 저장하기</button>
-    </div>
-  `;
-}
-
-function saveBanner() {
-  const banner = {
-    heroBadge:    document.getElementById('bannerBadge')?.value || '',
-    seasonBadge:  document.getElementById('bannerSeasonBadge')?.value || '',
-    heroTitle:    document.getElementById('bannerTitle')?.value || '',
-    heroSub:      document.getElementById('bannerSub')?.value || '',
-    seasonTitle:  document.getElementById('seasonTitle')?.value || '',
-    seasonDesc:   document.getElementById('seasonDesc')?.value || '',
-    ctaTitle:     document.getElementById('ctaTitle')?.value || '',
-    ctaSub:       document.getElementById('ctaSub')?.value || '',
-  };
-  localStorage.setItem('sajuon_banner', JSON.stringify(banner));
-  showToast('✅ 배너·카피가 저장되었습니다');
-}
-
-// =========================================
-// 섹션 3: 카테고리 관리
-// =========================================
-function renderCategory(container) {
-  const cats = getCats();
-  container.innerHTML = `
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">카테고리 목록 (${cats.length}개)</div>
-          <div class="admin-card-subtitle">상담 카테고리 아이콘·이름·차감 포인트를 수정합니다</div>
-        </div>
-        <button class="admin-add-btn" onclick="addCat()"><i class="fas fa-plus"></i> 추가</button>
-      </div>
-      <div class="admin-table-wrap">
-        <table class="admin-table" id="catTable">
-          <thead>
-            <tr>
-              <th>아이콘</th>
-              <th>카테고리명</th>
-              <th>키(내부ID)</th>
-              <th>차감P</th>
-              <th>탭 분류</th>
-              <th>질문 예시</th>
-              <th>관리</th>
-            </tr>
-          </thead>
-          <tbody id="catTbody">
-            ${cats.map((c, i) => catRow(c, i)).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-}
-
-function catRow(c, i) {
-  return `<tr id="cat-row-${i}">
-    <td><input class="admin-input" style="width:60px" value="${c.icon}" id="c-icon-${i}"/></td>
-    <td><input class="admin-input" style="min-width:110px" value="${c.name}" id="c-name-${i}"/></td>
-    <td><input class="admin-input" style="min-width:130px" value="${c.id}" id="c-id-${i}"/></td>
-    <td><input class="admin-input" style="width:70px" type="number" value="${c.pt.replace('P~','')}" id="c-pt-${i}"/></td>
-    <td>
-      <select class="admin-select" style="width:120px" id="c-tab-${i}">
-        ${['all','love','job','biz','name','life'].map(t => `<option value="${t}"${c.tab===t?' selected':''}>${t}</option>`).join('')}
-      </select>
-    </td>
-    <td><input class="admin-input" style="min-width:160px" value="${c.hook}" id="c-hook-${i}"/></td>
-    <td>
-      <button class="admin-save-btn" style="padding:6px 12px;font-size:0.78rem" onclick="saveCat(${i})">저장</button>
-      <button class="admin-del-btn" style="margin-top:4px" onclick="delCat(${i})">삭제</button>
-    </td>
-  </tr>`;
-}
-
-function getCats() {
-  try {
-    const saved = localStorage.getItem('sajuon_cats');
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return SAJU_DATA.categories.map(c => ({
-    id: c.id, tab: c.tab, icon: c.icon, name: c.name, pt: c.pt, hook: c.hook
-  }));
-}
-
-function saveCat(i) {
-  const cats = getCats();
-  cats[i] = {
-    id:   document.getElementById(`c-id-${i}`)?.value || cats[i].id,
-    tab:  document.getElementById(`c-tab-${i}`)?.value || cats[i].tab,
-    icon: document.getElementById(`c-icon-${i}`)?.value || cats[i].icon,
-    name: document.getElementById(`c-name-${i}`)?.value || cats[i].name,
-    pt:   (document.getElementById(`c-pt-${i}`)?.value || '100') + 'P~',
-    hook: document.getElementById(`c-hook-${i}`)?.value || cats[i].hook,
-  };
-  localStorage.setItem('sajuon_cats', JSON.stringify(cats));
-  showToast(`✅ "${cats[i].name}" 저장 완료`);
-}
-
-function delCat(i) {
-  const cats = getCats();
-  if (!confirm(`"${cats[i].name}" 카테고리를 삭제하시겠습니까?`)) return;
-  cats.splice(i, 1);
-  localStorage.setItem('sajuon_cats', JSON.stringify(cats));
-  showToast('🗑️ 카테고리가 삭제되었습니다');
-  renderCategory(document.getElementById('adminContent'));
-}
-
-function addCat() {
-  const cats = getCats();
-  cats.push({ id: 'new_' + Date.now(), tab: 'all', icon: '🌟', name: '새 카테고리', pt: '200P~', hook: '질문 예시를 입력하세요' });
-  localStorage.setItem('sajuon_cats', JSON.stringify(cats));
-  renderCategory(document.getElementById('adminContent'));
-  showToast('➕ 카테고리가 추가되었습니다');
-}
-
-// =========================================
-// 섹션 4: 요금 정책 관리
-// =========================================
-function renderPricing(container) {
-  let policy = {};
-  try { policy = JSON.parse(localStorage.getItem('sajuon_policy') || '{}'); } catch {}
-
-  const defaults = {
-    basicAmt: 10000, basicPt: 10000, basicBonus: 0,
-    stdAmt: 20000,   stdPt: 22000,   stdBonus: 2000,
-    premAmt: 30000,  premPt: 36000,  premBonus: 6000,
-    freePt: 500,
-    costBasic: 100,  costNormal: 200, costAdvanced: 300,
-  };
-  const p = { ...defaults, ...policy };
-
-  container.innerHTML = `
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">충전 플랜 설정</div>
-          <div class="admin-card-subtitle">플랜별 금액, 포인트, 보너스를 설정합니다</div>
-        </div>
-      </div>
-      <div style="margin-bottom:20px">
-        <h4 style="font-size:0.88rem;font-weight:700;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">베이직 플랜</h4>
-        <div class="admin-form-2col">
-          <div class="admin-form-row">
-            <label>결제금액 (원)</label>
-            <input class="admin-input" type="number" id="basicAmt" value="${p.basicAmt}"/>
-          </div>
-          <div class="admin-form-row">
-            <label>지급 포인트</label>
-            <input class="admin-input" type="number" id="basicPt" value="${p.basicPt}"/>
-          </div>
-        </div>
-      </div>
-      <div style="margin-bottom:20px">
-        <h4 style="font-size:0.88rem;font-weight:700;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">스탠다드 플랜 ⭐</h4>
-        <div class="admin-form-2col">
-          <div class="admin-form-row">
-            <label>결제금액 (원)</label>
-            <input class="admin-input" type="number" id="stdAmt" value="${p.stdAmt}"/>
-          </div>
-          <div class="admin-form-row">
-            <label>지급 포인트</label>
-            <input class="admin-input" type="number" id="stdPt" value="${p.stdPt}"/>
-          </div>
-          <div class="admin-form-row">
-            <label>보너스 포인트</label>
-            <input class="admin-input" type="number" id="stdBonus" value="${p.stdBonus}"/>
-          </div>
-        </div>
-      </div>
-      <div style="margin-bottom:24px">
-        <h4 style="font-size:0.88rem;font-weight:700;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">프리미엄 플랜</h4>
-        <div class="admin-form-2col">
-          <div class="admin-form-row">
-            <label>결제금액 (원)</label>
-            <input class="admin-input" type="number" id="premAmt" value="${p.premAmt}"/>
-          </div>
-          <div class="admin-form-row">
-            <label>지급 포인트</label>
-            <input class="admin-input" type="number" id="premPt" value="${p.premPt}"/>
-          </div>
-          <div class="admin-form-row">
-            <label>보너스 포인트</label>
-            <input class="admin-input" type="number" id="premBonus" value="${p.premBonus}"/>
-          </div>
-        </div>
-      </div>
-      <button class="admin-save-btn" onclick="savePricing()"><i class="fas fa-save"></i> 저장하기</button>
-    </div>
-
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">상담 차감 포인트 설정</div>
-        </div>
-      </div>
-      <div class="admin-form-2col">
-        <div class="admin-form-row">
-          <label>기본 상담 (타로·여행운 등)</label>
-          <input class="admin-input" type="number" id="costBasic" value="${p.costBasic}"/>
-        </div>
-        <div class="admin-form-row">
-          <label>일반 상담 (연애운·궁합·직업 등)</label>
-          <input class="admin-input" type="number" id="costNormal" value="${p.costNormal}"/>
-        </div>
-        <div class="admin-form-row">
-          <label>심화 상담 (사업운·이름·개명 등)</label>
-          <input class="admin-input" type="number" id="costAdvanced" value="${p.costAdvanced}"/>
-        </div>
-        <div class="admin-form-row">
-          <label>신규 무료 포인트</label>
-          <input class="admin-input" type="number" id="freePt" value="${p.freePt}"/>
-        </div>
-      </div>
-      <button class="admin-save-btn" onclick="savePricing()"><i class="fas fa-save"></i> 저장하기</button>
-    </div>
-  `;
-}
-
-function savePricing() {
-  const policy = {
-    basicAmt: +document.getElementById('basicAmt')?.value || 10000,
-    basicPt:  +document.getElementById('basicPt')?.value  || 10000,
-    basicBonus: 0,
-    stdAmt:   +document.getElementById('stdAmt')?.value   || 20000,
-    stdPt:    +document.getElementById('stdPt')?.value    || 22000,
-    stdBonus: +document.getElementById('stdBonus')?.value || 2000,
-    premAmt:  +document.getElementById('premAmt')?.value  || 30000,
-    premPt:   +document.getElementById('premPt')?.value   || 36000,
-    premBonus:+document.getElementById('premBonus')?.value|| 6000,
-    freePt:   +document.getElementById('freePt')?.value   || 500,
-    costBasic:   +document.getElementById('costBasic')?.value    || 100,
-    costNormal:  +document.getElementById('costNormal')?.value   || 200,
-    costAdvanced:+document.getElementById('costAdvanced')?.value || 300,
-  };
-  localStorage.setItem('sajuon_policy', JSON.stringify(policy));
-  showToast('✅ 요금 정책이 저장되었습니다');
-}
-
-// =========================================
-// 섹션 5: 후기 관리
-// =========================================
-function renderReviewsAdmin(container) {
-  let reviews = [];
-  try {
-    const saved = localStorage.getItem('sajuon_reviews');
-    reviews = saved ? JSON.parse(saved) : SAJU_DATA.reviews;
-  } catch { reviews = SAJU_DATA.reviews; }
-
-  container.innerHTML = `
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">후기 목록 (${reviews.length}개)</div>
-          <div class="admin-card-subtitle">메인 화면에 표시되는 후기를 관리합니다 (최대 6개 표시)</div>
-        </div>
-        <button class="admin-add-btn" onclick="addReview()"><i class="fas fa-plus"></i> 후기 추가</button>
-      </div>
-      <div id="reviewAdminList">
-        ${reviews.map((r, i) => reviewAdminRow(r, i)).join('')}
-      </div>
-    </div>
-  `;
-}
-
-function reviewAdminRow(r, i) {
-  return `
-    <div class="admin-card" style="border:1px dashed var(--border);margin-bottom:14px;padding:18px" id="review-row-${i}">
-      <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
-        <span style="font-weight:700;color:var(--text-muted);font-size:0.82rem">#${i+1}</span>
-        <div style="display:flex;gap:4px">
-          ${[1,2,3,4,5].map(s => `<span style="cursor:pointer;font-size:1rem;color:${s<=r.stars?'var(--accent)':'#ccc'}" onclick="setReviewStar(${i},${s})" id="rstar-${i}-${s}">★</span>`).join('')}
-        </div>
-        <input type="hidden" id="r-stars-${i}" value="${r.stars}"/>
-        <button class="admin-del-btn" style="margin-left:auto" onclick="delReview(${i})">삭제</button>
-      </div>
-      <div class="admin-form-2col">
-        <div class="admin-form-row">
-          <label>작성자</label>
-          <input class="admin-input" id="r-name-${i}" value="${r.name}"/>
-        </div>
-        <div class="admin-form-row">
-          <label>상담 분야</label>
-          <input class="admin-input" id="r-cat-${i}" value="${r.cat}"/>
-        </div>
-      </div>
-      <div class="admin-form-row">
-        <label>후기 내용</label>
-        <textarea class="admin-textarea" id="r-text-${i}" style="min-height:60px">${r.text}</textarea>
-      </div>
-      <button class="admin-save-btn" style="margin-top:4px" onclick="saveReview(${i})"><i class="fas fa-save"></i> 저장</button>
-    </div>
-  `;
-}
-
-function setReviewStar(i, stars) {
-  document.getElementById(`r-stars-${i}`).value = stars;
-  for (let s = 1; s <= 5; s++) {
-    const el = document.getElementById(`rstar-${i}-${s}`);
-    if (el) el.style.color = s <= stars ? 'var(--accent)' : '#ccc';
-  }
-}
-
-function getReviews() {
-  try {
-    const saved = localStorage.getItem('sajuon_reviews');
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return SAJU_DATA.reviews;
-}
-
-function saveReview(i) {
-  const reviews = getReviews();
-  reviews[i] = {
-    stars: parseInt(document.getElementById(`r-stars-${i}`)?.value || '5'),
-    name:  document.getElementById(`r-name-${i}`)?.value || '',
-    cat:   document.getElementById(`r-cat-${i}`)?.value  || '',
-    text:  document.getElementById(`r-text-${i}`)?.value || '',
-    color: reviews[i]?.color || '#2c5f4f',
-  };
-  localStorage.setItem('sajuon_reviews', JSON.stringify(reviews));
-  showToast(`✅ "${reviews[i].name}" 후기 저장 완료`);
-}
-
-function delReview(i) {
-  const reviews = getReviews();
-  if (!confirm(`후기를 삭제하시겠습니까?`)) return;
-  reviews.splice(i, 1);
-  localStorage.setItem('sajuon_reviews', JSON.stringify(reviews));
-  showToast('🗑️ 후기가 삭제되었습니다');
-  renderReviewsAdmin(document.getElementById('adminContent'));
-}
-
-function addReview() {
-  const reviews = getReviews();
-  reviews.push({ stars: 5, name: '새 이용자', cat: '종합 운세 상담', text: '후기 내용을 입력하세요.', color: '#2c5f4f' });
-  localStorage.setItem('sajuon_reviews', JSON.stringify(reviews));
-  renderReviewsAdmin(document.getElementById('adminContent'));
-  showToast('➕ 후기가 추가되었습니다');
-}
-
-// =========================================
-// 섹션 6: FAQ 관리
-// =========================================
-function renderFAQAdmin(container) {
-  let faqs = [];
-  try {
-    const saved = localStorage.getItem('sajuon_faqs');
-    faqs = saved ? JSON.parse(saved) : SAJU_DATA.faqs;
-  } catch { faqs = SAJU_DATA.faqs; }
-
-  container.innerHTML = `
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">FAQ 목록 (${faqs.length}개)</div>
-          <div class="admin-card-subtitle">메인 화면 FAQ 섹션을 관리합니다</div>
-        </div>
-        <button class="admin-add-btn" onclick="addFAQ()"><i class="fas fa-plus"></i> FAQ 추가</button>
-      </div>
-      <div id="faqAdminList">
-        ${faqs.map((f, i) => faqAdminRow(f, i)).join('')}
-      </div>
-    </div>
-  `;
-}
-
-function faqAdminRow(f, i) {
-  return `
-    <div class="admin-card" style="border:1px dashed var(--border);margin-bottom:12px;padding:16px" id="faq-admin-row-${i}">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <span style="font-weight:700;color:var(--text-muted);font-size:0.82rem">Q${i+1}</span>
-        <button class="admin-del-btn" style="margin-left:auto" onclick="delFAQ(${i})">삭제</button>
-      </div>
-      <div class="admin-form-row">
-        <label>질문</label>
-        <input class="admin-input" id="faq-q-${i}" value="${f.q}"/>
-      </div>
-      <div class="admin-form-row">
-        <label>답변</label>
-        <textarea class="admin-textarea" id="faq-a-${i}">${f.a}</textarea>
-      </div>
-      <button class="admin-save-btn" style="margin-top:4px" onclick="saveFAQ(${i})"><i class="fas fa-save"></i> 저장</button>
-    </div>
-  `;
-}
-
-function getFAQs() {
-  try {
-    const saved = localStorage.getItem('sajuon_faqs');
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return SAJU_DATA.faqs;
-}
-
-function saveFAQ(i) {
-  const faqs = getFAQs();
-  faqs[i] = {
-    q: document.getElementById(`faq-q-${i}`)?.value || '',
-    a: document.getElementById(`faq-a-${i}`)?.value || '',
-  };
-  localStorage.setItem('sajuon_faqs', JSON.stringify(faqs));
-  showToast('✅ FAQ가 저장되었습니다');
-}
-
-function delFAQ(i) {
-  const faqs = getFAQs();
-  if (!confirm('FAQ를 삭제하시겠습니까?')) return;
-  faqs.splice(i, 1);
-  localStorage.setItem('sajuon_faqs', JSON.stringify(faqs));
-  showToast('🗑️ FAQ가 삭제되었습니다');
-  renderFAQAdmin(document.getElementById('adminContent'));
-}
-
-function addFAQ() {
-  const faqs = getFAQs();
-  faqs.push({ q: '새 질문을 입력하세요', a: '답변 내용을 입력하세요.' });
-  localStorage.setItem('sajuon_faqs', JSON.stringify(faqs));
-  renderFAQAdmin(document.getElementById('adminContent'));
-  showToast('➕ FAQ가 추가되었습니다');
-}
-
-// =========================================
-// 섹션 7: 이용 내역 조회
-// =========================================
-function renderHistoryAdmin(container) {
-  const hist = getHistory();
-  container.innerHTML = `
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">전체 이용 내역 (${hist.length}건)</div>
-        </div>
-        <button class="admin-del-btn" onclick="clearHistory()">내역 초기화</button>
-      </div>
-      ${renderHistoryTable(hist)}
-    </div>
-  `;
-}
-
-function renderHistoryTable(hist) {
-  if (!hist.length) {
-    return `<p style="text-align:center;color:var(--text-light);padding:32px">이용 내역이 없습니다</p>`;
-  }
-  return `
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr><th>일시</th><th>구분</th><th>포인트 변동</th><th>메모</th></tr>
-        </thead>
-        <tbody>
-          ${hist.map(h => `
-            <tr>
-              <td>${h.date}</td>
-              <td>${h.type}</td>
-              <td class="${h.amount > 0 ? 'amount-plus' : 'amount-minus'}">${h.amount > 0 ? '+' : ''}${h.amount.toLocaleString()}P</td>
-              <td>${h.note || '-'}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
-function getHistory() {
-  try { return JSON.parse(localStorage.getItem('sajuon_history') || '[]'); } catch { return []; }
-}
-
-function clearHistory() {
-  if (!confirm('모든 이용 내역을 초기화하시겠습니까?')) return;
-  localStorage.removeItem('sajuon_history');
-  showToast('🗑️ 이용 내역이 초기화되었습니다');
-  renderHistoryAdmin(document.getElementById('adminContent'));
-}
-
-// =========================================
-// 섹션 8: 포인트 조작
-// =========================================
-function renderPointsAdmin(container) {
-  const current = getPoints();
-  container.innerHTML = `
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">포인트 직접 조작</div>
-          <div class="admin-card-subtitle">테스트 및 관리 목적으로 포인트를 직접 설정합니다</div>
-        </div>
-      </div>
-      <div style="font-size:2rem;font-weight:800;color:var(--primary);margin-bottom:24px">
-        현재: <span id="curPtDisplay">${current.toLocaleString()}</span>P
-      </div>
-      <h4 style="font-size:0.85rem;font-weight:700;color:var(--text-muted);margin-bottom:14px">빠른 충전</h4>
-      <div class="point-control-grid">
-        ${[500, 1000, 5000, 10000, 22000, 36000].map(amt => `
-          <div class="point-btn" onclick="quickAddPoint(${amt})">
-            <div class="point-btn-amount">+${amt.toLocaleString()}P</div>
-            <div class="point-btn-label">바로 충전</div>
-          </div>
-        `).join('')}
-      </div>
-      <div class="admin-form-2col" style="margin-top:24px">
-        <div class="admin-form-row">
-          <label>포인트 직접 설정 (P)</label>
-          <input class="admin-input" type="number" id="manualPt" value="${current}" placeholder="숫자 입력"/>
-        </div>
-        <div class="admin-form-row" style="display:flex;align-items:flex-end">
-          <button class="admin-save-btn" onclick="setManualPoint()"><i class="fas fa-edit"></i> 포인트 설정</button>
-        </div>
-      </div>
-      <button class="admin-del-btn" style="margin-top:16px" onclick="resetPoints()">포인트 초기화 (0P)</button>
-    </div>
-
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div class="admin-card-title">전체 데이터 초기화</div>
-      </div>
-      <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:20px">
-        사이트의 저장된 데이터를 초기화합니다. 포인트, 이용 내역, 관리자 설정이 모두 삭제됩니다.
-      </p>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <button class="admin-del-btn" onclick="resetAllData()">⚠️ 전체 데이터 초기화</button>
-        <button class="admin-save-btn" onclick="exportData()"><i class="fas fa-download"></i> 데이터 내보내기</button>
-      </div>
-    </div>
-  `;
-}
-
-function quickAddPoint(amt) {
-  const current = getPoints();
-  const newPts = current + amt;
-  localStorage.setItem('sajuon_points', String(newPts));
-  const hist = getHistory();
-  hist.unshift({
-    date: new Date().toLocaleString('ko-KR'),
-    type: '관리자 포인트 지급',
-    amount: amt,
-    note: '관리자 직접 충전'
-  });
-  localStorage.setItem('sajuon_history', JSON.stringify(hist));
-  const el = document.getElementById('curPtDisplay');
-  if (el) el.textContent = newPts.toLocaleString();
-  updateAdminPt();
-  showToast(`✅ ${amt.toLocaleString()}P 충전 완료! (총 ${newPts.toLocaleString()}P)`);
-}
-
-function setManualPoint() {
-  const val = parseInt(document.getElementById('manualPt')?.value || '0', 10);
-  if (isNaN(val) || val < 0) { showToast('❌ 올바른 숫자를 입력해주세요'); return; }
-  localStorage.setItem('sajuon_points', String(val));
-  const el = document.getElementById('curPtDisplay');
-  if (el) el.textContent = val.toLocaleString();
-  updateAdminPt();
-  showToast(`✅ 포인트가 ${val.toLocaleString()}P로 설정되었습니다`);
-}
-
-function resetPoints() {
-  if (!confirm('포인트를 0으로 초기화하시겠습니까?')) return;
-  localStorage.setItem('sajuon_points', '0');
-  const el = document.getElementById('curPtDisplay');
-  if (el) el.textContent = '0';
-  updateAdminPt();
-  showToast('🗑️ 포인트가 초기화되었습니다');
-}
-
-function resetAllData() {
-  if (!confirm('⚠️ 모든 데이터(포인트, 내역, 설정)를 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
-  const keys = ['sajuon_points','sajuon_history','sajuon_banner','sajuon_cats','sajuon_policy','sajuon_reviews','sajuon_faqs','sajuon_initialized'];
-  keys.forEach(k => localStorage.removeItem(k));
-  updateAdminPt();
-  showToast('🗑️ 전체 데이터가 초기화되었습니다');
-  renderPointsAdmin(document.getElementById('adminContent'));
-}
-
-function exportData() {
-  const data = {
-    points:   getPoints(),
-    history:  getHistory(),
-    banner:   JSON.parse(localStorage.getItem('sajuon_banner') || '{}'),
-    policy:   JSON.parse(localStorage.getItem('sajuon_policy') || '{}'),
-    reviews:  JSON.parse(localStorage.getItem('sajuon_reviews') || '[]'),
-    faqs:     JSON.parse(localStorage.getItem('sajuon_faqs') || '[]'),
-    exported: new Date().toISOString(),
-  };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `sajuon_data_${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('📤 데이터 내보내기 완료!');
-}
-
-// =========================================
-// 섹션 8: 회원 관리
-// =========================================
-function renderMembersAdmin(container) {
-  let users = [];
-  try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
-
-  // 이용 내역에서 상담 통계 집계
-  let history = [];
-  try { history = JSON.parse(localStorage.getItem('sajuon_history') || '[]'); } catch {}
-
-  const totalMembers  = users.length;
-  const activeMembers = users.filter(u => u.status === 'active').length;
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const todayNew = users.filter(u => u.joinDate && u.joinDate.slice(0, 10) === todayStr).length;
-  const mktAgree = users.filter(u => u.marketing).length;
-
-  // 상담 통계
-  const consultHistory = history.filter(h => h.type && h.type.includes('AI 상담'));
-  const totalConsults  = consultHistory.length;
-  const totalPtUsed    = consultHistory.reduce((s, h) => s + Math.abs(h.amount || 0), 0);
-  const todayConsults  = consultHistory.filter(h => h.date && h.date.includes(new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', ''))).length;
-
-  // 카테고리별 상담 횟수
-  const catCount = {};
-  consultHistory.forEach(h => {
-    const cat = (h.type || '').replace('AI 상담 · ', '').trim();
-    catCount[cat] = (catCount[cat] || 0) + 1;
-  });
-  const topCats = Object.entries(catCount).sort((a,b) => b[1]-a[1]).slice(0, 5);
-
-  container.innerHTML = `
-    <!-- 회원 통계 -->
-    <div style="margin-bottom:8px;font-size:0.85rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">👥 회원 현황</div>
-    <div class="stat-grid" style="margin-bottom:20px">
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#e8f5e9">👥</div>
-        <div class="stat-val">${totalMembers}</div>
-        <div class="stat-label">전체 회원 수</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#e3f2fd">✅</div>
-        <div class="stat-val">${activeMembers}</div>
-        <div class="stat-label">활성 회원</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:var(--accent-pale)">🆕</div>
-        <div class="stat-val">${todayNew}</div>
-        <div class="stat-label">오늘 가입</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#fce4ec">📢</div>
-        <div class="stat-val">${mktAgree}</div>
-        <div class="stat-label">마케팅 동의</div>
-      </div>
-    </div>
-
-    <!-- 상담 통계 -->
-    <div style="margin-bottom:8px;font-size:0.85rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">💬 상담 현황</div>
-    <div class="stat-grid" style="margin-bottom:20px">
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#e8f4fd">💬</div>
-        <div class="stat-val">${totalConsults.toLocaleString()}</div>
-        <div class="stat-label">총 상담 건수</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#fff8e1">💰</div>
-        <div class="stat-val">${totalPtUsed.toLocaleString()}P</div>
-        <div class="stat-label">총 포인트 사용</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#f3e5f5">📅</div>
-        <div class="stat-val">${todayConsults}</div>
-        <div class="stat-label">오늘 상담 건수</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#e8f5e9">📊</div>
-        <div class="stat-val">${totalMembers ? Math.round(totalPtUsed / Math.max(totalMembers, 1)).toLocaleString() : 0}P</div>
-        <div class="stat-label">회원당 평균 사용</div>
-      </div>
-    </div>
-
-    <!-- 인기 상담 분야 -->
-    ${topCats.length > 0 ? `
-    <div class="admin-card" style="margin-bottom:20px">
-      <div class="admin-card-header">
-        <div class="admin-card-title">🏆 인기 상담 분야 TOP 5</div>
-      </div>
-      <div style="padding:0 20px 16px">
-        ${topCats.map(([cat, cnt], idx) => {
-          const maxCnt = topCats[0][1];
-          const pct = Math.round((cnt / maxCnt) * 100);
-          const colors = ['#2c5f4f','#3d7a65','#5a9e86','#d4af37','#b8962f'];
-          return `
-            <div style="margin-bottom:12px">
-              <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:0.85rem">
-                <span><strong>${idx+1}위</strong> ${cat || '기타'}</span>
-                <span style="color:var(--primary);font-weight:600">${cnt}건</span>
-              </div>
-              <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden">
-                <div style="height:100%;width:${pct}%;background:${colors[idx]};border-radius:4px;transition:width 0.5s"></div>
-              </div>
-            </div>`;
-        }).join('')}
-      </div>
-    </div>
-    ` : `
-    <div class="admin-card" style="margin-bottom:20px;padding:24px;text-align:center;color:var(--text-muted)">
-      <p>💬 아직 상담 기록이 없습니다. 사용자가 AI 상담을 시작하면 통계가 표시됩니다.</p>
-    </div>
-    `}
-
-    <!-- 회원 목록 -->
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">회원 목록 (${totalMembers}명)</div>
-          <div class="admin-card-subtitle">가입 회원 정보를 조회하고 관리합니다</div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input class="admin-input" id="memberSearch" style="width:200px" placeholder="이름·이메일 검색" oninput="filterMembers()"/>
-          <button class="admin-save-btn" onclick="exportMembersCSV()" style="background:var(--primary)"><i class="fas fa-download"></i> CSV</button>
-          <button class="admin-del-btn" onclick="clearAllMembers()">전체 초기화</button>
-        </div>
-      </div>
-      <div class="admin-table-wrap" id="memberTableWrap">
-        ${renderMemberTable(users)}
-      </div>
-    </div>
-
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div class="admin-card-title">테스트 회원 생성</div>
-      </div>
-      <div class="admin-form-2col">
-        <div class="admin-form-row">
-          <label>이름</label>
-          <input class="admin-input" id="testName" value="테스트회원" />
-        </div>
-        <div class="admin-form-row">
-          <label>이메일</label>
-          <input class="admin-input" id="testEmail" value="test@sajuon.kr" />
-        </div>
-        <div class="admin-form-row">
-          <label>비밀번호</label>
-          <input class="admin-input" id="testPw" value="test1234" />
-        </div>
-        <div class="admin-form-row">
-          <label>초기 포인트</label>
-          <input class="admin-input" type="number" id="testPt" value="500" />
-        </div>
-      </div>
-      <button class="admin-save-btn" onclick="createTestMember()"><i class="fas fa-user-plus"></i> 테스트 회원 생성</button>
-    </div>
-  `;
-}
-
-// CSV 내보내기
-function exportMembersCSV() {
-  let users = [];
-  try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
-  if (!users.length) { showToast('❌ 내보낼 회원 데이터가 없습니다'); return; }
-
-  const rows = [
-    ['이름', '이메일', '전화', '성별', '포인트', '마케팅동의', '가입일', '상태'],
-    ...users.map(u => [
-      u.name || '',
-      u.email || '',
-      u.phone || '',
-      u.gender === 'female' ? '여성' : u.gender === 'male' ? '남성' : '미설정',
-      u.points || 0,
-      u.marketing ? '동의' : '미동의',
-      u.joinDate ? new Date(u.joinDate).toLocaleDateString('ko-KR') : '',
-      u.status === 'active' ? '활성' : '정지',
-    ])
-  ];
-
-  const csv = '\uFEFF' + rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `운세ON_회원목록_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast(`✅ ${users.length}명 CSV 다운로드 완료`);
-}
-
-function renderMemberTable(users) {
-  if (!users.length) {
-    return `<p style="text-align:center;color:var(--text-light);padding:40px">가입된 회원이 없습니다</p>`;
-  }
-  // 이용내역에서 각 회원의 마지막 상담 날짜 추출
-  let history = [];
-  try { history = JSON.parse(localStorage.getItem('sajuon_history') || '[]'); } catch {}
-  const consultHistory = history.filter(h => h.type && h.type.includes('AI 상담'));
-
-  return `
-    <table class="admin-table">
-      <thead>
-        <tr>
-          <th>이름</th>
-          <th>이메일</th>
-          <th>포인트</th>
-          <th>성별</th>
-          <th>마케팅</th>
-          <th>가입일</th>
-          <th>최근로그인</th>
-          <th>상태</th>
-          <th>관리</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${users.map((u, i) => `
-          <tr id="member-row-${i}">
-            <td><strong>${u.name || '-'}</strong><br/><span style="font-size:0.72rem;color:var(--text-muted)">${u.phone || ''}</span></td>
-            <td>${u.email || '-'}</td>
-            <td><span class="badge-gold">${(u.points || 0).toLocaleString()}P</span></td>
-            <td>${u.gender === 'female' ? '여성' : u.gender === 'male' ? '남성' : '미설정'}</td>
-            <td>${u.marketing ? '<span class="badge-green">동의</span>' : '<span class="badge-red">미동의</span>'}</td>
-            <td style="font-size:0.78rem">${u.joinDate ? new Date(u.joinDate).toLocaleDateString('ko-KR') : '-'}</td>
-            <td style="font-size:0.78rem">${u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('ko-KR') : '-'}</td>
-            <td>
-              ${u.status === 'active'
-                ? '<span class="badge-green">활성</span>'
-                : '<span class="badge-red">정지</span>'}
-            </td>
-            <td>
-              <button class="admin-save-btn" style="padding:4px 10px;font-size:0.75rem;margin-bottom:3px" onclick="toggleMemberStatus(${i})">
-                ${u.status === 'active' ? '정지' : '활성화'}
-              </button><br/>
-              <button class="admin-del-btn" onclick="deleteMember(${i})">삭제</button>
-            </td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  `;
-}
-
-function filterMembers() {
-  const keyword = document.getElementById('memberSearch')?.value?.toLowerCase() || '';
-  let users = [];
-  try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
-  const filtered = keyword
-    ? users.filter(u => (u.name||'').toLowerCase().includes(keyword) || (u.email||'').toLowerCase().includes(keyword))
-    : users;
-  const wrap = document.getElementById('memberTableWrap');
-  if (wrap) wrap.innerHTML = renderMemberTable(filtered);
-}
-
-function toggleMemberStatus(i) {
-  let users = [];
-  try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
-  if (!users[i]) return;
-  users[i].status = users[i].status === 'active' ? 'suspended' : 'active';
-  localStorage.setItem('sajuon_users', JSON.stringify(users));
-  showToast(`✅ ${users[i].name} 회원 상태: ${users[i].status === 'active' ? '활성' : '정지'}`);
-  renderMembersAdmin(document.getElementById('adminContent'));
-}
-
-function deleteMember(i) {
-  let users = [];
-  try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
-  if (!users[i]) return;
-  if (!confirm(`"${users[i].name}" 회원을 삭제하시겠습니까?`)) return;
-  users.splice(i, 1);
-  localStorage.setItem('sajuon_users', JSON.stringify(users));
-  showToast('🗑️ 회원이 삭제되었습니다');
-  renderMembersAdmin(document.getElementById('adminContent'));
-}
-
-function clearAllMembers() {
-  if (!confirm('⚠️ 모든 회원 데이터를 삭제하시겠습니까?')) return;
-  localStorage.removeItem('sajuon_users');
-  localStorage.removeItem('sajuon_current_user');
-  showToast('🗑️ 회원 데이터가 초기화되었습니다');
-  renderMembersAdmin(document.getElementById('adminContent'));
-}
-
-function createTestMember() {
-  const name  = document.getElementById('testName')?.value?.trim() || '테스트회원';
-  const email = document.getElementById('testEmail')?.value?.trim() || 'test@sajuon.kr';
-  const pw    = document.getElementById('testPw')?.value || 'test1234';
-  const pts   = parseInt(document.getElementById('testPt')?.value || '500', 10);
-
-  let users = [];
-  try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
-
-  if (users.find(u => u.email === email)) {
-    showToast('❌ 이미 존재하는 이메일입니다'); return;
-  }
-
-  const hashFn = (s) => {
-    let hash = 0;
-    for (let i = 0; i < s.length; i++) { hash = ((hash << 5) - hash) + s.charCodeAt(i); hash = hash & hash; }
-    return 'h_' + Math.abs(hash).toString(36) + '_' + s.length;
-  };
-
-  users.push({
-    id: 'u_' + Date.now(), name, email, pw: hashFn(pw),
-    phone: '', birth: '', gender: 'none', marketing: false,
-    points: pts, joinDate: new Date().toISOString(),
-    lastLogin: new Date().toISOString(), status: 'active',
-  });
-  localStorage.setItem('sajuon_users', JSON.stringify(users));
-  showToast(`✅ 테스트 회원 "${name}" 생성 완료 (비밀번호: ${pw})`);
-  renderMembersAdmin(document.getElementById('adminContent'));
-}
-
-// =========================================
-// 섹션 10: AI 설정 (Gemini API 관리)
-// =========================================
-function renderAISettings(container) {
-  // 직접 localStorage에서 읽기 (gemini.js 의존성 제거)
-  var currentKey = '';
-  try { currentKey = localStorage.getItem('sajuon_gemini_key') || ''; } catch(e) {}
-  var isSet = (currentKey.length > 20 && currentKey.indexOf('AIza') === 0);
-  var maskedKey = isSet
-    ? currentKey.slice(0,8) + '••••••••••••••••' + currentKey.slice(-4)
-    : '미설정';
-
-  var statusColor = isSet ? '#e8f5e9' : '#fce4ec';
-  var statusEmoji = isSet ? '✅' : '❌';
-  var statusText  = isSet ? '연결됨' : '미설정';
-  var badgeBg     = isSet ? '#e8f5e9' : '#fce4ec';
-  var badgeColor  = isSet ? '#2e7d32' : '#c62828';
-  var badgeText   = isSet ? '✅ 활성' : '❌ 미설정';
-  var labelText   = isSet ? '새 키로 교체' : 'API 키 입력';
-
-  var savedKeyBlock = isSet ? (
-    '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">' +
-      '<div>' +
-        '<div style="font-size:0.78rem;color:#166534;font-weight:600;margin-bottom:2px">현재 저장된 키</div>' +
-        '<code style="font-size:0.88rem;color:#14532d">' + maskedKey + '</code>' +
-      '</div>' +
-      '<button onclick="deleteGeminiKey()" style="padding:6px 14px;background:#fce4ec;color:#c62828;border:1px solid #f48fb1;border-radius:8px;cursor:pointer;font-size:0.82rem;font-weight:600">🗑️ 삭제</button>' +
-    '</div>'
-  ) : '';
-
-  container.innerHTML =
-    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">' +
-      '<div class="stat-card"><div class="stat-icon" style="background:' + statusColor + '">' + statusEmoji + '</div><div class="stat-val" style="font-size:1rem">' + statusText + '</div><div class="stat-label">Gemini API 상태</div></div>' +
-      '<div class="stat-card"><div class="stat-icon" style="background:#e3f2fd">🤖</div><div class="stat-val" style="font-size:0.85rem">gemini-1.5-flash</div><div class="stat-label">사용 모델</div></div>' +
-      '<div class="stat-card"><div class="stat-icon" style="background:#fff8e1">💰</div><div class="stat-val" style="font-size:0.85rem">무료 (한도 내)</div><div class="stat-label">Flash 티어</div></div>' +
-      '<div class="stat-card"><div class="stat-icon" style="background:#f3e5f5">📊</div><div class="stat-val" style="font-size:0.85rem">1M 토큰</div><div class="stat-label">컨텍스트 윈도우</div></div>' +
-    '</div>' +
-
-    '<div class="admin-card" style="margin-bottom:20px">' +
-      '<div class="admin-card-header">' +
-        '<div><div class="admin-card-title">🔑 Gemini API 키 설정</div><div class="admin-card-subtitle">Google AI Studio에서 발급한 API 키를 입력합니다</div></div>' +
-        '<span style="background:' + badgeBg + ';color:' + badgeColor + ';padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:700">' + badgeText + '</span>' +
-      '</div>' +
-      '<div style="padding:0 20px 20px">' +
-        savedKeyBlock +
-        '<div style="margin-bottom:16px">' +
-          '<label style="display:block;margin-bottom:8px;font-weight:600;font-size:0.9rem">' + labelText + '</label>' +
-          '<div style="display:flex;gap:10px;align-items:center">' +
-            '<div style="position:relative;flex:1">' +
-              '<input type="password" id="geminiKeyInput" placeholder="AIzaSy..." style="width:100%;padding:10px 44px 10px 14px;border:1.5px solid #ddd;border-radius:8px;font-family:monospace;font-size:0.9rem;box-sizing:border-box" />' +
-              '<button id="toggleKeyBtn" type="button" onclick="toggleKeyVisibility()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;font-size:1rem">👁️</button>' +
-            '</div>' +
-            '<button onclick="saveGeminiKey()" style="padding:10px 20px;background:#1b5e20;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:600;white-space:nowrap">💾 저장</button>' +
-          '</div>' +
-          '<small id="geminiKeyMsg" style="display:block;margin-top:8px;color:#666">🔒 키는 이 브라우저의 localStorage에만 저장됩니다. 서버로 전송되지 않습니다.</small>' +
-        '</div>' +
-        '<button onclick="testGeminiKey()" style="padding:10px 20px;background:#1565c0;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:600">🔌 연결 테스트</button>' +
-        '<span id="geminiTestResult" style="margin-left:12px;font-size:0.88rem"></span>' +
-      '</div>' +
-    '</div>' +
-
-    '<div class="admin-card" style="margin-bottom:20px">' +
-      '<div class="admin-card-header"><div class="admin-card-title">📖 API 키 발급 방법</div></div>' +
-      '<div style="padding:0 20px 20px">' +
-        '<ol style="padding-left:20px;line-height:2.2;color:#444;margin:0 0 16px">' +
-          '<li><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#1b5e20;font-weight:600">aistudio.google.com</a> 접속 (Google 계정 필요)</li>' +
-          '<li>"Create API Key" 클릭 → "Create API key in new project" 선택</li>' +
-          '<li>생성된 키 <code style="background:#f5f5f5;padding:2px 6px;border-radius:4px">AIzaSy...</code> 복사</li>' +
-          '<li>위 입력란에 붙여넣기 후 💾 저장 클릭</li>' +
-        '</ol>' +
-        '<div style="background:#fffde7;border:1px solid #f9a825;border-radius:10px;padding:14px 18px">' +
-          '<strong>💰 비용 안내</strong><br>' +
-          '<span style="font-size:0.85rem;color:#555;line-height:2;display:block;margin-top:4px">' +
-            '• Gemini 2.0 Flash: <strong>무료 티어</strong> — 분당 15회, 일 1,500회 무료<br>' +
-            '• 무료 초과 시: 입력 1M 토큰당 $0.075 (약 100원)<br>' +
-            '• 상담 1건 ≈ 500~800 토큰 → 약 0.07원/건' +
-          '</span>' +
-        '</div>' +
-      '</div>' +
-    '</div>' +
-
-    '<div class="admin-card">' +
-      '<div class="admin-card-header"><div class="admin-card-title">🧠 AI 페르소나 설정</div><div class="admin-card-subtitle">현재 적용 중인 분석 방식</div></div>' +
-      '<div style="padding:0 20px 20px">' +
-        '<div style="background:#f8f9fa;border-radius:10px;padding:16px;font-size:0.85rem;line-height:2;color:#444">' +
-          '<strong>📌 AI 페르소나:</strong> 수십 년 경력의 한국 전통 사주명리학 전문가<br>' +
-          '<strong>📌 분석 방법:</strong> 천간·지지·오행·십신 기반, 사주팔자 완전 구성, 용신·기신 도출<br>' +
-          '<strong>📌 세운 반영:</strong> 2026년 병오년(丙午年) 흐름 적용<br>' +
-          '<strong>📌 사용 모델:</strong> gemini-1.5-flash (스트리밍)<br>' +
-          '<strong>📌 응답 온도:</strong> 0.85 &nbsp;|&nbsp; <strong>최대 토큰:</strong> 1,500/응답' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-}
-
-function saveGeminiKey() {
-  const val = document.getElementById('geminiKeyInput')?.value?.trim();
-  const msg = document.getElementById('geminiKeyMsg');
-  if (!val) {
-    if (msg) { msg.textContent = '❌ API 키를 입력해주세요.'; msg.style.color='#c62828'; }
-    return;
-  }
-  if (!val.startsWith('AIza') || val.length < 20) {
-    if (msg) { msg.textContent = '❌ 올바른 형식이 아닙니다. AIzaSy...로 시작하는 키를 입력하세요.'; msg.style.color='#c62828'; }
-    return;
-  }
-  // gemini.js 함수 또는 직접 저장
-  try { if (typeof setGeminiKey === 'function') setGeminiKey(val); else localStorage.setItem('sajuon_gemini_key', val); } catch(e) { localStorage.setItem('sajuon_gemini_key', val); }
-  showToast('✅ Gemini API 키가 저장되었습니다!');
-  // 저장 후 UI 재렌더링
-  renderAISettings(document.getElementById('adminContent'));
-  // 저장 후 자동 테스트 (800ms 후)
-  setTimeout(() => testGeminiKey(), 800);
-}
-
-function toggleKeyVisibility() {
-  const inp = document.getElementById('geminiKeyInput');
-  const btn = document.getElementById('toggleKeyBtn');
-  if (!inp) return;
-  if (inp.type === 'password') {
-    inp.type = 'text';
-    if (btn) btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
-  } else {
-    inp.type = 'password';
-    if (btn) btn.innerHTML = '<i class="fas fa-eye"></i>';
-  }
-}
-
-function deleteGeminiKey() {
-  if (!confirm('API 키를 삭제하시겠습니까? AI 상담이 비활성화됩니다.')) return;
-  localStorage.removeItem('sajuon_gemini_key');
-  showToast('🗑️ API 키가 삭제되었습니다');
-  renderAISettings(document.getElementById('adminContent'));
-}
-
-async function testGeminiKey() {
-  const result = document.getElementById('geminiTestResult');
-  if (result) { result.textContent = '⏳ 테스트 중...'; result.style.color = '#666'; }
-  try {
-    let res;
-    if (typeof testGeminiConnection === 'function') {
-      res = await testGeminiConnection();
+    // SSE 스트리밍 읽기
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText  = '';
+    let buffer    = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // 마지막 불완전 줄 보관
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const chunk  = parsed?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          if (chunk) {
+            fullText += chunk;
+            onChunk(fullText);
+          }
+        } catch (_) {
+          // JSON 파싱 실패 무시
+        }
+      }
+    }
+
+    // 응답을 히스토리에 추가
+    if (fullText) {
+      addToHistory('model', fullText);
+      onDone(fullText);
     } else {
-      // gemini.js 없을 때 직접 테스트
-      const key = localStorage.getItem('sajuon_gemini_key') || '';
-      if (!key) { res = { ok: false, msg: '❌ 저장된 API 키가 없습니다' }; }
-      else {
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${key}`, {
-          method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ contents:[{role:'user',parts:[{text:'안녕'}]}], generationConfig:{maxOutputTokens:10} })
-        });
-        res = r.ok ? { ok:true, msg:'✅ 연결 성공! Gemini 2.0 Flash' } : { ok:false, msg:`❌ HTTP ${r.status} — 키를 확인하세요` };
-      }
+      onError('응답을 받지 못했습니다. 다시 시도해주세요.');
     }
-    if (result) { result.textContent = res.msg; result.style.color = res.ok ? '#2e7d32' : '#c62828'; }
-    showToast(res.msg);
-  } catch(e) {
-    const errMsg = '❌ 네트워크 오류: ' + e.message;
-    if (result) { result.textContent = errMsg; result.style.color = '#c62828'; }
-    showToast(errMsg);
+
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    console.error('Gemini API Error:', err);
+    onError(`네트워크 오류가 발생했습니다: ${err.message}`);
   }
 }
 
-// =========================================
-// 전역 함수 노출 (HTML onclick 속성에서 직접 호출)
-// =========================================
-window.switchSection      = switchSection;
-window.saveGeminiKey      = saveGeminiKey;
-window.deleteGeminiKey    = deleteGeminiKey;
-window.testGeminiKey      = testGeminiKey;
-window.toggleKeyVisibility = toggleKeyVisibility;
+// ===== 마크다운 → HTML 변환 (Gemini가 마크다운으로 응답할 경우 대비) =====
+function convertMarkdownToHtml(text) {
+  return text
+    // 코드블록 제거
+    .replace(/```[\s\S]*?```/g, '')
+    // **bold**
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    // *italic*
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    // ### 헤딩 → h4
+    .replace(/^###\s+(.+)$/gm, '<h4>$1</h4>')
+    .replace(/^##\s+(.+)$/gm, '<h4>$1</h4>')
+    .replace(/^#\s+(.+)$/gm, '<h4>$1</h4>')
+    // - 항목 → li (연속된 것은 ul로 감싸기)
+    .replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/gs, (m) => `<ul>${m}</ul>`)
+    // 줄바꿈
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br/>');
+}
 
-// =========================================
-// 초기화
-// =========================================
-document.addEventListener('DOMContentLoaded', () => {
-  initPoints();
-  updateAdminPt();
-  initAdminNav();
-
-  // URL 해시로 섹션 결정
-  const hash = location.hash.replace('#', '') || 'dash';
-  switchSection(SECTIONS[hash] ? hash : 'dash');
-});
+// ===== API 연결 테스트 =====
+async function testGeminiConnection() {
+  const key = getGeminiKey();
+  if (!key) return { ok: false, msg: 'API 키가 없습니다' };
+  const model = getGeminiModel();
+  const ver   = getGeminiVer();
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/${ver}/models/${model}:generateContent?key=${key}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: '안녕' }] }],
+          generationConfig: { maxOutputTokens: 20 }
+        })
+      }
+    );
+    if (res.ok) {
+      return { ok: true, msg: `✅ 연결 성공! 모델: ${model}` };
+    } else {
+      const d = await res.json().catch(() => ({}));
+      return { ok: false, msg: `❌ ${d?.error?.message || 'HTTP ' + res.status}` };
+    }
+  } catch (e) {
+    return { ok: false, msg: `❌ 네트워크 오류: ${e.message}` };
+  }
+}
