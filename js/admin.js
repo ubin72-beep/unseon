@@ -1149,7 +1149,7 @@ function renderAISettings(container) {
   container.innerHTML =
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">' +
       '<div class="stat-card"><div class="stat-icon" style="background:' + statusColor + '">' + statusEmoji + '</div><div class="stat-val" style="font-size:1rem">' + statusText + '</div><div class="stat-label">Gemini API 상태</div></div>' +
-      '<div class="stat-card"><div class="stat-icon" style="background:#e3f2fd">🤖</div><div class="stat-val" style="font-size:0.85rem">gemini-2.5-flash</div><div class="stat-label">사용 모델</div></div>' +
+      '<div class="stat-card"><div class="stat-icon" style="background:#e3f2fd">🤖</div><div class="stat-val" style="font-size:0.85rem">gemini-1.5-flash</div><div class="stat-label">사용 모델</div></div>' +
       '<div class="stat-card"><div class="stat-icon" style="background:#fff8e1">💰</div><div class="stat-val" style="font-size:0.85rem">무료 (한도 내)</div><div class="stat-label">Flash 티어</div></div>' +
       '<div class="stat-card"><div class="stat-icon" style="background:#f3e5f5">📊</div><div class="stat-val" style="font-size:0.85rem">1M 토큰</div><div class="stat-label">컨텍스트 윈도우</div></div>' +
     '</div>' +
@@ -1204,7 +1204,7 @@ function renderAISettings(container) {
           '<strong>📌 AI 페르소나:</strong> 수십 년 경력의 한국 전통 사주명리학 전문가<br>' +
           '<strong>📌 분석 방법:</strong> 천간·지지·오행·십신 기반, 사주팔자 완전 구성, 용신·기신 도출<br>' +
           '<strong>📌 세운 반영:</strong> 2026년 병오년(丙午年) 흐름 적용<br>' +
-          '<strong>📌 사용 모델:</strong> gemini-2.5-flash (스트리밍)<br>' +
+          '<strong>📌 사용 모델:</strong> gemini-1.5-flash (스트리밍)<br>' +
           '<strong>📌 응답 온도:</strong> 0.85 &nbsp;|&nbsp; <strong>최대 토큰:</strong> 1,500/응답' +
         '</div>' +
       '</div>' +
@@ -1263,7 +1263,7 @@ async function testGeminiKey() {
       const key = localStorage.getItem('sajuon_gemini_key') || '';
       if (!key) { res = { ok: false, msg: '❌ 저장된 API 키가 없습니다' }; }
       else {
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${key}`, {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ contents:[{role:'user',parts:[{text:'안녕'}]}], generationConfig:{maxOutputTokens:10} })
         });
