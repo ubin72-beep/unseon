@@ -16,7 +16,7 @@ function hasGeminiKey() {
 }
 
 // ===== 모델 설정 =====
-const GEMINI_MODEL   = 'gemini-2.0-flash';
+const GEMINI_MODEL   = 'gemini-2.5-flash-preview-05-20';
 const GEMINI_API_URL = (key) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${key}`;
 
@@ -248,8 +248,8 @@ async function testGeminiConnection() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: '안녕하세요. 테스트입니다.' }] }],
-          generationConfig: { maxOutputTokens: 50 }
+          contents: [{ role: 'user', parts: [{ text: '안녕' }] }],
+          generationConfig: { maxOutputTokens: 20 }
         })
       }
     );
