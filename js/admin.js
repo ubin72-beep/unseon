@@ -14,6 +14,7 @@ const SECTIONS = {
   history:  { title: '이용 내역 조회',   render: renderHistoryAdmin },
   members:  { title: '회원 관리',        render: renderMembersAdmin },
   points:   { title: '포인트 조작',      render: renderPointsAdmin },
+  ai:       { title: 'AI 설정',          render: renderAISettings },
 };
 
 let currentSection = 'dash';
@@ -29,23 +30,17 @@ function showToast(msg, duration = 2500) {
 
 // ===== 네비 초기화 =====
 function initAdminNav() {
-  document.querySelectorAll('.admin-nav-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-      e.preventDefault();
-      const section = item.dataset.section;
-      if (section) switchSection(section);
-      // 모바일 사이드바 닫기
-      document.getElementById('adminSidebar')?.classList.remove('open');
-    });
-  });
-
   // 모바일 토글
   const toggle = document.getElementById('adminMenuToggle');
   const sidebar = document.getElementById('adminSidebar');
   if (toggle && sidebar) {
-    toggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebar.classList.toggle('open');
+    });
     document.addEventListener('click', (e) => {
-      if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
+      if (sidebar.classList.contains('open') &&
+          !sidebar.contains(e.target) && !toggle.contains(e.target)) {
         sidebar.classList.remove('open');
       }
     });
@@ -72,6 +67,9 @@ function switchSection(key) {
 
   // 해시 업데이트
   history.replaceState(null, '', '#' + key);
+
+  // 모바일 사이드바 닫기
+  document.getElementById('adminSidebar')?.classList.remove('open');
 }
 
 // ===== 포인트 표시 =====
@@ -805,13 +803,33 @@ function renderMembersAdmin(container) {
   let users = [];
   try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
 
+  // 이용 내역에서 상담 통계 집계
+  let history = [];
+  try { history = JSON.parse(localStorage.getItem('sajuon_history') || '[]'); } catch {}
+
   const totalMembers  = users.length;
   const activeMembers = users.filter(u => u.status === 'active').length;
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayNew = users.filter(u => u.joinDate && u.joinDate.slice(0, 10) === todayStr).length;
   const mktAgree = users.filter(u => u.marketing).length;
 
+  // 상담 통계
+  const consultHistory = history.filter(h => h.type && h.type.includes('AI 상담'));
+  const totalConsults  = consultHistory.length;
+  const totalPtUsed    = consultHistory.reduce((s, h) => s + Math.abs(h.amount || 0), 0);
+  const todayConsults  = consultHistory.filter(h => h.date && h.date.includes(new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', ''))).length;
+
+  // 카테고리별 상담 횟수
+  const catCount = {};
+  consultHistory.forEach(h => {
+    const cat = (h.type || '').replace('AI 상담 · ', '').trim();
+    catCount[cat] = (catCount[cat] || 0) + 1;
+  });
+  const topCats = Object.entries(catCount).sort((a,b) => b[1]-a[1]).slice(0, 5);
+
   container.innerHTML = `
+    <!-- 회원 통계 -->
+    <div style="margin-bottom:8px;font-size:0.85rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">👥 회원 현황</div>
     <div class="stat-grid" style="margin-bottom:20px">
       <div class="stat-card">
         <div class="stat-icon" style="background:#e8f5e9">👥</div>
@@ -835,14 +853,71 @@ function renderMembersAdmin(container) {
       </div>
     </div>
 
+    <!-- 상담 통계 -->
+    <div style="margin-bottom:8px;font-size:0.85rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">💬 상담 현황</div>
+    <div class="stat-grid" style="margin-bottom:20px">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e8f4fd">💬</div>
+        <div class="stat-val">${totalConsults.toLocaleString()}</div>
+        <div class="stat-label">총 상담 건수</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fff8e1">💰</div>
+        <div class="stat-val">${totalPtUsed.toLocaleString()}P</div>
+        <div class="stat-label">총 포인트 사용</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#f3e5f5">📅</div>
+        <div class="stat-val">${todayConsults}</div>
+        <div class="stat-label">오늘 상담 건수</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e8f5e9">📊</div>
+        <div class="stat-val">${totalMembers ? Math.round(totalPtUsed / Math.max(totalMembers, 1)).toLocaleString() : 0}P</div>
+        <div class="stat-label">회원당 평균 사용</div>
+      </div>
+    </div>
+
+    <!-- 인기 상담 분야 -->
+    ${topCats.length > 0 ? `
+    <div class="admin-card" style="margin-bottom:20px">
+      <div class="admin-card-header">
+        <div class="admin-card-title">🏆 인기 상담 분야 TOP 5</div>
+      </div>
+      <div style="padding:0 20px 16px">
+        ${topCats.map(([cat, cnt], idx) => {
+          const maxCnt = topCats[0][1];
+          const pct = Math.round((cnt / maxCnt) * 100);
+          const colors = ['#2c5f4f','#3d7a65','#5a9e86','#d4af37','#b8962f'];
+          return `
+            <div style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:0.85rem">
+                <span><strong>${idx+1}위</strong> ${cat || '기타'}</span>
+                <span style="color:var(--primary);font-weight:600">${cnt}건</span>
+              </div>
+              <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden">
+                <div style="height:100%;width:${pct}%;background:${colors[idx]};border-radius:4px;transition:width 0.5s"></div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>
+    ` : `
+    <div class="admin-card" style="margin-bottom:20px;padding:24px;text-align:center;color:var(--text-muted)">
+      <p>💬 아직 상담 기록이 없습니다. 사용자가 AI 상담을 시작하면 통계가 표시됩니다.</p>
+    </div>
+    `}
+
+    <!-- 회원 목록 -->
     <div class="admin-card">
       <div class="admin-card-header">
         <div>
           <div class="admin-card-title">회원 목록 (${totalMembers}명)</div>
           <div class="admin-card-subtitle">가입 회원 정보를 조회하고 관리합니다</div>
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
           <input class="admin-input" id="memberSearch" style="width:200px" placeholder="이름·이메일 검색" oninput="filterMembers()"/>
+          <button class="admin-save-btn" onclick="exportMembersCSV()" style="background:var(--primary)"><i class="fas fa-download"></i> CSV</button>
           <button class="admin-del-btn" onclick="clearAllMembers()">전체 초기화</button>
         </div>
       </div>
@@ -878,10 +953,46 @@ function renderMembersAdmin(container) {
   `;
 }
 
+// CSV 내보내기
+function exportMembersCSV() {
+  let users = [];
+  try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
+  if (!users.length) { showToast('❌ 내보낼 회원 데이터가 없습니다'); return; }
+
+  const rows = [
+    ['이름', '이메일', '전화', '성별', '포인트', '마케팅동의', '가입일', '상태'],
+    ...users.map(u => [
+      u.name || '',
+      u.email || '',
+      u.phone || '',
+      u.gender === 'female' ? '여성' : u.gender === 'male' ? '남성' : '미설정',
+      u.points || 0,
+      u.marketing ? '동의' : '미동의',
+      u.joinDate ? new Date(u.joinDate).toLocaleDateString('ko-KR') : '',
+      u.status === 'active' ? '활성' : '정지',
+    ])
+  ];
+
+  const csv = '\uFEFF' + rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `운세ON_회원목록_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`✅ ${users.length}명 CSV 다운로드 완료`);
+}
+
 function renderMemberTable(users) {
   if (!users.length) {
     return `<p style="text-align:center;color:var(--text-light);padding:40px">가입된 회원이 없습니다</p>`;
   }
+  // 이용내역에서 각 회원의 마지막 상담 날짜 추출
+  let history = [];
+  try { history = JSON.parse(localStorage.getItem('sajuon_history') || '[]'); } catch {}
+  const consultHistory = history.filter(h => h.type && h.type.includes('AI 상담'));
+
   return `
     <table class="admin-table">
       <thead>
@@ -892,6 +1003,7 @@ function renderMemberTable(users) {
           <th>성별</th>
           <th>마케팅</th>
           <th>가입일</th>
+          <th>최근로그인</th>
           <th>상태</th>
           <th>관리</th>
         </tr>
@@ -899,12 +1011,13 @@ function renderMemberTable(users) {
       <tbody>
         ${users.map((u, i) => `
           <tr id="member-row-${i}">
-            <td><strong>${u.name || '-'}</strong></td>
+            <td><strong>${u.name || '-'}</strong><br/><span style="font-size:0.72rem;color:var(--text-muted)">${u.phone || ''}</span></td>
             <td>${u.email || '-'}</td>
             <td><span class="badge-gold">${(u.points || 0).toLocaleString()}P</span></td>
             <td>${u.gender === 'female' ? '여성' : u.gender === 'male' ? '남성' : '미설정'}</td>
             <td>${u.marketing ? '<span class="badge-green">동의</span>' : '<span class="badge-red">미동의</span>'}</td>
             <td style="font-size:0.78rem">${u.joinDate ? new Date(u.joinDate).toLocaleDateString('ko-KR') : '-'}</td>
+            <td style="font-size:0.78rem">${u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('ko-KR') : '-'}</td>
             <td>
               ${u.status === 'active'
                 ? '<span class="badge-green">활성</span>'
@@ -992,6 +1105,190 @@ function createTestMember() {
   showToast(`✅ 테스트 회원 "${name}" 생성 완료 (비밀번호: ${pw})`);
   renderMembersAdmin(document.getElementById('adminContent'));
 }
+
+// =========================================
+// 섹션 10: AI 설정 (Gemini API 관리)
+// =========================================
+function renderAISettings(container) {
+  const currentKey = getGeminiKey ? getGeminiKey() : '';
+  const maskedKey  = currentKey
+    ? currentKey.slice(0, 8) + '••••••••••••••••' + currentKey.slice(-4)
+    : '미설정';
+  const isSet = currentKey && currentKey.startsWith('AIza');
+
+  container.innerHTML = `
+    <!-- 상태 카드 -->
+    <div class="stat-grid" style="margin-bottom:24px">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:${isSet ? '#e8f5e9' : '#fce4ec'}">${isSet ? '✅' : '❌'}</div>
+        <div class="stat-val" style="font-size:1rem">${isSet ? '연결됨' : '미설정'}</div>
+        <div class="stat-label">Gemini API 상태</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e3f2fd">🤖</div>
+        <div class="stat-val" style="font-size:0.85rem">gemini-2.0-flash</div>
+        <div class="stat-label">사용 모델</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fff8e1">💰</div>
+        <div class="stat-val" style="font-size:0.85rem">무료 (한도 내)</div>
+        <div class="stat-label">Flash 티어</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#f3e5f5">📊</div>
+        <div class="stat-val" style="font-size:0.85rem">1M 토큰</div>
+        <div class="stat-label">컨텍스트 윈도우</div>
+      </div>
+    </div>
+
+    <!-- API 키 설정 -->
+    <div class="admin-card" style="margin-bottom:20px">
+      <div class="admin-card-header">
+        <div>
+          <div class="admin-card-title">🔑 Gemini API 키 설정</div>
+          <div class="admin-card-subtitle">Google AI Studio에서 발급한 API 키를 입력합니다</div>
+        </div>
+        ${isSet ? `<span style="background:#e8f5e9;color:#2e7d32;padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:700">✅ 활성</span>` : `<span style="background:#fce4ec;color:#c62828;padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:700">❌ 미설정</span>`}
+      </div>
+      <div style="padding:0 20px 20px">
+
+        ${isSet ? `
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:0.78rem;color:#166534;font-weight:600;margin-bottom:2px">현재 저장된 키</div>
+            <code style="font-size:0.88rem;color:#14532d">${maskedKey}</code>
+          </div>
+          <button class="admin-del-btn" onclick="deleteGeminiKey()">🗑️ 삭제</button>
+        </div>
+        ` : ''}
+
+        <div class="admin-form-row" style="margin-bottom:12px">
+          <label style="margin-bottom:6px;display:block;font-weight:600">${isSet ? '새 키로 교체' : 'API 키 입력'}</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="position:relative;flex:1">
+              <input type="password" id="geminiKeyInput" class="admin-input" placeholder="AIzaSy..." style="width:100%;font-family:monospace;padding-right:44px" />
+              <button id="toggleKeyBtn" type="button" onclick="toggleKeyVisibility()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;font-size:1rem;padding:4px"><i class="fas fa-eye"></i></button>
+            </div>
+            <button class="admin-save-btn" onclick="saveGeminiKey()" style="white-space:nowrap"><i class="fas fa-save"></i> 저장</button>
+          </div>
+          <small id="geminiKeyMsg" style="display:block;margin-top:6px;color:var(--text-muted)">🔒 키는 이 브라우저의 localStorage에만 저장됩니다. 서버로 전송되지 않습니다.</small>
+        </div>
+
+        <button class="admin-save-btn" onclick="testGeminiKey()" style="background:#1565c0">
+          <i class="fas fa-plug"></i> 연결 테스트
+        </button>
+        <span id="geminiTestResult" style="margin-left:10px;font-size:0.88rem"></span>
+      </div>
+    </div>
+
+    <!-- API 키 발급 안내 -->
+    <div class="admin-card" style="margin-bottom:20px">
+      <div class="admin-card-header">
+        <div class="admin-card-title">📖 Gemini API 키 발급 방법</div>
+      </div>
+      <div style="padding:0 20px 20px">
+        <ol style="padding-left:20px;line-height:2;color:var(--text-body)">
+          <li><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--primary);font-weight:600">aistudio.google.com</a> 접속 (Google 계정 필요)</li>
+          <li>"Create API Key" 클릭</li>
+          <li>"Create API key in new project" 선택</li>
+          <li>생성된 키 (AIzaSy...) 복사</li>
+          <li>위 입력창에 붙여넣기 후 저장</li>
+        </ol>
+        <div style="background:#fffde7;border:1px solid #f9a825;border-radius:10px;padding:14px 18px;margin-top:12px">
+          <strong>💰 비용 안내</strong><br/>
+          <small style="color:var(--text-body);line-height:1.7">
+            • Gemini 2.0 Flash: <strong>무료 티어</strong> — 분당 15회, 일 1,500회 무료 요청<br/>
+            • 무료 한도 초과 시: 입력 1M 토큰당 $0.075 (약 100원)<br/>
+            • 상담 1건 평균 약 500~800 토큰 → 약 0.07원/건<br/>
+            • 월 10,000건 기준 약 700원 수준으로 매우 저렴
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- 프롬프트 미리보기 -->
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <div class="admin-card-title">🧠 AI 사주 상담 프롬프트 설정</div>
+        <div class="admin-card-subtitle">현재 적용 중인 AI 페르소나 및 분석 방식</div>
+      </div>
+      <div style="padding:0 20px 20px">
+        <div style="background:#f8f9fa;border-radius:10px;padding:16px;font-size:0.82rem;line-height:1.8;color:var(--text-body);max-height:300px;overflow-y:auto">
+          <strong>📌 현재 AI 페르소나:</strong><br/>
+          수십 년 경력의 한국 전통 사주명리학 전문가<br/><br/>
+          <strong>📌 분석 방법:</strong><br/>
+          • 천간(天干)·지지(地支)·오행(五行)·십신(十神) 기반 분석<br/>
+          • 사주팔자(四柱八字) 완전 구성 및 오행 비율 계산<br/>
+          • 용신(用神)·기신(忌神) 도출<br/>
+          • 2026년 병오년(丙午年) 세운 흐름 반영<br/>
+          • 대화 연속성 지원 (최대 10턴 기억)<br/><br/>
+          <strong>📌 사용 모델:</strong> gemini-2.0-flash (스트리밍)<br/>
+          <strong>📌 응답 온도:</strong> 0.85 (창의적이되 일관성 있는 응답)<br/>
+          <strong>📌 최대 토큰:</strong> 1,500 토큰/응답
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function saveGeminiKey() {
+  const val = document.getElementById('geminiKeyInput')?.value?.trim();
+  const msg = document.getElementById('geminiKeyMsg');
+  if (!val) {
+    if (msg) { msg.textContent = '❌ API 키를 입력해주세요.'; msg.style.color='#c62828'; }
+    return;
+  }
+  if (!val.startsWith('AIza')) {
+    if (msg) { msg.textContent = '❌ 올바른 형식이 아닙니다. AIzaSy...로 시작하는 키를 입력하세요.'; msg.style.color='#c62828'; }
+    return;
+  }
+  setGeminiKey(val);
+  showToast('✅ Gemini API 키가 저장되었습니다! 연결 테스트를 진행합니다...');
+  // 저장 후 UI 재렌더링
+  renderAISettings(document.getElementById('adminContent'));
+  // 저장 후 자동 테스트 (1초 후)
+  setTimeout(() => testGeminiKey(), 1000);
+}
+
+function toggleKeyVisibility() {
+  const inp = document.getElementById('geminiKeyInput');
+  const btn = document.getElementById('toggleKeyBtn');
+  if (!inp) return;
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    if (btn) btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+  } else {
+    inp.type = 'password';
+    if (btn) btn.innerHTML = '<i class="fas fa-eye"></i>';
+  }
+}
+
+function deleteGeminiKey() {
+  if (!confirm('API 키를 삭제하시겠습니까? AI 상담이 비활성화됩니다.')) return;
+  localStorage.removeItem('sajuon_gemini_key');
+  showToast('🗑️ API 키가 삭제되었습니다');
+  renderAISettings(document.getElementById('adminContent'));
+}
+
+async function testGeminiKey() {
+  const result = document.getElementById('geminiTestResult');
+  if (result) result.textContent = '⏳ 테스트 중...';
+  const res = await testGeminiConnection();
+  if (result) {
+    result.textContent = res.msg;
+    result.style.color = res.ok ? '#2e7d32' : '#c62828';
+  }
+  showToast(res.msg);
+}
+
+// =========================================
+// 전역 함수 노출 (HTML onclick 속성에서 직접 호출)
+// =========================================
+window.switchSection      = switchSection;
+window.saveGeminiKey      = saveGeminiKey;
+window.deleteGeminiKey    = deleteGeminiKey;
+window.testGeminiKey      = testGeminiKey;
+window.toggleKeyVisibility = toggleKeyVisibility;
 
 // =========================================
 // 초기화
