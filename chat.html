@@ -88,11 +88,76 @@
           보유 <strong id="chatPointVal">0</strong>P
           · 이 상담 <strong id="chatCostVal">200</strong>P 차감
         </div>
+        <!-- 사주 입력 패널 (토글) -->
+        <div id="sajuInputPanel" style="display:none;background:#f8f9fa;border:1.5px solid #e0e0e0;border-radius:12px;padding:14px 16px;margin-bottom:10px">
+          <div style="font-size:0.82rem;font-weight:700;color:#3a3a3a;margin-bottom:10px">🔮 사주 정보 입력 <span style="font-weight:400;color:#888">(더 정확한 분석을 위해)</span></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+            <label style="font-size:0.8rem;display:flex;align-items:center;gap:4px;cursor:pointer">
+              <input type="radio" name="calType" value="solar" id="calSolar" checked onchange="updateSajuCalType()"> 양력
+            </label>
+            <label style="font-size:0.8rem;display:flex;align-items:center;gap:4px;cursor:pointer">
+              <input type="radio" name="calType" value="lunar" id="calLunar" onchange="updateSajuCalType()"> 음력
+            </label>
+            <label id="leapLabel" style="font-size:0.8rem;display:none;align-items:center;gap:4px;cursor:pointer">
+              <input type="checkbox" id="calLeap"> 윤달
+            </label>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">
+            <div>
+              <div style="font-size:0.72rem;color:#888;margin-bottom:3px">년도</div>
+              <input type="number" id="sajuYear" placeholder="1990" min="1900" max="2010"
+                style="width:100%;padding:7px 8px;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;box-sizing:border-box">
+            </div>
+            <div>
+              <div style="font-size:0.72rem;color:#888;margin-bottom:3px">월</div>
+              <input type="number" id="sajuMonth" placeholder="1" min="1" max="12"
+                style="width:100%;padding:7px 8px;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;box-sizing:border-box">
+            </div>
+            <div>
+              <div style="font-size:0.72rem;color:#888;margin-bottom:3px">일</div>
+              <input type="number" id="sajuDay" placeholder="1" min="1" max="31"
+                style="width:100%;padding:7px 8px;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;box-sizing:border-box">
+            </div>
+            <div>
+              <div style="font-size:0.72rem;color:#888;margin-bottom:3px">시 <span style="color:#bbb;font-size:0.68rem">(선택)</span></div>
+              <select id="sajuHour" style="width:100%;padding:7px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:0.75rem;box-sizing:border-box">
+                <option value="-1">모름</option>
+                <option value="0">자시(子) 0시</option>
+                <option value="1">축시(丑) 1시</option>
+                <option value="3">인시(寅) 3시</option>
+                <option value="5">묘시(卯) 5시</option>
+                <option value="7">진시(辰) 7시</option>
+                <option value="9">사시(巳) 9시</option>
+                <option value="11">오시(午) 11시</option>
+                <option value="13">미시(未) 13시</option>
+                <option value="15">신시(申) 15시</option>
+                <option value="17">유시(酉) 17시</option>
+                <option value="19">술시(戌) 19시</option>
+                <option value="21">해시(亥) 21시</option>
+                <option value="23">자시(子) 23시</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button onclick="applySajuInput()" style="flex:1;padding:8px;background:#1b5e20;color:#fff;border:none;border-radius:8px;font-size:0.83rem;font-weight:600;cursor:pointer">
+              ✅ 사주 정보 입력창에 적용
+            </button>
+            <button onclick="document.getElementById('sajuInputPanel').style.display='none'" style="padding:8px 12px;background:#f5f5f5;color:#555;border:1px solid #ddd;border-radius:8px;font-size:0.8rem;cursor:pointer">
+              닫기
+            </button>
+          </div>
+          <div id="sajuPreview" style="margin-top:8px;font-size:0.78rem;color:#1b5e20;min-height:18px"></div>
+        </div>
+
         <div class="chat-input-row">
+          <button id="sajuToggleBtn" onclick="toggleSajuPanel()" title="사주 정보 직접 입력"
+            style="flex-shrink:0;width:36px;height:36px;background:#f5f5f5;border:1.5px solid #ddd;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;color:#666">
+            🔮
+          </button>
           <textarea
             id="chatInput"
             class="chat-textarea"
-            placeholder="질문을 입력하세요... (예: 그 사람이 저를 좋아하는 것 같은데, 확인해도 될까요?)"
+            placeholder="질문을 입력하세요... (예: 1990년 5월 15일생 연애운이 어떤가요?)"
             rows="1"
           ></textarea>
           <button class="chat-send-btn" id="chatSendBtn" onclick="sendMessage()">
@@ -135,10 +200,14 @@
   </div>
 </div>
 
-<script src="js/auth.js?v=20260401"></script>
-<script src="js/main.js?v=20260401"></script>
-<script src="js/gemini.js?v=20260401"></script>
-<script src="js/chat.js?v=20260401"></script>
+<script src="js/auth.js?v=20260405"></script>
+<script src="js/main.js?v=20260405"></script>
+<script src="js/saju.js?v=20260405"></script>
+<script src="js/tarot.js?v=20260405"></script>
+<script src="js/astrology.js?v=20260405"></script>
+<script src="js/naming.js?v=20260405"></script>
+<script src="js/gemini.js?v=20260405"></script>
+<script src="js/chat.js?v=20260405"></script>
 <script>document.addEventListener('DOMContentLoaded', initAuthHeader);</script>
 </body>
 </html>
