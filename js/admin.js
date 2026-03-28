@@ -1149,7 +1149,7 @@ function renderAISettings(container) {
   container.innerHTML =
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">' +
       '<div class="stat-card"><div class="stat-icon" style="background:' + statusColor + '">' + statusEmoji + '</div><div class="stat-val" style="font-size:1rem">' + statusText + '</div><div class="stat-label">Gemini API 상태</div></div>' +
-      '<div class="stat-card"><div class="stat-icon" style="background:#e3f2fd">🤖</div><div class="stat-val" style="font-size:0.85rem">gemini-1.5-flash</div><div class="stat-label">사용 모델</div></div>' +
+      '<div class="stat-card"><div class="stat-icon" style="background:#e3f2fd">🤖</div><div class="stat-val" style="font-size:0.75rem">' + (localStorage.getItem('sajuon_gemini_model') || '미설정') + '</div><div class="stat-label">사용 모델</div></div>' +
       '<div class="stat-card"><div class="stat-icon" style="background:#fff8e1">💰</div><div class="stat-val" style="font-size:0.85rem">무료 (한도 내)</div><div class="stat-label">Flash 티어</div></div>' +
       '<div class="stat-card"><div class="stat-icon" style="background:#f3e5f5">📊</div><div class="stat-val" style="font-size:0.85rem">1M 토큰</div><div class="stat-label">컨텍스트 윈도우</div></div>' +
     '</div>' +
@@ -1208,7 +1208,7 @@ function renderAISettings(container) {
           '<strong>📌 AI 페르소나:</strong> 수십 년 경력의 한국 전통 사주명리학 전문가<br>' +
           '<strong>📌 분석 방법:</strong> 천간·지지·오행·십신 기반, 사주팔자 완전 구성, 용신·기신 도출<br>' +
           '<strong>📌 세운 반영:</strong> 2026년 병오년(丙午年) 흐름 적용<br>' +
-          '<strong>📌 사용 모델:</strong> gemini-1.5-flash (스트리밍)<br>' +
+          '<strong>📌 사용 모델:</strong> ' + (localStorage.getItem('sajuon_gemini_model') || '미설정') + ' (스트리밍)<br>' +
           '<strong>📌 응답 온도:</strong> 0.85 &nbsp;|&nbsp; <strong>최대 토큰:</strong> 1,500/응답' +
         '</div>' +
       '</div>' +
@@ -1256,56 +1256,96 @@ function deleteGeminiKey() {
 }
 
 async function testGeminiKey() {
-  const result = document.getElementById('geminiTestResult');
-  if (result) { result.innerHTML = '⏳ 연결 테스트 중...'; result.style.color = '#666'; }
+  var result = document.getElementById('geminiTestResult');
+  if (result) { result.innerHTML = '⏳ 사용 가능한 모델 조회 중...'; result.style.color = '#666'; }
 
-  const key = localStorage.getItem('sajuon_gemini_key') || '';
+  var key = localStorage.getItem('sajuon_gemini_key') || '';
   if (!key) {
     if (result) { result.innerHTML = '❌ 저장된 API 키가 없습니다.'; result.style.color = '#c62828'; }
     showToast('❌ API 키 없음'); return;
   }
 
-  // 신규 계정 기준 사용 가능 모델 우선순위
-  // gemini-2.0-flash 는 신규 계정 사용 불가 → gemini-2.5-flash 우선
-  const MODELS = [
+  var reqBody = JSON.stringify({
+    contents: [{ role: 'user', parts: [{ text: '안녕' }] }],
+    generationConfig: { maxOutputTokens: 10 }
+  });
+
+  // ── 1단계: 모델 목록 조회 ──
+  var availableModels = [];
+  try {
+    var listRes = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models?key=' + key + '&pageSize=100'
+    );
+    if (listRes.ok) {
+      var listData = await listRes.json();
+      availableModels = (listData.models || [])
+        .filter(function(m) {
+          return (m.supportedGenerationMethods || []).indexOf('generateContent') !== -1;
+        })
+        .map(function(m) { return m.name.replace('models/', ''); });
+      if (result) result.innerHTML = '⏳ 사용 가능한 모델 ' + availableModels.length + '개 발견. 연결 테스트 중...';
+    } else {
+      var errD = await listRes.json().catch(function() { return {}; });
+      var errMsg = (errD && errD.error && errD.error.message) ? errD.error.message : ('HTTP ' + listRes.status);
+      if (result) { result.innerHTML = '❌ API 오류: ' + errMsg; result.style.color = '#c62828'; }
+      showToast('❌ API 키 오류');
+      return;
+    }
+  } catch(e) {
+    if (result) { result.innerHTML = '❌ 네트워크 오류: ' + e.message; result.style.color = '#c62828'; }
+    showToast('❌ 네트워크 오류'); return;
+  }
+
+  // ── 2단계: 우선순위 순으로 실제 연결 테스트 ──
+  // 신규 계정은 gemini-2.0-flash 사용 불가 → 목록에서 실제 있는 것 우선
+  var PRIORITY = [
     'gemini-2.5-flash',
-    'gemini-2.5-flash-preview-05-20',
+    'gemini-2.0-flash',
     'gemini-2.0-flash-lite',
     'gemini-2.0-flash-001',
     'gemini-1.5-flash',
     'gemini-1.5-flash-001',
     'gemini-1.5-pro',
+    'gemini-pro',
   ];
 
-  const reqBody = JSON.stringify({
-    contents: [{ role: 'user', parts: [{ text: '안녕' }] }],
-    generationConfig: { maxOutputTokens: 10 }
-  });
+  // 우선순위 목록 중 실제 가용 모델만 추출, 없으면 가용 모델 전체 시도
+  var toTest = PRIORITY.filter(function(m) { return availableModels.indexOf(m) !== -1; });
+  if (toTest.length === 0) toTest = availableModels.slice(0, 5); // 최대 5개
 
-  let successModel = null;
-  let lastErr = '';
+  var successModel = null;
+  var lastErr = '';
 
-  for (const model of MODELS) {
+  for (var i = 0; i < toTest.length; i++) {
+    var model = toTest[i];
     try {
-      if (result) result.innerHTML = `⏳ 테스트 중: <b>${model}</b>...`;
-      const r = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+      if (result) result.innerHTML = '⏳ 테스트 중: <b>' + model + '</b>...';
+      // generateContent로 먼저 테스트 (빠르고 안정적)
+      var r = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: reqBody }
       );
       if (r.ok) { successModel = model; break; }
-      const d = await r.json().catch(() => ({}));
-      lastErr = d?.error?.message || `HTTP ${r.status}`;
-    } catch(e) { lastErr = e.message; }
+      var d = await r.json().catch(function() { return {}; });
+      lastErr = (d && d.error && d.error.message) ? d.error.message : ('HTTP ' + r.status);
+    } catch(e2) { lastErr = e2.message; }
   }
 
   if (successModel) {
     localStorage.setItem('sajuon_gemini_model', successModel);
     localStorage.setItem('sajuon_gemini_ver',   'v1beta');
-    if (result) { result.innerHTML = `✅ 연결 성공! 모델: <b>${successModel}</b>`; result.style.color = '#2e7d32'; }
-    showToast(`✅ 연결 성공: ${successModel}`);
-    setTimeout(() => renderAISettings(document.getElementById('adminContent')), 500);
+    if (result) {
+      result.innerHTML = '✅ 연결 성공! 사용 모델: <b>' + successModel + '</b> (전체 ' + availableModels.length + '개 모델 중 선택)';
+      result.style.color = '#2e7d32';
+    }
+    showToast('✅ 연결 성공: ' + successModel);
+    setTimeout(function() { renderAISettings(document.getElementById('adminContent')); }, 600);
   } else {
-    if (result) { result.innerHTML = `❌ 연결 실패: ${lastErr}`; result.style.color = '#c62828'; }
+    if (result) {
+      result.innerHTML = '❌ 연결 실패: ' + lastErr +
+        '<br><small style="color:#888">사용 가능한 모델: ' + (availableModels.length > 0 ? availableModels.join(', ') : '없음') + '</small>';
+      result.style.color = '#c62828';
+    }
     showToast('❌ 연결 실패');
   }
 }
