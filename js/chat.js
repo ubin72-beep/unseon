@@ -773,6 +773,29 @@ function renderWelcome() {
   if (!msgs) return;
   const catName = CAT_KR_MAP[currentCat] || currentCat;
   const examples = getExamples(currentCat);
+
+  // 카테고리별 특별 안내 메시지
+  let specialNotice = '';
+  if (currentCat === '타로상담') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#2c3e50,#3498db);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">🃏</div>
+        <strong>타로 리딩 안내</strong><br/>
+        질문을 입력하면 <strong>78장 덱에서 카드를 자동으로 뽑아</strong> 해석해드립니다.<br/>
+        연애·직장·결정 고민 등 구체적인 질문일수록 정확한 리딩이 가능합니다.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">과거-현재-미래 / 관계 스프레드 / 켈틱 크로스 자동 선택</span>
+      </div>`;
+  } else if (currentCat === '점성술상담') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">🌙</div>
+        <strong>점성술 출생 차트 분석</strong><br/>
+        생년월일을 입력하면 <strong>태양궁·달 별자리·행성 위치를 정밀 계산</strong>해드립니다.<br/>
+        출생 시간까지 알려주시면 <strong>어센던트(상승궁)</strong>도 함께 분석됩니다.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1990년 3월 15일 오전 9시생</span>
+      </div>`;
+  }
+
   msgs.innerHTML = `
     <div class="chat-welcome">
       <div class="welcome-icon">${currentCatConfig?.icon || '🔮'}</div>
@@ -782,6 +805,7 @@ function renderWelcome() {
         생년월일시를 함께 알려주시면 더 정확한 분석이 가능합니다.<br/>
         <strong>상담 1건 ${currentCatConfig?.cost || 200}P 차감</strong>
       </p>
+      ${specialNotice}
       <div class="welcome-examples">
         <div class="welcome-examples-label">💡 예시 질문 클릭해서 바로 시작</div>
         ${examples.map(ex => `<button class="welcome-example-btn" onclick="setExample('${ex.replace(/'/g,'&#39;')}')">${ex}</button>`).join('')}
@@ -796,9 +820,46 @@ function getExamples(cat) {
     '궁합상담': ['저와 상대방의 궁합을 봐주세요', '결혼 상대로 잘 맞을까요?', '동업을 하려는데 이 분과 궁합이 어떤가요?'],
     '사업운재물운': ['올해 사업을 시작해도 좋을까요?', '지금 투자해도 괜찮을까요?', '올해 재물운이 어떤가요?'],
     '직업상담': ['이직을 고민 중인데 지금이 좋은 시기인가요?', '제 직무 적성이 궁금합니다', '승진 가능성이 있을까요?'],
-    '아이이름짓기': ['사주에 맞는 아이 이름을 추천해주세요', '이름의 획수도 함께 분석해주세요', '남자/여자 이름 후보를 알려주세요'],
-    '개명상담': ['현재 이름이 사주와 맞지 않는 것 같아요', '개명하면 운이 바뀔까요?', '어떤 이름이 좋을까요?'],
-    '타로상담': ['현재 상황에 대한 타로 한 장 뽑아주세요', '이 결정, 어떻게 생각하세요?', '지금 이 관계의 흐름은?'],
+    '아이이름짓기': [
+      '2026년 3월 15일 오전 8시생 여자아이입니다. 김씨 성에 맞는 이름 추천해주세요',
+      '2025년 12월 5일생 남자아이 이름 후보가 민준, 서준, 하준인데 어떤 이름이 좋나요?',
+      '음력 2026년 1월 20일 오후 2시생 남자아이 사주에 맞는 이름을 지어주세요'
+    ],
+    '개명상담': [
+      '현재 이름이 이지혜인데 사주와 잘 맞는지 분석해주세요. 1988년 5월 3일생입니다',
+      '개명을 고려 중입니다. 1993년 8월 15일생 여자인데 추천 이름 알려주세요',
+      '박씨 성에 사주 오행을 보완하는 개명 이름을 추천해주세요. 1990년 11월생입니다'
+    ],
+    '타로상담': [
+      '1995년 8월생인데요, 지금 직장 고민 타로 봐주세요',
+      '이 관계를 계속해야 할까요? 타로로 봐주세요',
+      '2026년 전반적인 흐름을 타로 3장으로 읽어주세요'
+    ],
+    '점성술상담': [
+      '1990년 3월 15일 오전 9시 서울 출생입니다. 출생 차트 분석해주세요',
+      '저는 쌍둥이자리인데 2026년 연애운이 어떤가요?',
+      '1985년 11월 5일생입니다. 태양궁과 달 별자리를 알려주세요'
+    ],
+    '사주보완이름': [
+      '1987년 3월생 이씨 성인데 사주 오행을 보완하는 이름을 추천해주세요',
+      '현재 이름 최성민인데 사주 오행과 잘 맞는지, 보완이 필요한지 분석해주세요',
+      '1995년 7월생 여성입니다. 사주에서 부족한 오행을 채우는 이름으로 바꾸고 싶어요'
+    ],
+    '브랜드네이밍': [
+      '카페 브랜드 이름으로 하나, 모도, 봄날 중 어떤 게 좋을까요?',
+      '온라인 쇼핑몰 창업 예정입니다. 여성의류 브랜드명을 추천해주세요',
+      '뷰티 브랜드 이름을 짓고 싶어요. 키워드는 자연, 순수, 빛입니다'
+    ],
+    '상호명상담': [
+      '한식당 상호명으로 어울리는 이름을 추천해주세요. 1978년생 사장입니다',
+      '미용실 상호명 후보가 헤어아트, 미인, 봄봄인데 어떤 게 좋을까요?',
+      '인테리어 회사 상호명을 분석해주세요. 현재 이름은 모던하우스입니다'
+    ],
+    '상호브랜드네이밍': [
+      'IT 스타트업 브랜드명을 추천해주세요. 키워드: 혁신, 연결, 미래',
+      '교육 브랜드 이름으로 배움터, 지식나무, 새빛 중 추천해주세요',
+      '반려동물용품 브랜드 네이밍 해주세요. 업종과 잘 맞는 오행 분석도 부탁드려요'
+    ],
     '2026병오년운세': ['2026년 전체 운세가 궁금합니다', '올해 조심해야 할 달은 언제인가요?', '올해 가장 좋은 달은 언제인가요?'],
     'default': ['지금 상황에 대해 분석해주세요', '올해 운세가 궁금합니다', '제 생년월일로 사주를 봐주세요'],
   };
@@ -1225,4 +1286,98 @@ function saveHistory(cat, cost, question) {
 document.addEventListener('DOMContentLoaded', () => {
   initPoints();
   chatInit();
+});
+
+// ===== 사주 입력 패널 =====
+function toggleSajuPanel() {
+  const panel = document.getElementById('sajuInputPanel');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  const btn = document.getElementById('sajuToggleBtn');
+  if (btn) btn.style.background = isOpen ? '#f5f5f5' : '#e8f5e9';
+}
+
+function updateSajuCalType() {
+  const isLunar = document.getElementById('calLunar')?.checked;
+  const leapLabel = document.getElementById('leapLabel');
+  if (leapLabel) leapLabel.style.display = isLunar ? 'flex' : 'none';
+  updateSajuPreview();
+}
+
+function updateSajuPreview() {
+  const preview = document.getElementById('sajuPreview');
+  if (!preview) return;
+
+  const year  = parseInt(document.getElementById('sajuYear')?.value);
+  const month = parseInt(document.getElementById('sajuMonth')?.value);
+  const day   = parseInt(document.getElementById('sajuDay')?.value);
+  const hourVal = parseInt(document.getElementById('sajuHour')?.value);
+  const isLunar = document.getElementById('calLunar')?.checked || false;
+  const isLeap  = document.getElementById('calLeap')?.checked || false;
+
+  if (!year || !month || !day) { preview.textContent = ''; return; }
+
+  if (typeof calcSaju !== 'function') { preview.textContent = ''; return; }
+
+  try {
+    const saju = calcSaju({ year, month, day, hour: isNaN(hourVal) ? -1 : hourVal, isLunar, isLeap });
+    if (saju.error) { preview.textContent = '⚠️ ' + saju.error; return; }
+    const s = saju.summary;
+    const calStr = isLunar ? '음력 ' : '양력 ';
+    const solStr = '→ 양력 ' + saju.solar.year + '/' + saju.solar.month + '/' + saju.solar.day;
+    preview.innerHTML =
+      (isLunar ? solStr + ' | ' : '') +
+      '연주: <b>' + s.yearPillar + '</b> 월주: <b>' + s.monthPillar + '</b> 일주: <b>' + s.dayPillar + '</b> 시주: <b>' + s.timePillar.split(' ')[0] + '</b>' +
+      ' | 용신: <b>' + s.yongsinStr + '</b>';
+  } catch(e) {
+    preview.textContent = '';
+  }
+}
+
+function applySajuInput() {
+  const year  = document.getElementById('sajuYear')?.value;
+  const month = document.getElementById('sajuMonth')?.value;
+  const day   = document.getElementById('sajuDay')?.value;
+  const hourSel = document.getElementById('sajuHour');
+  const hourVal = hourSel?.value;
+  const isLunar = document.getElementById('calLunar')?.checked || false;
+  const isLeap  = document.getElementById('calLeap')?.checked || false;
+
+  if (!year || !month || !day) {
+    appendSystemMsg('⚠️ 년, 월, 일을 모두 입력해주세요.');
+    return;
+  }
+
+  const calStr = isLunar ? '음력 ' : '';
+  const leapStr = isLeap ? ' 윤달' : '';
+  const hourLabel = hourSel?.options[hourSel.selectedIndex]?.text || '';
+  const timeStr = (hourVal === '-1' || hourVal === undefined) ? '' : ' ' + hourLabel;
+
+  const inputText = calStr + year + '년 ' + month + '월 ' + day + '일' + leapStr + timeStr;
+
+  const ta = document.getElementById('chatInput');
+  if (ta) {
+    // 기존 내용이 있으면 앞에 추가, 없으면 대입
+    if (ta.value.trim()) {
+      ta.value = inputText + ' ' + ta.value.trim();
+    } else {
+      ta.value = inputText;
+    }
+    autoResizeTextarea(ta);
+    ta.focus();
+  }
+
+  // 패널 닫기
+  document.getElementById('sajuInputPanel').style.display = 'none';
+  document.getElementById('sajuToggleBtn').style.background = '#f5f5f5';
+}
+
+// 사주 입력 필드 변경 시 미리보기 업데이트 (DOM 로드 후)
+document.addEventListener('DOMContentLoaded', function() {
+  ['sajuYear','sajuMonth','sajuDay','sajuHour'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateSajuPreview);
+    if (el) el.addEventListener('change', updateSajuPreview);
+  });
 });
