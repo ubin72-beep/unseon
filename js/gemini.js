@@ -1,6 +1,11 @@
 /* =========================================================
-   운세ON — js/gemini.js
-   Google Gemini API 연동 + 사주 명리 전문 AI 엔진
+   운세ON — js/gemini.js  (v3 — 2026-03-28 최종 안정화)
+   Google Gemini API 연동
+   
+   [핵심 변경사항]
+   - 모델을 하드코딩하지 않고 localStorage에서 동적으로 읽음
+   - testGeminiKey()가 저장한 모델/버전을 그대로 사용
+   - streamGenerateContent 실패 시 generateContent 폴백
    ========================================================= */
 
 // ===== API 키 관리 =====
@@ -12,28 +17,20 @@ function setGeminiKey(key) {
 }
 function hasGeminiKey() {
   const k = getGeminiKey();
-  return k && k.startsWith('AIza') && k.length > 20;
+  return !!(k && k.startsWith('AIza') && k.length > 20);
 }
 
-// ===== 모델 설정 (테스트에서 성공한 모델 자동 사용) =====
-// 모델 고정: gemini-2.0-flash / v1beta (콘솔에서 정상 확인됨)
-// gemini-2.0-flash 는 신규계정 사용불가 → gemini-2.5-flash 사용
-const GEMINI_MODEL = 'gemini-2.5-flash';
-const GEMINI_VER   = 'v1beta';
-
+// ===== 모델 설정 (admin.js testGeminiKey가 저장한 값 사용) =====
 function getGeminiModel() {
-  return localStorage.getItem('sajuon_gemini_model') || GEMINI_MODEL;
+  // testGeminiKey()가 성공 후 저장한 모델 사용
+  // 기본값은 gemini-2.5-flash (신규 계정도 지원)
+  return localStorage.getItem('sajuon_gemini_model') || 'gemini-2.5-flash';
 }
 function getGeminiVer() {
-  return localStorage.getItem('sajuon_gemini_ver') || GEMINI_VER;
+  return localStorage.getItem('sajuon_gemini_ver') || 'v1beta';
 }
-const GEMINI_API_URL = (key) => {
-  const model = getGeminiModel();
-  const ver   = getGeminiVer();
-  return `https://generativelanguage.googleapis.com/${ver}/models/${model}:streamGenerateContent?alt=sse&key=${key}`;
-};
 
-// ===== 카테고리별 한글명 =====
+// ===== 카테고리 한글명 =====
 const CAT_KR_GEMINI = {
   '연애운':'연애운','궁합상담':'궁합 상담','사업운재물운':'사업운·재물운','직업상담':'직업 상담',
   '썸재회':'썸·재회','결혼운':'결혼운','배우자복':'배우자복','소개팅흐름':'소개팅 흐름',
@@ -48,76 +45,38 @@ const CAT_KR_GEMINI = {
   '2026병오년운세':'2026 병오년 운세','종합운세상담':'종합 운세 상담',
 };
 
-// ===== 시스템 프롬프트 빌더 =====
+// ===== 시스템 프롬프트 =====
 function buildSystemPrompt(category) {
-  const catName = CAT_KR_GEMINI[category] || category;
+  const catName = CAT_KR_GEMINI[category] || category || '종합 운세';
 
-  return `당신은 운세ON 서비스의 전문 사주 명리 상담 AI입니다.
-수십 년 경력의 한국 전통 사주명리학 전문가로서 사용자에게 깊이 있고 따뜻한 운세 상담을 제공합니다.
-
-【현재 상담 분야】: ${catName}
-
-【핵심 원칙】
-1. 사주명리(四柱命理) 기반: 천간(天干)·지지(地支)·오행(五行)·십신(十神) 이론을 정확히 활용하여 분석
-2. 2026년 병오년(丙午年) 맥락: 丙(병화)·午(오화)의 강한 火 기운이 지배하는 해임을 염두에 두고 분석
-3. 사용자가 생년월일시를 제공하면 반드시 사주팔자(四柱八字)를 구성하여 분석
-4. 생년월일 없이 질문할 경우 일반 명리 흐름으로 분석하되, 정보 제공을 자연스럽게 유도
-5. 긍정적이고 희망적인 메시지를 전달하되, 주의사항도 균형 있게 안내
-6. 항상 한국어로 답변하며, 경어체(~습니다/~세요) 사용
-
-【사주팔자 분석 방법】
-- 생년: 연주(年柱) 천간·지지 도출
-- 생월: 월주(月柱) 천간·지지 도출
-- 생일: 일주(日柱) 천간·지지 도출 (일간이 본인의 핵심)
-- 생시: 시주(時柱) 천간·지지 도출
-- 오행 비율 계산 → 용신(用神)·기신(忌神) 도출
-- 대운(大運)·세운(歲運) 흐름 파악
-
-【천간 10개】: 甲(갑목) 乙(을목) 丙(병화) 丁(정화) 戊(무토) 己(기토) 庚(경금) 辛(신금) 壬(임수) 癸(계수)
-【지지 12개】: 子(자수) 丑(축토) 寅(인목) 卯(묘목) 辰(진토) 巳(사화) 午(오화) 未(미토) 申(신금) 酉(유금) 戌(술토) 亥(해수)
-【육십갑자 연도 기준】: 2026=병오, 2025=을사, 2024=갑진, 2023=계묘, 2022=임인, 2021=신축, 2020=경자, 2000=경진, 1990=경오, 1980=경신, 1970=경술, 1960=경자
-
-【출력 형식】
-반드시 아래 구조로 HTML 형식으로 답변하세요:
-
-<h4>[이모지] [분야명] 분석 결과</h4>
-
-[사주팔자가 있을 경우]
-<div class="saju-pillars">
-  <div class="pillar"><span class="pillar-label">연주</span><span class="pillar-gan">[천간]</span><span class="pillar-ji">[지지]</span></div>
-  <div class="pillar"><span class="pillar-label">월주</span><span class="pillar-gan">[천간]</span><span class="pillar-ji">[지지]</span></div>
-  <div class="pillar"><span class="pillar-label">일주</span><span class="pillar-gan">[천간]</span><span class="pillar-ji">[지지]</span></div>
-  <div class="pillar"><span class="pillar-label">시주</span><span class="pillar-gan">[천간]</span><span class="pillar-ji">[지지]</span></div>
-</div>
-<div class="saju-ohaeng">
-  <span class="oh-wood">목(木) [비율]%</span>
-  <span class="oh-fire">화(火) [비율]%</span>
-  <span class="oh-earth">토(土) [비율]%</span>
-  <span class="oh-metal">금(金) [비율]%</span>
-  <span class="oh-water">수(水) [비율]%</span>
-</div>
-
-<p>[핵심 분석 내용 — 2~3문장, 구체적이고 개인화된 내용]</p>
-
-<ul>
-<li>🌟 <strong>[포인트 1 제목]</strong>: [구체적 내용]</li>
-<li>📅 <strong>[포인트 2 제목]</strong>: [구체적 내용]</li>
-<li>⚠️ <strong>[포인트 3 제목]</strong>: [주의사항]</li>
-<li>💡 <strong>[포인트 4 제목]</strong>: [조언]</li>
-<li>🍀 <strong>행운 정보</strong>: 행운의 색 [색상] · 방향 [방향] · 숫자 [숫자]</li>
-</ul>
-
-<p class="saju-closing">[마무리 메시지 — 추가 정보 요청 또는 희망적 마무리]</p>
-
-【주의사항】
-- 의료·법률·재정 결정에 대한 확실한 보장은 절대 하지 마세요
-- 불안감을 조성하는 표현은 피하세요
-- 항상 "참고·오락 목적"임을 자연스럽게 유지하세요
-- 마크다운(**, ##) 대신 반드시 HTML 태그를 사용하세요
-- 응답은 500~800자 내외로 적절히 유지하세요`;
+  return '당신은 운세ON의 전문 사주명리 상담 AI입니다.\n\n' +
+    '【현재 상담 분야】: ' + catName + '\n\n' +
+    '【반드시 지켜야 할 규칙】\n' +
+    '1. 사용자가 보낸 질문을 정확히 읽고, 그 질문에 맞는 개인화된 답변을 하세요.\n' +
+    '2. 모든 질문에 똑같은 답변을 절대 하지 마세요. 질문마다 다른 내용으로 답하세요.\n' +
+    '3. 사용자가 생년월일을 알려주면 반드시 천간·지지를 분석하여 사주팔자를 답변에 반영하세요.\n' +
+    '4. 생년월일이 없으면 일반적인 흐름으로 먼저 답하고, 더 정확한 분석을 위해 생년월일을 요청하세요.\n' +
+    '5. 2026년은 병오년(丙午年)으로 火 기운이 강한 해입니다. 이를 답변에 반영하세요.\n' +
+    '6. 한국어 경어체(~습니다, ~세요)로 답변하세요.\n' +
+    '7. 답변은 HTML 형식으로 작성하세요. **굵게**나 ##제목 같은 마크다운은 절대 사용하지 마세요.\n' +
+    '8. 답변 길이는 300~600자로 적절히 유지하세요.\n\n' +
+    '【HTML 답변 형식】\n' +
+    '<h4>[이모지] [분야] 상담 결과</h4>\n' +
+    '<p>[사용자 질문에 맞는 핵심 분석 내용]</p>\n' +
+    '<ul>\n' +
+    '  <li>🌟 <strong>[포인트1]</strong>: [내용]</li>\n' +
+    '  <li>📅 <strong>[포인트2]</strong>: [내용]</li>\n' +
+    '  <li>⚠️ <strong>[주의사항]</strong>: [내용]</li>\n' +
+    '  <li>💡 <strong>[조언]</strong>: [내용]</li>\n' +
+    '</ul>\n' +
+    '<p class="saju-closing">[마무리 문장]</p>\n\n' +
+    '【천간/지지 참고】\n' +
+    '천간: 甲(갑)木 乙(을)木 丙(병)火 丁(정)火 戊(무)土 己(기)土 庚(경)金 辛(신)金 壬(임)水 癸(계)水\n' +
+    '지지: 子(자)水 丑(축)土 寅(인)木 卯(묘)木 辰(진)土 巳(사)火 午(오)火 未(미)土 申(신)金 酉(유)金 戌(술)土 亥(해)水\n' +
+    '연도 간지: 2026=병오 2025=을사 2024=갑진 2023=계묘 2000=경진 1990=경오 1980=경신 1970=경술 1960=경자';
 }
 
-// ===== 대화 히스토리 (연속 대화 지원) =====
+// ===== 대화 히스토리 =====
 let conversationHistory = [];
 
 function resetConversation() {
@@ -125,14 +84,13 @@ function resetConversation() {
 }
 
 function addToHistory(role, text) {
-  conversationHistory.push({ role, parts: [{ text }] });
-  // 최대 10턴(20개 메시지)만 유지
+  conversationHistory.push({ role: role, parts: [{ text: text }] });
   if (conversationHistory.length > 20) {
-    conversationHistory = conversationHistory.slice(conversationHistory.length - 20);
+    conversationHistory = conversationHistory.slice(-20);
   }
 }
 
-// ===== Gemini 스트리밍 API 호출 =====
+// ===== Gemini 스트리밍 호출 (메인 함수) =====
 async function callGeminiStream(category, userMessage, onChunk, onDone, onError) {
   const key = getGeminiKey();
   if (!key) {
@@ -140,18 +98,19 @@ async function callGeminiStream(category, userMessage, onChunk, onDone, onError)
     return;
   }
 
-  // 대화 히스토리에 사용자 메시지 추가
-  addToHistory('user', userMessage);
+  // 현재 저장된 모델/버전 사용
+  const model = getGeminiModel();
+  const ver   = getGeminiVer();
 
-  const systemPrompt = buildSystemPrompt(category);
+  addToHistory('user', userMessage);
 
   const requestBody = {
     system_instruction: {
-      parts: [{ text: systemPrompt }]
+      parts: [{ text: buildSystemPrompt(category) }]
     },
     contents: conversationHistory,
     generationConfig: {
-      temperature: 0.85,
+      temperature: 0.9,
       topK: 40,
       topP: 0.95,
       maxOutputTokens: 1500,
@@ -165,20 +124,36 @@ async function callGeminiStream(category, userMessage, onChunk, onDone, onError)
     ]
   };
 
+  // 스트리밍 URL
+  const streamUrl = 'https://generativelanguage.googleapis.com/' + ver + '/models/' + model + ':streamGenerateContent?alt=sse&key=' + key;
+
   try {
-    const res = await fetch(GEMINI_API_URL(key), {
+    const res = await fetch(streamUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
     });
 
     if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      const errMsg = errData?.error?.message || `HTTP ${res.status}`;
-      if (res.status === 400) onError(`API 요청 오류: ${errMsg}`);
-      else if (res.status === 403) onError('API 키가 유효하지 않습니다. 관리자 페이지에서 키를 확인해주세요.');
-      else if (res.status === 429) onError('요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
-      else onError(`Gemini 오류: ${errMsg}`);
+      const errData = await res.json().catch(function() { return {}; });
+      const errMsg  = (errData && errData.error && errData.error.message) ? errData.error.message : ('HTTP ' + res.status);
+
+      // 모델 관련 오류 시 자동 재시도
+      if (res.status === 400 && errMsg.indexOf('no longer available') !== -1) {
+        // 모델이 사용 불가 → 폴백 모델로 재시도
+        await _retryWithFallback(category, userMessage, requestBody, key, onChunk, onDone, onError, model);
+        return;
+      }
+
+      if (res.status === 403) {
+        onError('API 키가 유효하지 않습니다. 관리자 페이지에서 API 키를 다시 설정해주세요.');
+      } else if (res.status === 429) {
+        onError('요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+      } else if (res.status === 400) {
+        onError('요청 오류: ' + errMsg);
+      } else {
+        onError('Gemini 오류: ' + errMsg);
+      }
       return;
     }
 
@@ -189,67 +164,157 @@ async function callGeminiStream(category, userMessage, onChunk, onDone, onError)
     let buffer    = '';
 
     while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+      const chunk = await reader.read();
+      if (chunk.done) break;
 
-      buffer += decoder.decode(value, { stream: true });
+      buffer += decoder.decode(chunk.value, { stream: true });
       const lines = buffer.split('\n');
-      buffer = lines.pop(); // 마지막 불완전 줄 보관
+      buffer = lines.pop();
 
-      for (const line of lines) {
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
         if (!line.startsWith('data: ')) continue;
         const jsonStr = line.slice(6).trim();
         if (jsonStr === '[DONE]') continue;
         try {
           const parsed = JSON.parse(jsonStr);
-          const chunk  = parsed?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          if (chunk) {
-            fullText += chunk;
+          const text = parsed &&
+                       parsed.candidates &&
+                       parsed.candidates[0] &&
+                       parsed.candidates[0].content &&
+                       parsed.candidates[0].content.parts &&
+                       parsed.candidates[0].content.parts[0] &&
+                       parsed.candidates[0].content.parts[0].text
+                       ? parsed.candidates[0].content.parts[0].text : '';
+          if (text) {
+            fullText += text;
             onChunk(fullText);
           }
-        } catch (_) {
-          // JSON 파싱 실패 무시
-        }
+        } catch (_) {}
       }
     }
 
-    // 응답을 히스토리에 추가
     if (fullText) {
       addToHistory('model', fullText);
       onDone(fullText);
     } else {
-      onError('응답을 받지 못했습니다. 다시 시도해주세요.');
+      // 스트리밍 응답이 비어 있으면 non-streaming으로 폴백
+      console.warn('[Gemini] 스트리밍 응답 없음, generateContent로 폴백');
+      await _callGeminiNonStream(model, ver, key, requestBody, onChunk, onDone, onError);
     }
 
   } catch (err) {
     if (err.name === 'AbortError') return;
-    console.error('Gemini API Error:', err);
-    onError(`네트워크 오류가 발생했습니다: ${err.message}`);
+    // 스트리밍 실패 시 non-streaming 폴백
+    console.warn('[Gemini] 스트리밍 오류, generateContent로 폴백:', err.message);
+    await _callGeminiNonStream(model, ver, key, requestBody, onChunk, onDone, onError);
   }
 }
 
-// ===== 마크다운 → HTML 변환 (Gemini가 마크다운으로 응답할 경우 대비) =====
+// ===== non-streaming 폴백 (streamGenerateContent 실패 시) =====
+async function _callGeminiNonStream(model, ver, key, requestBody, onChunk, onDone, onError) {
+  try {
+    var url = 'https://generativelanguage.googleapis.com/' + ver + '/models/' + model + ':generateContent?key=' + key;
+    var res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!res.ok) {
+      var errData = await res.json().catch(function() { return {}; });
+      var errMsg = (errData && errData.error && errData.error.message) ? errData.error.message : ('HTTP ' + res.status);
+      // 이 모델도 안 되면 폴백 목록 시도
+      await _retryWithFallback('', '', requestBody, key, onChunk, onDone, onError, model);
+      return;
+    }
+
+    var data = await res.json();
+    var text = data &&
+               data.candidates &&
+               data.candidates[0] &&
+               data.candidates[0].content &&
+               data.candidates[0].content.parts &&
+               data.candidates[0].content.parts[0] &&
+               data.candidates[0].content.parts[0].text
+               ? data.candidates[0].content.parts[0].text : '';
+
+    if (text) {
+      onChunk(text);
+      addToHistory('model', text);
+      onDone(text);
+    } else {
+      onError('응답을 받지 못했습니다. 관리자 페이지에서 연결 테스트를 다시 실행해주세요.');
+    }
+  } catch (e) {
+    onError('네트워크 오류: ' + e.message);
+  }
+}
+
+// ===== 폴백: 다른 모델로 재시도 (non-streaming, 안정적) =====
+async function _retryWithFallback(category, userMessage, requestBody, key, onChunk, onDone, onError, failedModel) {
+  var FALLBACK_MODELS = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-001',
+  ];
+
+  for (var i = 0; i < FALLBACK_MODELS.length; i++) {
+    var model = FALLBACK_MODELS[i];
+    if (model === failedModel) continue;
+
+    try {
+      var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key;
+      var res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!res.ok) continue;
+
+      var data = await res.json();
+      var text = data &&
+                 data.candidates &&
+                 data.candidates[0] &&
+                 data.candidates[0].content &&
+                 data.candidates[0].content.parts &&
+                 data.candidates[0].content.parts[0] &&
+                 data.candidates[0].content.parts[0].text
+                 ? data.candidates[0].content.parts[0].text : '';
+
+      if (text) {
+        // 성공한 모델로 업데이트
+        localStorage.setItem('sajuon_gemini_model', model);
+        localStorage.setItem('sajuon_gemini_ver',   'v1beta');
+        onChunk(text);
+        addToHistory('model', text);
+        onDone(text);
+        return;
+      }
+    } catch (_) {}
+  }
+
+  onError('사용 가능한 모델이 없습니다. 관리자 페이지에서 연결 테스트를 다시 실행해주세요.');
+}
+
+// ===== 마크다운 → HTML 변환 =====
 function convertMarkdownToHtml(text) {
   return text
-    // 코드블록 제거
     .replace(/```[\s\S]*?```/g, '')
-    // **bold**
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    // *italic*
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    // ### 헤딩 → h4
     .replace(/^###\s+(.+)$/gm, '<h4>$1</h4>')
-    .replace(/^##\s+(.+)$/gm, '<h4>$1</h4>')
-    .replace(/^#\s+(.+)$/gm, '<h4>$1</h4>')
-    // - 항목 → li (연속된 것은 ul로 감싸기)
+    .replace(/^##\s+(.+)$/gm,  '<h4>$1</h4>')
+    .replace(/^#\s+(.+)$/gm,   '<h4>$1</h4>')
     .replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/gs, (m) => `<ul>${m}</ul>`)
-    // 줄바꿈
+    .replace(/(<li>[\s\S]*?<\/li>\n?)+/g, function(m) { return '<ul>' + m + '</ul>'; })
     .replace(/\n\n/g, '</p><p>')
     .replace(/\n/g, '<br/>');
 }
 
-// ===== API 연결 테스트 =====
+// ===== API 연결 테스트 (admin.js의 testGeminiKey와 병행) =====
 async function testGeminiConnection() {
   const key = getGeminiKey();
   if (!key) return { ok: false, msg: 'API 키가 없습니다' };
@@ -257,7 +322,7 @@ async function testGeminiConnection() {
   const ver   = getGeminiVer();
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+      'https://generativelanguage.googleapis.com/' + ver + '/models/' + model + ':generateContent?key=' + key,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -267,13 +332,10 @@ async function testGeminiConnection() {
         })
       }
     );
-    if (res.ok) {
-      return { ok: true, msg: `✅ 연결 성공! 모델: ${model}` };
-    } else {
-      const d = await res.json().catch(() => ({}));
-      return { ok: false, msg: `❌ ${d?.error?.message || 'HTTP ' + res.status}` };
-    }
+    if (res.ok) return { ok: true, msg: '✅ 연결 성공! 모델: ' + model };
+    const d = await res.json().catch(function() { return {}; });
+    return { ok: false, msg: '❌ ' + ((d && d.error && d.error.message) ? d.error.message : ('HTTP ' + res.status)) };
   } catch (e) {
-    return { ok: false, msg: `❌ 네트워크 오류: ${e.message}` };
+    return { ok: false, msg: '❌ 네트워크 오류: ' + e.message };
   }
 }
