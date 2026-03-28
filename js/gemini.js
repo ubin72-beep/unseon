@@ -16,11 +16,16 @@ function hasGeminiKey() {
 }
 
 // ===== 모델 설정 (테스트에서 성공한 모델 자동 사용) =====
+// 모델 고정: gemini-2.0-flash / v1beta (콘솔에서 정상 확인됨)
+// gemini-2.0-flash 는 신규계정 사용불가 → gemini-2.5-flash 사용
+const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_VER   = 'v1beta';
+
 function getGeminiModel() {
-  return localStorage.getItem('sajuon_gemini_model') || 'gemini-1.5-flash-latest';
+  return localStorage.getItem('sajuon_gemini_model') || GEMINI_MODEL;
 }
 function getGeminiVer() {
-  return localStorage.getItem('sajuon_gemini_ver') || 'v1beta';
+  return localStorage.getItem('sajuon_gemini_ver') || GEMINI_VER;
 }
 const GEMINI_API_URL = (key) => {
   const model = getGeminiModel();
@@ -252,7 +257,7 @@ async function testGeminiConnection() {
   const ver   = getGeminiVer();
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/${ver}/models/${model}:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
