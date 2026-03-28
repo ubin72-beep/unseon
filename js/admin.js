@@ -1172,8 +1172,12 @@ function renderAISettings(container) {
           '</div>' +
           '<small id="geminiKeyMsg" style="display:block;margin-top:8px;color:#666">🔒 키는 이 브라우저의 localStorage에만 저장됩니다. 서버로 전송되지 않습니다.</small>' +
         '</div>' +
-        '<button onclick="testGeminiKey()" style="padding:10px 20px;background:#1565c0;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:600">🔌 연결 테스트</button>' +
-        '<span id="geminiTestResult" style="margin-left:12px;font-size:0.88rem"></span>' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">' +
+          '<button onclick="testGeminiKey()" style="padding:10px 20px;background:#1565c0;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:600">🔌 연결 테스트</button>' +
+          '<button onclick="listGeminiModels()" style="padding:10px 16px;background:#37474f;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.85rem">📋 모델 목록 조회</button>' +
+        '</div>' +
+        '<div id="geminiTestResult" style="font-size:0.88rem;margin-bottom:4px"></div>' +
+        '<div id="geminiModelInfo" style="font-size:0.8rem;color:#888"></div>' +
       '</div>' +
     '</div>' +
 
@@ -1253,26 +1257,27 @@ function deleteGeminiKey() {
 
 async function testGeminiKey() {
   const result = document.getElementById('geminiTestResult');
-  if (result) { result.textContent = '⏳ 연결 테스트 중...'; result.style.color = '#666'; }
+  if (result) { result.innerHTML = '⏳ 연결 테스트 중...'; result.style.color = '#666'; }
 
   const key = localStorage.getItem('sajuon_gemini_key') || '';
   if (!key) {
-    const msg = '❌ 저장된 API 키가 없습니다. 먼저 키를 입력하고 저장하세요.';
-    if (result) { result.textContent = msg; result.style.color = '#c62828'; }
-    showToast(msg); return;
+    if (result) { result.innerHTML = '❌ 저장된 API 키가 없습니다.'; result.style.color = '#c62828'; }
+    showToast('❌ API 키 없음'); return;
   }
 
-  // 시도할 모델 목록 (순서대로 fallback)
-  const MODELS_TO_TRY = [
-    { ver: 'v1beta', name: 'gemini-1.5-flash-latest' },
-    { ver: 'v1beta', name: 'gemini-1.5-flash' },
-    { ver: 'v1beta', name: 'gemini-1.5-pro-latest' },
-    { ver: 'v1',     name: 'gemini-1.5-flash-latest' },
-    { ver: 'v1',     name: 'gemini-1.5-flash' },
-    { ver: 'v1beta', name: 'gemini-pro' },
+  // 신규 계정 기준 사용 가능 모델 우선순위
+  // gemini-2.0-flash 는 신규 계정 사용 불가 → gemini-2.5-flash 우선
+  const MODELS = [
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-preview-05-20',
+    'gemini-2.0-flash-lite',
+    'gemini-2.0-flash-001',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-001',
+    'gemini-1.5-pro',
   ];
 
-  const body = JSON.stringify({
+  const reqBody = JSON.stringify({
     contents: [{ role: 'user', parts: [{ text: '안녕' }] }],
     generationConfig: { maxOutputTokens: 10 }
   });
@@ -1280,34 +1285,58 @@ async function testGeminiKey() {
   let successModel = null;
   let lastErr = '';
 
-  for (const m of MODELS_TO_TRY) {
+  for (const model of MODELS) {
     try {
-      if (result) result.textContent = `⏳ 시도 중: ${m.name} (${m.ver})...`;
-      const url = `https://generativelanguage.googleapis.com/${m.ver}/models/${m.name}:generateContent?key=${key}`;
-      const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body });
-      if (r.ok) { successModel = m; break; }
+      if (result) result.innerHTML = `⏳ 테스트 중: <b>${model}</b>...`;
+      const r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: reqBody }
+      );
+      if (r.ok) { successModel = model; break; }
       const d = await r.json().catch(() => ({}));
       lastErr = d?.error?.message || `HTTP ${r.status}`;
     } catch(e) { lastErr = e.message; }
   }
 
   if (successModel) {
-    // 성공한 모델로 gemini.js 설정 업데이트
-    const successMsg = `✅ 연결 성공! 모델: ${successModel.name}`;
-    if (result) { result.textContent = successMsg; result.style.color = '#2e7d32'; }
-    showToast(successMsg);
-    // gemini.js 런타임에도 즉시 반영
-    try {
-      window._GEMINI_MODEL_OVERRIDE = successModel.name;
-      window._GEMINI_VER_OVERRIDE   = successModel.ver;
-    } catch(e) {}
-    // localStorage에 성공 모델 저장
-    localStorage.setItem('sajuon_gemini_model', successModel.name);
-    localStorage.setItem('sajuon_gemini_ver',   successModel.ver);
+    localStorage.setItem('sajuon_gemini_model', successModel);
+    localStorage.setItem('sajuon_gemini_ver',   'v1beta');
+    if (result) { result.innerHTML = `✅ 연결 성공! 모델: <b>${successModel}</b>`; result.style.color = '#2e7d32'; }
+    showToast(`✅ 연결 성공: ${successModel}`);
+    setTimeout(() => renderAISettings(document.getElementById('adminContent')), 500);
   } else {
-    const errMsg = `❌ 모든 모델 연결 실패. 마지막 오류: ${lastErr}`;
-    if (result) { result.textContent = errMsg; result.style.color = '#c62828'; }
-    showToast('❌ API 연결 실패 — 오류 내용을 확인하세요');
+    if (result) { result.innerHTML = `❌ 연결 실패: ${lastErr}`; result.style.color = '#c62828'; }
+    showToast('❌ 연결 실패');
+  }
+}
+
+// ── 사용 가능한 모델 목록 조회 및 표시 ──
+async function listGeminiModels() {
+  const result = document.getElementById('geminiTestResult');
+  const info   = document.getElementById('geminiModelInfo');
+  if (result) { result.innerHTML = '⏳ 모델 목록 조회 중...'; result.style.color = '#666'; }
+
+  const key = localStorage.getItem('sajuon_gemini_key') || '';
+  if (!key) { if (result) { result.innerHTML = '❌ API 키가 없습니다'; result.style.color = '#c62828'; } return; }
+
+  try {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}&pageSize=50`);
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      if (result) { result.innerHTML = `❌ ${d?.error?.message || 'HTTP ' + r.status}`; result.style.color = '#c62828'; }
+      return;
+    }
+    const data = await r.json();
+    const models = (data.models || []).filter(m => (m.supportedGenerationMethods||[]).includes('generateContent'));
+    if (models.length === 0) {
+      if (result) { result.innerHTML = '❌ generateContent 지원 모델이 없습니다. <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank" style="color:#1565c0">API 활성화 →</a>'; result.style.color = '#c62828'; }
+      return;
+    }
+    const listHtml = models.map(m => `<span style="display:inline-block;background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:4px;margin:2px;font-size:0.8rem">${m.name.replace('models/','')}</span>`).join('');
+    if (result) { result.innerHTML = `✅ 사용 가능한 모델 ${models.length}개 발견`; result.style.color = '#2e7d32'; }
+    if (info)   { info.innerHTML = listHtml; }
+  } catch(e) {
+    if (result) { result.innerHTML = `❌ 네트워크 오류: ${e.message}`; result.style.color = '#c62828'; }
   }
 }
 
@@ -1319,6 +1348,7 @@ window.saveGeminiKey      = saveGeminiKey;
 window.deleteGeminiKey    = deleteGeminiKey;
 window.testGeminiKey      = testGeminiKey;
 window.toggleKeyVisibility = toggleKeyVisibility;
+window.listGeminiModels   = listGeminiModels;
 
 // =========================================
 // 초기화
