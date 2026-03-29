@@ -134,7 +134,9 @@ body.admin-body {
 .admin-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 28px 28px 40px;
+  min-height: 0;
 }
 .admin-content::-webkit-scrollbar { width: 5px; }
 .admin-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }

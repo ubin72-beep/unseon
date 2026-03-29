@@ -128,26 +128,77 @@ body.chat-page {
 /* 환영 메시지 */
 .chat-welcome {
   text-align: center;
-  padding: 40px 20px;
-  max-width: 500px;
+  padding: 40px 24px 28px;
+  max-width: 540px;
   margin: 0 auto;
+  animation: welcomeIn 0.5s ease;
 }
-.welcome-icon { font-size: 3.5rem; margin-bottom: 16px; }
-.welcome-title { font-size: 1.4rem; font-weight: 800; color: var(--text-dark); margin-bottom: 10px; }
-.welcome-sub { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 24px; }
-.welcome-examples { display: flex; flex-direction: column; gap: 8px; }
+@keyframes welcomeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+.welcome-icon {
+  font-size: 3.8rem;
+  margin-bottom: 16px;
+  display: block;
+  animation: iconFloat 3s ease-in-out infinite;
+}
+@keyframes iconFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+.welcome-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.welcome-sub {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  line-height: 1.75;
+  margin-bottom: 26px;
+}
+.welcome-sub strong { color: var(--accent-dark); }
+.welcome-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+.welcome-examples-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
 .welcome-example-btn {
-  background: var(--bg-base);
+  background: var(--white);
   border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 12px 16px;
+  padding: 12px 18px;
   text-align: left;
   font-size: 0.88rem;
   color: var(--text-body);
   transition: all 0.2s;
   cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.welcome-example-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-pale); }
+.welcome-example-btn::before {
+  content: '💬';
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+.welcome-example-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-pale);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
+}
 
 /* 메시지 버블 */
 .msg-row {
@@ -307,6 +358,180 @@ body.chat-page {
 .modal p strong { color: var(--primary); }
 .modal-actions { display: flex; flex-direction: column; gap: 10px; }
 .modal-actions .btn { justify-content: center; }
+
+/* ===== Gemini API 키 경고 배너 ===== */
+.gemini-key-alert {
+  background: linear-gradient(135deg, #c62828, #e53935);
+  color: white;
+  padding: 10px 0;
+  font-size: 0.88rem;
+  position: sticky;
+  top: var(--header-h);
+  z-index: 500;
+}
+.btn-alert-link {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.4);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-alert-link:hover { background: rgba(255,255,255,0.35); }
+
+/* ===== API 키 배너 (채팅 내부) ===== */
+.api-key-banner {
+  background: linear-gradient(135deg, #fff8e1, #fffde7);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 0;
+  animation: msgIn 0.3s ease;
+}
+.api-key-banner.shake {
+  animation: shake 0.4s ease;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-8px); }
+  75%      { transform: translateX(8px); }
+}
+.api-key-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  flex-wrap: wrap;
+}
+.api-key-banner-icon { font-size: 2rem; flex-shrink: 0; }
+.api-key-banner-text { flex: 1; min-width: 200px; }
+.api-key-banner-text strong { display: block; color: var(--text-dark); margin-bottom: 4px; }
+.api-key-banner-text p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+.api-key-banner-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-sm { padding: 6px 14px !important; font-size: 0.82rem !important; }
+
+/* ===== 인라인 API 키 입력 폼 ===== */
+.inline-key-form {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  animation: msgIn 0.3s ease;
+}
+.inline-key-inner {
+  padding: 18px 20px;
+}
+.inline-key-inner label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+  margin-bottom: 10px;
+}
+.inline-key-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.inline-key-inner small {
+  color: var(--text-light);
+  font-size: 0.78rem;
+  display: block;
+}
+.inline-key-inner small a { color: var(--primary); }
+
+/* ===== 스트리밍 버블 ===== */
+.streaming-bubble {
+  position: relative;
+}
+.streaming-bubble::after {
+  content: '▋';
+  display: inline-block;
+  color: var(--primary);
+  animation: cursorBlink 0.7s ease infinite;
+  font-size: 0.9em;
+  vertical-align: text-bottom;
+}
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.streaming-badge {
+  background: linear-gradient(135deg, var(--primary-pale), #e8f5e0);
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  animation: pulse 1.5s ease infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+/* ===== 사주팔자 4주 표시 ===== */
+.saju-pillars {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0;
+  justify-content: center;
+}
+.pillar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(180deg, var(--primary-pale), #fff);
+  border: 1.5px solid var(--primary-light);
+  border-radius: 10px;
+  padding: 10px 16px;
+  min-width: 64px;
+  gap: 4px;
+}
+.pillar-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.pillar-gan {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--primary-dark);
+  line-height: 1;
+}
+.pillar-ji {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+  line-height: 1;
+}
+
+/* ===== 오행 비율 바 ===== */
+.saju-ohaeng {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 10px 0 14px;
+  justify-content: center;
+}
+.oh-wood  { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+.oh-fire  { background: #fce4ec; color: #c62828; border: 1px solid #f48fb1; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+.oh-earth { background: #fff8e1; color: #f57f17; border: 1px solid #ffe082; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+.oh-metal { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+.oh-water { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+
+/* ===== 마무리 문구 ===== */
+.saju-closing {
+  background: var(--primary-pale);
+  border-left: 3px solid var(--primary);
+  padding: 10px 14px;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.88rem;
+  color: var(--primary-dark);
+  margin-top: 12px !important;
+}
 
 /* ===== 반응형 ===== */
 @media (max-width: 768px) {
