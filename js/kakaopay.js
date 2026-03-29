@@ -84,10 +84,55 @@ function selectPlan(planKey) {
   if (card) card.classList.add('selected');
 }
 
+/* ── 로그인 여부 확인 ── */
+function requireLoginForPayment() {
+  const user = getCurrentUserInfo();
+  if (!user || !user.id) {
+    // 결제 후 돌아올 페이지 저장
+    sessionStorage.setItem('sajuon_auth_redirect', 'pricing.html');
+    // 로그인 안내 모달 표시
+    showLoginRequiredModal();
+    return false;
+  }
+  return true;
+}
+
+/* ── 로그인 필요 모달 ── */
+function showLoginRequiredModal() {
+  let modal = document.getElementById('loginRequiredModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'loginRequiredModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center';
+    modal.innerHTML = `
+      <div style="background:#fff;border-radius:20px;padding:40px 32px;max-width:380px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+        <div style="font-size:3rem;margin-bottom:12px">🔐</div>
+        <h3 style="font-size:1.25rem;font-weight:700;color:#1a1a2e;margin-bottom:8px">로그인이 필요합니다</h3>
+        <p style="font-size:0.9rem;color:#666;margin-bottom:8px">포인트 충전은 회원만 이용 가능합니다.</p>
+        <p style="font-size:0.85rem;color:#999;margin-bottom:28px">가입 즉시 <strong style="color:#2e7d32">500P 무료</strong> 지급!</p>
+        <div style="display:flex;gap:10px;justify-content:center">
+          <a href="auth.html?tab=register" style="flex:1;padding:12px;background:#1b5e20;color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.92rem">
+            <i class="fas fa-user-plus"></i> 회원가입
+          </a>
+          <a href="auth.html" style="flex:1;padding:12px;background:#f5f5f5;color:#333;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.92rem;border:1.5px solid #ddd">
+            <i class="fas fa-sign-in-alt"></i> 로그인
+          </a>
+        </div>
+        <button onclick="document.getElementById('loginRequiredModal').style.display='none'" style="margin-top:14px;background:none;border:none;color:#aaa;font-size:0.82rem;cursor:pointer">닫기</button>
+      </div>`;
+    document.body.appendChild(modal);
+  } else {
+    modal.style.display = 'flex';
+  }
+}
+
 /* ── 카카오페이 결제 시작 ── */
 function startKakaoPay(planKey) {
   const plan = PLANS[planKey];
   if (!plan) { alert('플랜 정보를 찾을 수 없습니다.'); return; }
+
+  // ★ 로그인 체크 — 비로그인 시 차단
+  if (!requireLoginForPayment()) return;
 
   selectedPlan = planKey;
 
@@ -230,10 +275,28 @@ function runRealKakaoPay(plan) {
 
 /* ── 결제 완료 처리 ── */
 function completePayment(plan, orderId, pgToken) {
-  // 포인트 지급
+  // 포인트 지급 (localStorage)
   const currentPts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
   const newPts = currentPts + plan.point;
   localStorage.setItem('sajuon_points', String(newPts));
+
+  // ★ 사용자 계정(sajuon_users) points 필드도 동기화
+  try {
+    const currentUser = getCurrentUserInfo();
+    if (currentUser && currentUser.id) {
+      const users = JSON.parse(localStorage.getItem('sajuon_users') || '[]');
+      const idx = users.findIndex(u => u.id === currentUser.id);
+      if (idx !== -1) {
+        users[idx].points = newPts;
+        localStorage.setItem('sajuon_users', JSON.stringify(users));
+        // 현재 세션 사용자 정보도 업데이트
+        const updatedUser = { ...currentUser, points: newPts };
+        localStorage.setItem('sajuon_current_user', JSON.stringify(updatedUser));
+      }
+    }
+  } catch(e) {
+    console.warn('[Payment] 사용자 계정 포인트 동기화 실패:', e);
+  }
 
   // 이용 내역 저장
   const hist = JSON.parse(localStorage.getItem('sajuon_history') || '[]');

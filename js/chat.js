@@ -626,6 +626,16 @@ let isTyping = false;
 
 // ===== 초기화 =====
 function chatInit() {
+  // ★ 로그인 사용자 계정 기준 포인트 동기화 (로그인 시 계정 points가 최신값)
+  try {
+    const _cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+    if (_cu && _cu.id && typeof _cu.points === 'number') {
+      const lsPts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+      const syncPts = Math.max(_cu.points, lsPts);
+      localStorage.setItem('sajuon_points', String(syncPts));
+    }
+  } catch(_) {}
+
   // 헤더 포인트
   updateHeaderPoints();
 
@@ -689,7 +699,7 @@ function renderSidebar() {
     { label: '인기 상담', keys: ['연애운', '궁합상담', '사업운재물운', '직업상담'] },
     { label: '연애·인간관계', keys: ['연애운', '궁합상담', '썸재회', '결혼운', '배우자복', '소개팅흐름', '인간관계갈등', '가족운자녀운'] },
     { label: '직업·취업', keys: ['직업상담', '취업운', '이직운', '승진운', '직무적성', '시험운합격운', '프리랜서운'] },
-    { label: '사업·재물', keys: ['사업운재물운', '재물운', '개업시기', '동업궁합', '상호명상담', '업종추천'] },
+    { label: '사업·재물', keys: ['사업운재물운', '재물운', '개업시기', '개업상담', '동업궁합', '상호명상담', '상호브랜드네이밍', '업종추천'] },
     { label: '이름·작명', keys: ['아이이름짓기', '개명상담', '사주보완이름', '브랜드네이밍'] },
     { label: '라이프', keys: ['이사운', '집터운', '계약시기', '여행운', '조심할달', '기회가오는달'] },
     { label: '운세·타로', keys: ['타로상담', '점성술상담', '2026병오년운세', '종합운세상담'] },
@@ -734,7 +744,7 @@ function renderSidebar() {
 const CAT_KR_MAP = {
   '연애운':'연애운','궁합상담':'궁합 상담','사업운재물운':'사업운·재물운','직업상담':'직업 상담',
   '썸재회':'썸·재회','결혼운':'결혼운','배우자복':'배우자복','소개팅흐름':'소개팅 흐름',
-  '인관계갈등':'인간관계 갈등','가족운자녀운':'가족운·자녀운','취업운':'취업운',
+  '인간관계갈등':'인간관계 갈등','가족운자녀운':'가족운·자녀운','취업운':'취업운',
   '이직운':'이직운','승진운':'승진운','직무적성':'직무 적성','시험운합격운':'시험운·합격운',
   '프리랜서운':'프리랜서 운','재물운':'재물운','개업시기':'개업 시기','개업상담':'개업 상담',
   '동업궁합':'동업 궁합','상호명상담':'상호명 상담','상호브랜드네이밍':'상호·브랜드 네이밍',
@@ -794,6 +804,193 @@ function renderWelcome() {
         출생 시간까지 알려주시면 <strong>어센던트(상승궁)</strong>도 함께 분석됩니다.<br/>
         <span style="opacity:0.8;font-size:0.82rem">예: 1990년 3월 15일 오전 9시생</span>
       </div>`;
+  } else if (['아이이름짓기','개명상담','사주보완이름'].includes(currentCat)) {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#2d1b6b,#1a3a5c);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">✨</div>
+        <strong>작명·개명 전문 분석 안내</strong><br/>
+        <strong>성씨 + 생년월일</strong>을 함께 알려주시면 사주 오행에 맞는 이름을 추천해드립니다.<br/>
+        이름 후보가 있으시면 함께 입력해주시면 <strong>발음오행·수리 81수 길흉</strong>을 분석해드려요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 김씨 성, 2026년 3월생 여자아이 이름 후보: 지은, 서연, 하은</span>
+      </div>`;
+  } else if (['브랜드네이밍','상호명상담','상호브랜드네이밍'].includes(currentCat)) {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#1b3a2d,#2d4a1b);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">🏷️</div>
+        <strong>브랜드·상호명 네이밍 분석 안내</strong><br/>
+        <strong>업종 + 이름 후보(2~3개)</strong>를 알려주시면 발음 에너지와 오행 배합을 분석해드립니다.<br/>
+        사주 생년월일을 함께 알려주시면 <strong>용신 오행 기반 맞춤 네이밍</strong>이 가능합니다.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 카페 창업 예정, 후보: 하나, 봄날, 온기 / 1985년생 사장님</span>
+      </div>`;
+  } else if (currentCat === '업종추천') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#1a3a1a,#2d4a2d);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">🔎</div>
+        <strong>사주 기반 업종 추천 안내</strong><br/>
+        <strong>생년월일 + 보유 경력 + 자본금</strong>을 알려주시면 사주 오행에 최적화된 업종을 추천드립니다.<br/>
+        관심 있는 업종이 있으시면 함께 입력하시면 <strong>사주와 업종의 궁합 분석</strong>도 해드려요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1983년생 남성, 교사 경력 10년, 자본금 3000만원, 카페/교육 관심</span>
+      </div>`;
+  } else if (currentCat === '개업시기' || currentCat === '개업상담') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#3a2a1a,#4a3a1b);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">🏪</div>
+        <strong>개업 시기 · 길일 분석 안내</strong><br/>
+        <strong>생년월일 + 업종</strong>을 알려주시면 2026년 병오년 중 <strong>최적 개업 달과 길일</strong>을 분석해드립니다.<br/>
+        지역과 자본금 정보를 함께 주시면 더욱 상세한 개업 전략을 제시해드려요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1980년 5월생, 한식당 개업 예정, 서울 강남, 자본금 1억</span>
+      </div>`;
+  } else if (currentCat === '이사운') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#1a2a3a,#1a3a2a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">🏠</div>
+        <strong>이사운 · 풍수 방위 분석 안내</strong><br/>
+        <strong>생년월일 + 이사 예정지(방향·층수)</strong>를 알려주시면 사주 오행에 맞는 <strong>최적 이사 방향과 길일</strong>을 분석해드립니다.<br/>
+        현재 집과 이사 예정 집 방향도 함께 알려주시면 풍수 비교 분석이 가능합니다.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1985년 3월생, 남향 아파트 12층으로 이사 예정, 9월경 희망</span>
+      </div>`;
+  } else if (currentCat === '집터운') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#2a1a3a,#1a2a3a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">🏡</div>
+        <strong>집터 · 풍수 분석 안내</strong><br/>
+        <strong>집 방향(향)·층수·집 유형·주변 환경</strong>을 알려주시면 배산임수 풍수 이론으로 기운을 분석해드립니다.<br/>
+        사주 생년월일도 함께 주시면 <strong>오행별 최적 방향</strong>을 맞춤 분석해드려요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1978년생, 남동향 아파트 7층, 앞에 공원, 뒤에 큰 도로</span>
+      </div>`;
+  } else if (currentCat === '여행운') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#1a2a4a,#2a1a4a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">✈️</div>
+        <strong>여행운 · 이동운 분석 안내</strong><br/>
+        <strong>생년월일 + 여행 목적지 또는 시기</strong>를 알려주시면 사주 오행에 맞는 <strong>행운의 여행 방향과 최적 시기</strong>를 분석해드립니다.<br/>
+        역마살(驛馬煞) 여부와 2026년 여행 기운도 함께 분석해드려요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1990년생, 4월에 일본 여행 예정, 커플 여행 / 혼자 힐링 여행 고민</span>
+      </div>`;
+  } else if (currentCat === '직무적성') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#2a1a1a,#3a2a1a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">🎯</div>
+        <strong>직무 적성 · 커리어 분석 안내</strong><br/>
+        <strong>생년월일 + 현재 직종(또는 경력)</strong>을 알려주시면 사주 오행으로 <strong>5가지 직업 유형 중 최적 유형</strong>을 분석해드립니다.<br/>
+        직종 고민이 있으시면 후보 직종을 함께 알려주시면 사주와의 적합도를 비교해드려요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1992년생 여성, 현재 교사 7년차, 마케터·작가·코치 전직 고민</span>
+      </div>`;
+  } else if (['직업상담','취업운','이직운','승진운'].includes(currentCat)) {
+    const careerNoticeMap = {
+      '직업상담': { icon:'💼', title:'직업운 종합 분석', hint:'현재 직장 상황·희망 직종을 함께 알려주시면 커리어 방향을 정밀 분석해드립니다.' },
+      '취업운':   { icon:'📋', title:'취업운 · 합격운 분석', hint:'지원 예정 직종과 시기를 알려주시면 면접 길일과 합격 가능성이 높은 달을 분석해드립니다.' },
+      '이직운':   { icon:'🔄', title:'이직운 · 최적 타이밍 분석', hint:'현재 직장 경력과 희망 이직 시기를 알려주시면 2026년 이직 최적 달과 연봉 협상 전략을 제시해드립니다.' },
+      '승진운':   { icon:'⬆️', title:'승진운 · 조직 전략 분석', hint:'현재 직급과 승진 목표를 알려주시면 상사 관계 전략과 승진 발령 가능성이 높은 달을 분석해드립니다.' },
+    };
+    const n = careerNoticeMap[currentCat];
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#1a2a3a,#2a1a3a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">${n.icon}</div>
+        <strong>${n.title} 안내</strong><br/>
+        <strong>생년월일</strong>을 함께 알려주시면 사주 오행으로 직업운을 정밀 분석해드립니다.<br/>
+        ${n.hint}<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1988년 7월생, IT 개발자 5년차, 대기업 이직 또는 스타트업 창업 고민</span>
+      </div>`;
+  } else if (currentCat === '계약시기') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#1a3a2a,#2a3a1a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">📝</div>
+        <strong>계약 시기 · 길일 분석 안내</strong><br/>
+        <strong>생년월일 + 계약 유형</strong>을 알려주시면 사주 오행에 맞는 <strong>계약 길일과 주의사항</strong>을 분석해드립니다.<br/>
+        부동산·사업·고용·금전 등 계약 유형을 함께 알려주시면 더 정확한 분석이 가능합니다.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1985년생, 부동산 전세 계약 예정, 6월~7월 중 길일 추천</span>
+      </div>`;
+  } else if (currentCat === '조심할달') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#3a1a1a,#2a1a2a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">⚠️</div>
+        <strong>2026년 조심할 달 분석 안내</strong><br/>
+        <strong>생년월일</strong>을 알려주시면 올해 사주 흐름에서 <strong>특히 조심해야 할 달 Top 3</strong>과 분야별 대비법을 안내해드립니다.<br/>
+        재물·건강·인간관계·법적 문제 등 각 분야별로 구체적으로 분석해드려요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1987년 11월생 남성입니다. 2026년 조심해야 할 달과 좋은 달을 알려주세요</span>
+      </div>`;
+  } else if (currentCat === '기회가오는달') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#1a3a1a,#1a2a3a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">🌟</div>
+        <strong>2026년 기회가 오는 달 분석 안내</strong><br/>
+        <strong>생년월일</strong>을 알려주시면 올해 사주에서 <strong>재물·인연·커리어 기회가 집중되는 달 Top 3</strong>을 찾아드립니다.<br/>
+        기회의 달을 최대한 활용하는 구체적 행동 전략도 함께 안내해드려요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1992년 4월생 여성입니다. 올해 기회가 오는 달과 활용 방법을 알려주세요</span>
+      </div>`;
+  } else if (currentCat === '동업궁합') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#1a2a3a,#3a2a1a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">🤝</div>
+        <strong>동업 궁합 · 파트너십 분석 안내</strong><br/>
+        <strong>두 분의 생년월일</strong>을 알려주시면 사주 오행 상생상극으로 <strong>동업 궁합 점수와 역할 분담 전략</strong>을 분석해드립니다.<br/>
+        계약 체결 최적 시기와 갈등 예방 전략도 함께 제시해드려요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 본인 1980년 3월생, 파트너 1978년 11월생. 식음료 동업 계획 중</span>
+      </div>`;
+  } else if (currentCat === '프리랜서운') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#1a1a3a,#2a3a1a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">💻</div>
+        <strong>프리랜서 독립 운 분석 안내</strong><br/>
+        <strong>생년월일 + 분야(현재·희망)</strong>를 알려주시면 사주 오행으로 <strong>독립 최적 시기와 수입 안정화 전략</strong>을 분석해드립니다.<br/>
+        사주에서 프리랜서에 유리한 오행 유형인지도 함께 분석해드려요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1993년생, 현재 IT 직장인, 웹개발 프리랜서 독립 고민 중</span>
+      </div>`;
+  } else if (currentCat === '시험운합격운') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#1a2a4a,#1a3a2a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">📚</div>
+        <strong>시험운 · 합격운 분석 안내</strong><br/>
+        <strong>생년월일 + 시험 종류</strong>를 알려주시면 사주 오행으로 <strong>합격 가능성이 높은 달과 면접 길일</strong>을 분석해드립니다.<br/>
+        시험 유형(수능·공무원·자격증·어학·입사)에 따라 맞춤 조언을 드려요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1999년생 여성, 공무원 9급 시험 준비 중, 2026년 합격 가능성 분석</span>
+      </div>`;
+  } else if (currentCat === '2026병오년운세') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#3a1a00,#4a2a00);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">🔥</div>
+        <strong>2026 병오년 종합 운세 분석 안내</strong><br/>
+        <strong>생년월일</strong>을 알려주시면 2026년 丙午年(불말의 해)과 개인 사주를 결합한 <strong>연간 종합 운세</strong>를 분석해드립니다.<br/>
+        연애·재물·직업·건강 분야별 월별 흐름과 행운의 달을 함께 안내해드려요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1990년 6월생 여성입니다. 2026년 전체 운세와 좋은 달을 알려주세요</span>
+      </div>`;
+  } else if (currentCat === '종합운세상담') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#1a1a2a,#2a1a3a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">🔮</div>
+        <strong>종합 사주 운세 분석 안내</strong><br/>
+        <strong>생년월일시</strong>를 알려주시면 사주 팔자 전체를 분석하여 <strong>연애·재물·직업·건강·인간관계</strong> 6개 분야 종합 운세를 제공해드립니다.<br/>
+        현재 가장 고민되는 것을 함께 말씀해주시면 맞춤형 심층 분석이 가능합니다.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1985년 7월 3일 오전 6시생 남성입니다. 올해 전반적인 운세를 봐주세요</span>
+      </div>`;
+  } else if (currentCat === '재물운') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#2a2a00,#3a2a00);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">💰</div>
+        <strong>재물운 · 금전운 분석 안내</strong><br/>
+        <strong>생년월일</strong>을 알려주시면 사주 오행에서 재성(財星)의 흐름을 분석하여 <strong>2026년 재물 상승 시기와 투자 조언</strong>을 드립니다.<br/>
+        재물 고민(투자·저축·부업·사업 등)을 함께 말씀해주시면 더 구체적인 분석이 가능합니다.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1988년생, 주식 투자 타이밍과 올해 재물운이 궁금합니다</span>
+      </div>`;
+  } else if (currentCat === '사업운재물운') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#1a2a0a,#2a1a0a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">📈</div>
+        <strong>사업운 · 재물운 분석 안내</strong><br/>
+        <strong>생년월일 + 사업 현황</strong>을 알려주시면 2026년 사주 기반 <strong>사업 성장 시기와 재물 흐름</strong>을 종합 분석해드립니다.<br/>
+        투자·확장·동업·개업 등 사업 고민이 있으시면 함께 말씀해주세요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1980년생, 음식점 운영 중. 올해 확장하는 게 좋을까요?</span>
+      </div>`;
+  } else if (currentCat === '결혼운') {
+    specialNotice = `
+      <div style="background:linear-gradient(135deg,#3a1a2a,#1a1a3a);border-radius:12px;padding:14px 16px;margin:12px 0;color:white;font-size:0.88rem;line-height:1.6">
+        <div style="font-size:1.4rem;margin-bottom:6px">💍</div>
+        <strong>결혼운 · 인연 시기 분석 안내</strong><br/>
+        <strong>생년월일</strong>을 알려주시면 사주에서 관성(官星)·재성(財星) 흐름으로 <strong>결혼 적기와 배우자 유형</strong>을 분석해드립니다.<br/>
+        현재 교제 중이신 분은 상대방 생년월일도 함께 알려주시면 결혼 궁합도 분석해드려요.<br/>
+        <span style="opacity:0.8;font-size:0.82rem">예: 1991년생 여성, 3년 교제 중. 2026년에 결혼 적기인가요?</span>
+      </div>`;
   }
 
   msgs.innerHTML = `
@@ -816,10 +1013,56 @@ function renderWelcome() {
 
 function getExamples(cat) {
   const map = {
-    '연애운': ['그 사람이 저를 좋아하는 건지 궁금해요', '재회 가능성이 있을까요?', '언제쯤 새로운 인연이 생길까요?'],
-    '궁합상담': ['저와 상대방의 궁합을 봐주세요', '결혼 상대로 잘 맞을까요?', '동업을 하려는데 이 분과 궁합이 어떤가요?'],
-    '사업운재물운': ['올해 사업을 시작해도 좋을까요?', '지금 투자해도 괜찮을까요?', '올해 재물운이 어떤가요?'],
-    '직업상담': ['이직을 고민 중인데 지금이 좋은 시기인가요?', '제 직무 적성이 궁금합니다', '승진 가능성이 있을까요?'],
+    '연애운': [
+      '1993년생 여성입니다. 그 사람이 저를 좋아하는 건지 궁금해요',
+      '헤어진 지 6개월 됐는데 재회 가능성이 있을까요?',
+      '1990년생입니다. 언제쯤 새로운 인연이 생길까요?'
+    ],
+    '궁합상담': [
+      '저는 1988년생, 상대방은 1986년생입니다. 연애·결혼 궁합을 봐주세요',
+      '1992년생 여성입니다. 1989년생 남성과 결혼 상대로 잘 맞을까요?',
+      '1985년생 남성, 1987년생 여성입니다. 결혼을 앞두고 있는데 궁합 분석 부탁드립니다'
+    ],
+    '썸재회': [
+      '1995년생 여성입니다. 헤어진 사람과 재회 가능성이 있는지 궁금해요',
+      '3개월째 썸 타고 있는데 고백해도 될까요? 1992년생 남성입니다',
+      '1998년생입니다. 헤어진 지 1년 됐는데 다시 연락하면 어떻게 될까요?'
+    ],
+    '결혼운': [
+      '1991년생 여성, 3년 교제 중입니다. 2026년에 결혼하면 사주상 좋을까요?',
+      '1988년생 남성입니다. 아직 미혼인데 배우자 인연이 언제 올지 궁금합니다',
+      '1984년생 여성입니다. 결혼 적기와 배우자 유형을 분석해주세요'
+    ],
+    '배우자복': [
+      '1989년생 여성입니다. 사주에서 배우자복이 있는지 분석해주세요',
+      '1985년생 남성입니다. 배우자 인연이 언제쯤 올지, 어떤 유형인지 알고 싶어요',
+      '1993년생입니다. 현재 만나는 분이 배우자 인연인지 사주로 분석해주세요'
+    ],
+    '소개팅흐름': [
+      '1994년생 여성입니다. 이번 주 소개팅이 있는데 인연으로 이어질 가능성이 있을까요?',
+      '1991년생 남성입니다. 소개팅 이후 연락이 뜸한데 어떻게 해야 할까요?',
+      '1997년생입니다. 소개팅을 자주 하는데 사주상 인연 만나는 시기가 언제인가요?'
+    ],
+    '인간관계갈등': [
+      '1988년생입니다. 직장 동료와의 갈등이 심한데 어떻게 풀면 좋을까요?',
+      '1985년생 여성입니다. 친한 친구와 다퉜는데 관계 회복이 가능할까요?',
+      '1992년생, 상사와 맞지 않아 힘듭니다. 사주상 언제 개선될까요?'
+    ],
+    '가족운자녀운': [
+      '1980년생 남성입니다. 부모님과의 관계 개선 방법과 시기를 알려주세요',
+      '1975년생 여성입니다. 자녀와의 관계가 어떻게 흘러갈지 사주로 봐주세요',
+      '1985년생입니다. 가족 간 갈등이 많은데 사주에서 원인과 해결책을 찾을 수 있나요?'
+    ],
+    '사업운재물운': [
+      '1980년생 남성, 음식점 운영 중입니다. 올해 사업 확장해도 좋을까요?',
+      '1988년생입니다. 지금 투자(주식·부동산)해도 괜찮을까요?',
+      '1975년생 여성입니다. 올해 사업운과 재물운이 어떻게 될지 분석해주세요'
+    ],
+    '직업상담': [
+      '1985년 7월생 남성, 현재 직장이 맞지 않아 고민입니다. 2026년 직업운 분석해주세요',
+      '1990년생 여성, 이직이 나은지 현재 직장 승진을 노려야 하는지 분석해주세요',
+      '1978년생 남성, 프리랜서 전향을 고민 중입니다. 사주상 독립이 맞는 유형인가요?'
+    ],
     '아이이름짓기': [
       '2026년 3월 15일 오전 8시생 여자아이입니다. 김씨 성에 맞는 이름 추천해주세요',
       '2025년 12월 5일생 남자아이 이름 후보가 민준, 서준, 하준인데 어떤 이름이 좋나요?',
@@ -860,7 +1103,111 @@ function getExamples(cat) {
       '교육 브랜드 이름으로 배움터, 지식나무, 새빛 중 추천해주세요',
       '반려동물용품 브랜드 네이밍 해주세요. 업종과 잘 맞는 오행 분석도 부탁드려요'
     ],
-    '2026병오년운세': ['2026년 전체 운세가 궁금합니다', '올해 조심해야 할 달은 언제인가요?', '올해 가장 좋은 달은 언제인가요?'],
+    '업종추천': [
+      '1983년 7월생 남성입니다. 교사 경력 10년인데 창업 적합 업종을 추천해주세요',
+      '1990년 3월생 여성, 자본금 3000만원 있습니다. 어떤 업종이 사주에 맞을까요?',
+      '카페나 베이커리 창업을 생각 중인데, 제 사주(1985년 11월생)와 잘 맞는 업종인가요?'
+    ],
+    '개업시기': [
+      '1978년 5월생 사장입니다. 2026년에 한식당 개업하려는데 언제가 좋을까요?',
+      '카페를 열려고 하는데 3월, 4월, 9월 중 언제가 가장 좋은 개업 날짜인가요?',
+      '1992년생 여성입니다. 뷰티샵 개업 예정인데 2026년 개업 길일을 알려주세요'
+    ],
+    '개업상담': [
+      '1980년 2월생 남성입니다. 서울에서 치킨집 개업 예정인데 종합 상담해주세요',
+      '2026년 창업을 계획 중입니다. 1975년생, 자본금 5000만원, IT 서비스업 예정',
+      '1988년생 여성, 온라인 쇼핑몰 개업 예정입니다. 개업 시기와 상호명도 함께 알려주세요'
+    ],
+    '이사운': [
+      '1985년 3월생입니다. 9월에 남향 아파트 12층으로 이사 예정인데 사주에 맞나요?',
+      '1978년생 남성입니다. 서울 강남에서 경기 분당으로 이사 예정인데 이사 길일 알려주세요',
+      '올해 이사를 계획 중입니다. 1993년 8월생 여성인데 2026년 이사하기 좋은 달이 언제인가요?'
+    ],
+    '집터운': [
+      '1980년생입니다. 동남향 아파트 7층인데 풍수적으로 어떤가요? 앞에 공원이 있습니다',
+      '단독주택으로 이사를 고려 중입니다. 뒤에 산이 있고 앞에 도로가 있는 집인데 어떨까요?',
+      '1988년생 여성, 북향 빌라 3층입니다. 풍수상 문제가 있는지, 보완할 방법이 있는지 알려주세요'
+    ],
+    '여행운': [
+      '1990년 6월생입니다. 4월에 일본 여행 계획인데 사주상 여행운이 어떤가요?',
+      '1995년생 여성, 커플 여행 예정입니다. 올해 어느 방향으로 여행하면 좋을까요?',
+      '1983년생 남성입니다. 가을에 해외 여행을 가려는데 어느 나라가 행운의 방향인가요?'
+    ],
+    '직무적성': [
+      '1992년 3월생 여성입니다. 현재 교사 7년차인데 사주상 맞는 직업인가요?',
+      '1988년생 남성, IT 개발자입니다. 마케터·기획자·창업 중 어떤 방향이 더 맞을까요?',
+      '1996년생 여성입니다. 아직 직종을 못 정했어요. 사주로 맞는 직업 유형 알려주세요'
+    ],
+    '직업상담': [
+      '1985년 7월생 남성입니다. 현재 직장이 맞지 않아 고민입니다. 2026년 직업운 어떤가요?',
+      '1990년생 여성, 5년째 같은 직장입니다. 이직이 나은지 현재 직장에서 승진을 노려야 하는지 분석해주세요',
+      '1978년생 남성, 프리랜서 전향을 고민 중입니다. 사주상 독립이 맞는 유형인가요?'
+    ],
+    '취업운': [
+      '1998년생 여성입니다. 올해 취업을 목표로 하는데 2026년 취업운이 어떤가요?',
+      '1996년생 남성, IT 개발자 취준 중입니다. 몇 월에 지원하면 합격 가능성이 높을까요?',
+      '1994년생 여성입니다. 공무원 시험 준비 중인데 2026년 합격 가능성은 어떤가요?'
+    ],
+    '이직운': [
+      '1988년생 남성, 현재 5년차 직장인입니다. 올해 이직 최적 시기가 언제인가요?',
+      '1993년생 여성입니다. IT 회사에서 마케팅 회사로 이직 예정인데 사주상 유리한가요?',
+      '1985년생 남성, 연봉 협상 포함 이직을 고려 중입니다. 2026년 이직운과 연봉 협상 전략을 알려주세요'
+    ],
+    '승진운': [
+      '1982년생 남성, 과장 3년차입니다. 올해 부장 승진 가능성이 있을까요?',
+      '1990년생 여성, 팀장 후보입니다. 2026년 승진 발령 가능성과 상사 관계 전략을 알려주세요',
+      '1987년생 남성입니다. 승진이 계속 미뤄지고 있는데 사주상 언제 승진 기운이 오나요?'
+    ],
+    '2026병오년운세': [
+      '1990년 6월생 여성입니다. 2026년 병오년 전체 운세를 분석해주세요',
+      '1985년생 남성입니다. 올해 조심해야 할 달과 가장 좋은 달을 알려주세요',
+      '1995년 3월생입니다. 2026년 병오년 연애운·재물운·직업운을 종합 분석해주세요'
+    ],
+    '종합운세상담': [
+      '1988년 7월 15일 오전 8시생 남성입니다. 올해 종합 운세를 봐주세요',
+      '1993년 11월생 여성입니다. 연애·직업·재물 전반적인 운세가 궁금합니다',
+      '1980년 2월 3일생입니다. 사주 팔자로 현재와 앞으로의 흐름을 분석해주세요'
+    ],
+    '계약시기': [
+      '1985년생입니다. 6~7월 중 부동산 전세 계약 예정인데 길일을 알려주세요',
+      '1978년생 남성, 사업 계약서 작성 예정입니다. 2026년 계약하기 좋은 달은 언제인가요?',
+      '1992년생 여성입니다. 근로 계약·이직 계약 시 피해야 할 날짜가 있는지 분석해주세요'
+    ],
+    '조심할달': [
+      '1987년 11월생 남성입니다. 2026년 병오년에 특히 조심해야 할 달을 알려주세요',
+      '1995년생 여성입니다. 올해 재물과 건강 모두 조심해야 할 달과 대비법이 궁금합니다',
+      '1983년생, 2026년에 사업 확장을 계획 중입니다. 조심해야 할 달을 미리 파악하고 싶어요'
+    ],
+    '기회가오는달': [
+      '1992년 4월생 여성입니다. 2026년 재물과 인연 기회가 오는 달을 알려주세요',
+      '1988년생 남성, 이직을 계획 중입니다. 올해 커리어 기회가 오는 달이 언제인가요?',
+      '1990년생입니다. 올해 가장 좋은 달 3개와 그 달에 해야 할 행동을 알려주세요'
+    ],
+    '동업궁합': [
+      '저는 1980년 3월생이고 파트너는 1978년 11월생입니다. 식음료 동업 궁합 분석해주세요',
+      '본인 1985년생, 파트너 1983년생입니다. IT 스타트업 동업 가능성과 역할 분담을 알려주세요',
+      '1990년생 여성과 1988년생 남성이 뷰티샵 동업 예정입니다. 궁합과 계약 시기를 분석해주세요'
+    ],
+    '프리랜서운': [
+      '1993년생 IT 개발자입니다. 2026년 프리랜서 독립이 사주상 맞는 시기인가요?',
+      '1989년생 여성, 현재 마케터입니다. 독립 컨설턴트로 전환하면 성공할 수 있을까요?',
+      '1996년생, 유튜버·콘텐츠 크리에이터로 독립을 고민 중입니다. 사주상 독립 유형인가요?'
+    ],
+    '시험운합격운': [
+      '1999년생 여성입니다. 공무원 9급 시험 준비 중인데 2026년 합격 가능성이 있을까요?',
+      '1997년생 남성, 공인중개사 시험을 준비 중입니다. 올해 상반기와 하반기 중 언제가 유리한가요?',
+      '2001년생입니다. 대기업 입사 면접이 있는데 사주상 합격운이 있는지, 길일이 언제인지 알려주세요'
+    ],
+    '재물운': [
+      '1988년생 남성입니다. 올해 재물운 흐름과 투자 타이밍을 알려주세요',
+      '1993년생 여성입니다. 2026년 수입이 늘어나는 달과 지출 주의 달을 분석해주세요',
+      '1985년생, 주식 투자를 고민 중입니다. 사주상 투자운이 좋은 시기는 언제인가요?'
+    ],
+    '결혼운': [
+      '1991년생 여성, 3년 교제 중입니다. 2026년에 결혼하면 사주상 좋을까요?',
+      '1988년생 남성입니다. 아직 미혼인데 배우자 인연이 언제 올지 궁금합니다',
+      '1984년생 여성입니다. 결혼 적기가 언제인지, 배우자 유형이 어떤 분인지 알려주세요'
+    ],
     'default': ['지금 상황에 대해 분석해주세요', '올해 운세가 궁금합니다', '제 생년월일로 사주를 봐주세요'],
   };
   return (map[cat] || map['default']);
@@ -895,6 +1242,41 @@ async function sendMessage() {
   const text = ta?.value.trim();
   if (!text) return;
 
+  // ★ 로그인 체크 — 비로그인 시 안내 후 차단
+  const _chatUser = (function() {
+    try { return JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); } catch { return null; }
+  })();
+  if (!_chatUser || !_chatUser.id) {
+    // 채팅창 내 로그인 안내 메시지 표시
+    const msgs = document.getElementById('chatMessages');
+    if (msgs) {
+      const existing = document.getElementById('chatLoginNudge');
+      if (existing) {
+        existing.style.animation = 'none';
+        setTimeout(() => { existing.style.animation = 'shake 0.4s'; }, 10);
+      } else {
+        const nudge = document.createElement('div');
+        nudge.id = 'chatLoginNudge';
+        nudge.style.cssText = 'margin:20px auto;max-width:420px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border-radius:16px;padding:24px;text-align:center;box-shadow:0 4px 20px rgba(27,94,32,0.3)';
+        nudge.innerHTML = `
+          <div style="font-size:2.2rem;margin-bottom:10px">🔐</div>
+          <div style="font-weight:700;font-size:1.05rem;margin-bottom:6px">로그인 후 상담을 시작하세요</div>
+          <div style="font-size:0.85rem;opacity:0.88;margin-bottom:18px">가입 즉시 <strong>500P 무료</strong> 지급 · 언제든 AI 상담 가능</div>
+          <div style="display:flex;gap:10px;justify-content:center">
+            <a href="auth.html?tab=register" style="padding:10px 22px;background:#fff;color:#1b5e20;border-radius:10px;text-decoration:none;font-weight:700;font-size:0.88rem">
+              <i class="fas fa-user-plus"></i> 무료 가입
+            </a>
+            <a href="auth.html" style="padding:10px 22px;background:rgba(255,255,255,0.18);color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.88rem;border:1.5px solid rgba(255,255,255,0.4)">
+              <i class="fas fa-sign-in-alt"></i> 로그인
+            </a>
+          </div>`;
+        msgs.appendChild(nudge);
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+    }
+    return;
+  }
+
   const pts  = getPoints();
   const cost = currentCatConfig?.cost || 200;
 
@@ -913,6 +1295,17 @@ async function sendMessage() {
   const newPts = pts - cost;
   localStorage.setItem('sajuon_points', String(newPts));
   updatePointInfo();
+
+  // ★ 사용자 계정(sajuon_users) points 필드 동기화
+  try {
+    const _u = (function(){ try { return JSON.parse(localStorage.getItem('sajuon_current_user')||'null'); } catch{return null;} })();
+    if (_u && _u.id) {
+      const _users = JSON.parse(localStorage.getItem('sajuon_users') || '[]');
+      const _idx = _users.findIndex(u => u.id === _u.id);
+      if (_idx !== -1) { _users[_idx].points = newPts; localStorage.setItem('sajuon_users', JSON.stringify(_users)); }
+      localStorage.setItem('sajuon_current_user', JSON.stringify({ ..._u, points: newPts }));
+    }
+  } catch(_) {}
 
   // 이용 내역 저장
   saveHistory(CAT_KR_MAP[currentCat] || currentCat, cost, text);

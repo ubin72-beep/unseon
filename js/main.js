@@ -21,22 +21,24 @@ const SAJU_DATA = {
     { id: 'job_5',   tab: 'job',  icon: '🎯', name: '직무 적성',     pt: '200P~', hook: '이 일이 나에게 맞나요?' },
     { id: 'job_6',   tab: 'job',  icon: '📚', name: '시험운·합격운', pt: '200P~', hook: '이번 시험 합격할까요?' },
     { id: 'job_7',   tab: 'job',  icon: '💻', name: '프리랜서 운',   pt: '200P~', hook: '독립하면 잘 될까요?' },
-    { id: 'biz_1',   tab: 'biz',  icon: '📈', name: '사업운',        pt: '300P~', hook: '올해 사업 어떻게 될까요?' },
+    { id: 'biz_1',   tab: 'biz',  icon: '📈', name: '사업운재물운',   pt: '300P~', hook: '올해 사업 어떻게 될까요?' },
     { id: 'biz_2',   tab: 'biz',  icon: '💰', name: '재물운',        pt: '300P~', hook: '올해 돈 잘 벌 수 있을까요?' },
-    { id: 'biz_3',   tab: 'biz',  icon: '🏪', name: '개업 시기',     pt: '300P~', hook: '개업 날짜 이때가 맞나요?' },
-    { id: 'biz_4',   tab: 'biz',  icon: '🤝', name: '동업 궁합',     pt: '300P~', hook: '이 사람과 동업해도 될까요?' },
-    { id: 'biz_5',   tab: 'biz',  icon: '🏷️', name: '상호명 상담',   pt: '300P~', hook: '이 상호명이 운에 좋을까요?' },
-    { id: 'biz_6',   tab: 'biz',  icon: '🔎', name: '업종 추천',     pt: '300P~', hook: '나에게 맞는 업종은?' },
+    { id: 'biz_3',   tab: 'biz',  icon: '🏪', name: '개업시기',      pt: '300P~', hook: '개업 날짜 이때가 맞나요?' },
+    { id: 'biz_3b',  tab: 'biz',  icon: '🏪', name: '개업상담',      pt: '300P~', hook: '개업 종합 전략을 세우고 싶어요' },
+    { id: 'biz_4',   tab: 'biz',  icon: '🤝', name: '동업궁합',      pt: '300P~', hook: '이 사람과 동업해도 될까요?' },
+    { id: 'biz_5',   tab: 'biz',  icon: '🏷️', name: '상호명상담',    pt: '300P~', hook: '이 상호명이 운에 좋을까요?' },
+    { id: 'biz_5b',  tab: 'biz',  icon: '🏷️', name: '상호브랜드네이밍', pt: '300P~', hook: '브랜드명 사주로 검증해주세요' },
+    { id: 'biz_6',   tab: 'biz',  icon: '🔎', name: '업종추천',      pt: '300P~', hook: '나에게 맞는 업종은?' },
     { id: 'name_1',  tab: 'name', icon: '👶', name: '아이 이름짓기', pt: '300P~', hook: '사주에 맞는 이름 추천해요' },
     { id: 'name_2',  tab: 'name', icon: '🔤', name: '개명 상담',     pt: '300P~', hook: '이 이름이 내 운을 막나요?' },
     { id: 'name_3',  tab: 'name', icon: '✨', name: '사주 보완 이름', pt: '300P~', hook: '사주의 약점을 이름으로 보완' },
     { id: 'name_4',  tab: 'name', icon: '🏷️', name: '브랜드 네이밍', pt: '300P~', hook: '브랜드명 사주 감수' },
     { id: 'life_1',  tab: 'life', icon: '🏠', name: '이사운',        pt: '200P~', hook: '이사 시기 지금이 맞나요?' },
     { id: 'life_2',  tab: 'life', icon: '🏡', name: '집터운',        pt: '200P~', hook: '이 집터 운이 어떤가요?' },
-    { id: 'life_3',  tab: 'life', icon: '📝', name: '계약 시기',     pt: '200P~', hook: '계약하기 좋은 날은?' },
+    { id: 'life_3',  tab: 'life', icon: '📝', name: '계약시기',      pt: '200P~', hook: '계약하기 좋은 날은?' },
     { id: 'life_4',  tab: 'life', icon: '✈️', name: '여행운',        pt: '100P~', hook: '여행 다녀와도 괜찮을까요?' },
-    { id: 'life_5',  tab: 'life', icon: '⚠️', name: '조심할 달',    pt: '200P~', hook: '올해 조심해야 할 달은?' },
-    { id: 'life_6',  tab: 'life', icon: '🌟', name: '기회가 오는 달',pt: '200P~', hook: '올해 기회가 오는 달은?' },
+    { id: 'life_5',  tab: 'life', icon: '⚠️', name: '조심할달',     pt: '200P~', hook: '올해 조심해야 할 달은?' },
+    { id: 'life_6',  tab: 'life', icon: '🌟', name: '기회가오는달',  pt: '200P~', hook: '올해 기회가 오는 달은?' },
     { id: 'all_1',   tab: 'all',  icon: '🃏', name: '타로 상담',     pt: '100P~', hook: '카드가 뭐라고 하나요?' },
     { id: 'all_2',   tab: 'all',  icon: '🌙', name: '점성술 상담',   pt: '200P~', hook: '별자리가 말하는 내 운명' },
     { id: 'all_3',   tab: 'all',  icon: '🔥', name: '2026 병오년',   pt: '200P~', hook: '병오년 내 한 해 운세' },
@@ -135,10 +137,23 @@ function initCatTabs() {
     const list = tab === 'all'
       ? SAJU_DATA.categories
       : SAJU_DATA.categories.filter(c => c.tab === tab || (tab === 'all' && true));
+    // 카테고리 표시명 매핑 (CAT_CONFIG key → 사람이 읽기 좋은 이름)
+    const CAT_DISPLAY = {
+      '사업운재물운':'사업운·재물운','개업시기':'개업 시기','개업상담':'개업 상담',
+      '동업궁합':'동업 궁합','상호명상담':'상호명 상담','상호브랜드네이밍':'상호·브랜드 네이밍',
+      '업종추천':'업종 추천','계약시기':'계약 시기','조심할달':'조심할 달',
+      '기회가오는달':'기회가 오는 달','직무적성':'직무 적성','시험운합격운':'시험운·합격운',
+      '프리랜서운':'프리랜서 운','가족운자녀운':'가족운·자녀운','인간관계갈등':'인간관계 갈등',
+      '소개팅흐름':'소개팅 흐름','배우자복':'배우자복','결혼운':'결혼운','썸재회':'썸·재회',
+      '아이이름짓기':'아이 이름짓기','개명상담':'개명 상담','사주보완이름':'사주 보완 이름',
+      '브랜드네이밍':'브랜드 네이밍','이사운':'이사운','집터운':'집터운','여행운':'여행운',
+      '타로상담':'타로 상담','점성술상담':'점성술 상담','2026병오년운세':'2026 병오년',
+      '종합운세상담':'종합 운세','재물운':'재물운','취업운':'취업운','이직운':'이직운','승진운':'승진운',
+    };
     grid.innerHTML = list.map(c => `
       <div class="cat-item" onclick="goChatCategory('${c.name}')">
         <div class="cat-item-icon">${c.icon}</div>
-        <div class="cat-item-name">${c.name}</div>
+        <div class="cat-item-name">${CAT_DISPLAY[c.name] || c.name}</div>
         <div class="cat-item-pt">${c.pt}</div>
       </div>
     `).join('');

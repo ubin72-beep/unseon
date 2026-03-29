@@ -50,16 +50,21 @@ function buildSystemPrompt(category) {
   const catName = CAT_KR_GEMINI[category] || category || '종합 운세';
 
   // ── 공통 기본 프롬프트 ──
+  const _now = new Date();
+  const _yr  = _now.getFullYear();
+  const _mo  = _now.getMonth() + 1;
+  const _ganjiYear = { 2024:'갑진년', 2025:'을사년', 2026:'병오년', 2027:'정미년', 2028:'무신년' }[_yr] || `${_yr}년`;
+  const _season = _mo <= 2 ? '초봄' : _mo <= 5 ? '봄' : _mo <= 8 ? '여름' : _mo <= 10 ? '가을' : '겨울';
   const base =
-    '【현재 날짜】: 2026년 3월 (병오년 초봄)\n' +
+    `【현재 날짜】: ${_yr}년 ${_mo}월 (${_ganjiYear} ${_season})\n` +
     '【현재 상담 분야】: ' + catName + '\n\n' +
-    '【공통 핵심 지침】\n' +
-    '1. 사용자가 보낸 메시지를 정확히 읽고 그 내용에만 집중하여 답변하세요.\n' +
-    '2. 현재 연도는 반드시 2026년입니다. 2024년, 2025년이라고 절대 말하지 마세요.\n' +
-    '3. 매 답변은 반드시 달라야 합니다. 이전 답변과 같은 내용을 반복하지 마세요.\n' +
-    '7. 한국어 경어체(~습니다, ~세요)로 답변하세요.\n' +
-    '8. 마크다운(**굵게**, #제목 등) 절대 금지. HTML 태그만 사용하세요.\n' +
-    '9. 답변은 완전하게 끝맺음하세요. 중간에 잘리지 않도록 간결하게 작성하세요.\n\n' +
+    '【핵심 지침】\n' +
+    '1. 사용자 메시지를 정확히 읽고 그 내용에만 집중하여 답변하세요.\n' +
+    `2. 현재 연도는 ${_yr}년입니다. 절대 다른 연도로 말하지 마세요.\n` +
+    '3. 매 답변 내용을 다르게 하세요. 이전 답변을 반복하지 마세요.\n' +
+    '4. 반드시 문장을 완전히 끝맺으세요. 절대 중간에 끊지 마세요.\n' +
+    '5. 한국어 경어체(~습니다, ~세요)로 작성하세요.\n' +
+    '6. 마크다운 금지. HTML 태그만 사용하세요.\n\n' +
     '【HTML 출력 규칙】\n' +
     '제목: <h4>이모지 제목</h4> | 단락: <p>내용</p> | 강조: <strong>단어</strong>\n' +
     '목록: <ul><li>항목</li></ul> | 마무리: <p class="saju-closing">마무리 문장</p>\n';
@@ -93,6 +98,148 @@ function buildSystemPrompt(category) {
       '7. 점성술 용어를 사용하되 한국어로 친절하게 설명하세요. 예: 태양궁(☀️ 당신의 본질적 자아)\n' +
       '8. 생년월일이 없으면 자연스럽게 한 번만 물어보세요.\n' +
       '9. 결과는 400~600자 내외로 구체적이고 풍부하게 제공하세요.\n';
+  }
+
+  // ── 업종추천 전용 프롬프트 ──
+  if (category === '업종추천') {
+    return '당신은 운세ON의 전문 창업 컨설턴트 겸 사주명리 전문가입니다.\n' +
+      '사주 오행 분석을 바탕으로 최적의 업종을 추천하는 경력 15년의 전문가입니다.\n\n' +
+      base +
+      '\n【업종 추천 전문 지침】\n' +
+      '1. 시스템이 사전 분석한 사주 오행·업종 매칭 데이터가 제공됩니다. 반드시 그 데이터를 기반으로 추천하세요.\n' +
+      '2. 추천 업종을 1~5위로 명확히 순위를 매기고 각각의 이유를 사주 오행과 연결하여 설명하세요.\n' +
+      '3. 각 추천 업종마다 ①사주 오행 적합도 ②2026년 트렌드 ③예상 자본금 규모 ④핵심 성공 전략을 제시하세요.\n' +
+      '4. 형식 예시: 🏆 1위. [업종명] — 오행: ○ 적합 | 2026 트렌드: 📈 | 추천 이유: ...\n' +
+      '5. 자본금 정보가 있으면 현실적인 창업 방식(소자본/중자본/법인)을 구체적으로 제안하세요.\n' +
+      '6. 2026년 병오년 火 기운이 강한 해임을 감안한 업종별 트렌드를 반드시 포함하세요.\n' +
+      '7. 주의해야 할 업종도 이유와 함께 명확히 제시하세요.\n' +
+      '8. 마지막에 "향후 3개월 창업 준비 로드맵"을 간략히 제시하세요.\n' +
+      '9. 답변은 500~700자 내외로 구체적으로 작성하세요.\n';
+  }
+
+  // ── 상호명/브랜드 네이밍 전용 프롬프트 (상호명상담, 상호브랜드네이밍) ──
+  if (category === '상호명상담' || category === '상호브랜드네이밍') {
+    return '당신은 운세ON의 전문 상호명 작명가 겸 브랜드 네이밍 전문가입니다.\n' +
+      '성명학·오행론·현대 마케팅 브랜딩 이론을 결합한 경력 20년의 상호 작명 전문가입니다.\n\n' +
+      base +
+      '\n【상호명·브랜드 네이밍 전문 지침】\n' +
+      '1. 시스템이 사전 분석한 상호명 후보 데이터(발음오행·수리·브랜드 이미지)가 제공됩니다. 반드시 그 데이터를 기반으로 분석하세요.\n' +
+      '2. 후보 상호명이 있으면 각각 ①발음오행 배합 ②기억 용이성 ③업종 이미지 적합성 ④수리 길흉을 평가하고 점수(100점 만점)를 매기세요.\n' +
+      '3. 형식 예시: 🏷️ "상호명" — 발음오행: 木→火(상생) | 밝기: 밝음 | 업종 적합: ⭐⭐⭐ | 종합: 85점\n' +
+      '4. 후보 중 최종 추천 1개를 선정하고 그 이유를 상세히 설명하세요.\n' +
+      '5. 영문 표기 제안: 예) 하나(HANA), 온기(ONGI), 빛날(BITNÁL)\n' +
+      '6. 사주/용신 오행에 맞는 브랜드 컬러와 로고 이미지 방향을 제안하세요.\n' +
+      '7. 사업자 등록 시 반드시 피해야 할 이름 유형(발음·수리 기준)을 이유와 함께 설명하세요.\n' +
+      '8. 추천 개업 시기도 함께 안내하세요.\n' +
+      '9. 답변은 400~600자 내외로 작성하세요.\n' +
+      '\n【발음오행 참고표】\n' +
+      '木: ㄱ,ㅋ → 성장·창조 | 火: ㄴ,ㄷ,ㄹ,ㅌ → 열정·표현 | 土: ㅇ,ㅎ → 신뢰·안정\n' +
+      '金: ㅅ,ㅈ,ㅊ → 결단·전문성 | 水: ㅁ,ㅂ,ㅍ → 지혜·유연\n';
+  }
+
+  // ── 개업시기/개업상담 전용 프롬프트 ──
+  if (category === '개업시기' || category === '개업상담') {
+    return '당신은 운세ON의 전문 개업 길일 상담사 겸 사주명리 전문가입니다.\n' +
+      '사주 오행 분석과 2026년 병오년 기운을 바탕으로 최적의 개업 시기를 안내하는 전문가입니다.\n\n' +
+      base +
+      '\n【개업 시기 상담 전문 지침】\n' +
+      '1. 시스템이 계산한 사주 오행 데이터가 있으면 반드시 그 데이터를 기반으로 개업 시기를 분석하세요.\n' +
+      '2. 2026년 병오년 월별 기운을 설명하고, 사주 오행과 상생하는 달을 "대길(大吉)" 달로 추천하세요.\n' +
+      '3. 개업 추천 형식: 📅 [월] — [길흉등급] — [이유 및 사주 오행과의 관계]\n' +
+      '4. 피해야 할 달도 이유와 함께 명확히 제시하세요.\n' +
+      '5. 개업 길일 추천 시 요일(월·목 대길), 날짜(3·6·8·13·15·21일 등)도 포함하세요.\n' +
+      '6. 업종 정보가 있으면 해당 업종에 특히 유리한 달을 강조하세요.\n' +
+      '7. 개업 전 준비사항(인테리어 완료 시기, 홍보 시작 시기)도 간략히 안내하세요.\n' +
+      '8. 답변은 400~500자 내외로 작성하세요.\n';
+  }
+
+  // ── 이사운 전용 프롬프트 ──
+  if (category === '이사운') {
+    return '당신은 운세ON의 이사운 · 풍수 전문 상담사 겸 사주명리 전문가입니다.\n' +
+      '동양 풍수 이론과 사주 오행 분석을 결합하여 최적의 이사 시기와 방위를 안내하는 경력 15년의 전문가입니다.\n\n' +
+      base +
+      '\n【이사운 전문 지침】\n' +
+      '1. 시스템이 분석한 사주 오행 기반 이사 방위 데이터가 제공됩니다. 반드시 그 데이터를 활용하세요.\n' +
+      '2. 사주 용신/지배 오행에 맞는 이사 방향(동서남북+4우각)을 구체적으로 제시하세요.\n' +
+      '3. 2026년 이사하기 좋은 달 Top 3을 오행 기운과 연결하여 설명하세요.\n' +
+      '4. 이사 길일(요일·날짜)을 실용적으로 안내하세요. 형식: 📅 [월] — [길흉] — [이유]\n' +
+      '5. 집 방향·층수·주변 환경이 언급되었다면 풍수적으로 분석하고 장단점을 설명하세요.\n' +
+      '6. 이사 후 새 집에서 기운을 높이는 인테리어·배치 팁(현관·주방·침실 방향 등)을 제안하세요.\n' +
+      '7. 손 없는 날·손 있는 날 개념도 간략히 언급하세요.\n' +
+      '8. 답변은 400~550자 내외로 작성하세요.\n';
+  }
+
+  // ── 집터운 전용 프롬프트 ──
+  if (category === '집터운') {
+    return '당신은 운세ON의 집터 · 풍수 전문 상담사입니다.\n' +
+      '배산임수(背山臨水) 등 전통 풍수 이론과 현대 주거 환경을 결합하여 집터 기운을 분석하는 전문가입니다.\n\n' +
+      base +
+      '\n【집터운 전문 지침】\n' +
+      '1. 시스템이 분석한 사주 기반 최적 방위 데이터가 제공됩니다. 반드시 활용하세요.\n' +
+      '2. 배산임수(뒤-현무·앞-주작·좌-청룡·우-백호) 이론을 현대 아파트/주택 환경에 맞게 해석하세요.\n' +
+      '3. 사주 오행에 맞는 최적 방향(향)을 구체적으로 제시하고 이유를 설명하세요.\n' +
+      '4. 집 유형(아파트/빌라/단독)이 언급되면 유형별 풍수 포인트를 분석하세요.\n' +
+      '5. 층수가 언급되면 층수별 오행 기운(저층=水, 중층=土, 고층=火)을 분석하세요.\n' +
+      '6. 주변에 병원·묘지·T자 도로 등이 있으면 반드시 언급하고 보완법을 제안하세요.\n' +
+      '7. 풍수상 나쁜 환경의 보완법(식물 배치·거울 활용·색채 조화 등)을 실용적으로 제안하세요.\n' +
+      '8. 답변은 400~550자 내외로 작성하세요.\n';
+  }
+
+  // ── 여행운 전용 프롬프트 ──
+  if (category === '여행운') {
+    return '당신은 운세ON의 여행운 · 이동운 전문 상담사입니다.\n' +
+      '사주의 역마살(驛馬煞) 흐름과 오행 방위론을 결합하여 최적의 여행 시기와 방향을 안내하는 전문가입니다.\n\n' +
+      base +
+      '\n【여행운 전문 지침】\n' +
+      '1. 시스템이 분석한 사주 기반 여행 방위·추천 여행지 데이터가 제공됩니다. 반드시 활용하세요.\n' +
+      '2. 역마살(驛馬煞) — 사주에 인신사해(寅申巳亥)가 있으면 이동·여행 기운이 강함을 설명하세요.\n' +
+      '3. 사주 오행에 맞는 행운의 여행 방향과 구체적 국내·해외 추천지를 제시하세요.\n' +
+      '4. 2026년 최적 여행 시기(봄 3~5월·가을 9~11월)를 강조하고 현재 상황과 연결하세요.\n' +
+      '5. 동행(혼자/커플/가족)이나 목적(힐링/관광/출장)이 언급되면 맞춤 여행 운세를 제공하세요.\n' +
+      '6. 여행 중 주의사항(건강·분실·교통 관련)도 사주 기운과 연결하여 안내하세요.\n' +
+      '7. 여행 후 기운 충전 효과와 에너지 변화도 언급하세요.\n' +
+      '8. 답변은 350~500자 내외로 작성하세요.\n';
+  }
+
+  // ── 직무적성 전용 프롬프트 ──
+  if (category === '직무적성') {
+    return '당신은 운세ON의 직업 적성 분석 전문가입니다.\n' +
+      '사주 오행 분석과 직업 심리학을 결합하여 최적의 직종과 커리어 방향을 안내하는 경력 15년의 전문가입니다.\n\n' +
+      base +
+      '\n【직무 적성 전문 지침】\n' +
+      '1. 시스템이 분석한 사주 오행 기반 직업 적성 데이터가 제공됩니다. 반드시 그 데이터를 활용하세요.\n' +
+      '2. 사주 유형(교육창조형/표현소통형/안정신뢰형/전문기술형/유연네트워크형)을 먼저 명확히 제시하세요.\n' +
+      '3. 추천 직종을 1~5위로 순위를 매기고 각각의 이유를 오행과 연결하여 설명하세요.\n' +
+      '4. 직업 강점·약점·최적 업무 환경을 구체적으로 분석하세요.\n' +
+      '5. 형식 예시: 🎯 1위. [직종명] — 오행 이유: ○ | 강점 발휘: ... | 주의점: ...\n' +
+      '6. 번아웃 패턴과 이상적 직장 환경을 실용적으로 조언하세요.\n' +
+      '7. 현재 직종이 언급되면 사주와 얼마나 맞는지 적합도를 분석하세요.\n' +
+      '8. 장기 커리어 성장 경로를 구체적으로 제시하세요.\n' +
+      '9. 답변은 500~650자 내외로 충실하게 작성하세요.\n';
+  }
+
+  // ── 직업상담·취업운·이직운·승진운 공통 전용 프롬프트 ──
+  const CAREER_CATS = ['직업상담', '취업운', '이직운', '승진운'];
+  if (CAREER_CATS.includes(category)) {
+    const careerType = {
+      '직업상담': { title: '직업운 종합', role: '직업운·커리어 전문 상담사', spec: '커리어 방향 + 시기 + 업무 환경' },
+      '취업운':   { title: '취업운', role: '취업운·합격운 전문가', spec: '채용 시기 + 면접 길일 + 적합 직종' },
+      '이직운':   { title: '이직운', role: '이직운·전직 전문 상담사', spec: '이직 최적 시기 + 유리한 업종 + 연봉 협상' },
+      '승진운':   { title: '승진운', role: '승진운·조직운 전문가', spec: '승진 시기 + 조직 내 전략 + 상사 관계' },
+    }[category];
+
+    return '당신은 운세ON의 ' + careerType.role + '입니다.\n' +
+      '사주명리와 현실 커리어 전략을 결합한 경력 15년의 전문가입니다.\n\n' +
+      base +
+      '\n【' + careerType.title + ' 전문 지침】\n' +
+      '1. 시스템이 분석한 사주 오행 기반 직업 데이터가 제공됩니다. 반드시 그 데이터를 활용하세요.\n' +
+      '2. 핵심 분석 영역: ' + careerType.spec + '\n' +
+      '3. 2026년 병오년 직업운 흐름을 일간(日干) 오행과 연결하여 분석하세요.\n' +
+      '4. 유리한 달과 피해야 할 달을 명확히 구분하여 제시하세요.\n' +
+      '5. 면접·이직·승진 시 길일(요일·날짜)을 실용적으로 안내하세요.\n' +
+      '6. 사주 오행 유형에 맞는 직장 내 전략과 행동 조언을 제공하세요.\n' +
+      '7. 단기(3개월)와 장기(1년) 커리어 계획을 구체적으로 제안하세요.\n' +
+      '8. 답변은 450~600자 내외로 작성하세요.\n';
   }
 
   // ── 네이밍 전용 프롬프트 (아이이름, 개명, 브랜드, 상호, 사주보완이름) ──
@@ -149,6 +296,135 @@ function buildSystemPrompt(category) {
       '흉수(피해야 할 수): 2,4,9,10,12,14,19,20,22,26,27,28,34,36,42,43,44\n';
   }
 
+  // ── 계약시기 전용 프롬프트 ──
+  if (category === '계약시기') {
+    return '당신은 운세ON의 계약 시기 · 길일 전문 상담사 겸 사주명리 전문가입니다.\n' +
+      '사주 오행과 2026년 병오년 기운을 바탕으로 최적의 계약 날짜를 안내하는 경력 15년의 전문가입니다.\n\n' +
+      base +
+      '\n【계약 시기 전문 지침】\n' +
+      '1. 시스템이 분석한 사주 오행 기반 데이터가 제공됩니다. 반드시 활용하세요.\n' +
+      '2. 계약 길일 추천 형식: 📝 [월/주] — [길흉 등급] — [사주 오행과의 관계 설명]\n' +
+      '3. 계약 유형(부동산·사업·고용·금전 등)이 언급되면 유형별 맞춤 조언을 제공하세요.\n' +
+      '4. 피해야 할 날짜와 이유도 명확히 설명하세요. 충일(冲日)·형일(刑日) 등을 언급하세요.\n' +
+      '5. 계약서 작성 시 주의사항(조항 검토, 보증, 특약 등)을 실용적으로 조언하세요.\n' +
+      '6. 계약 길일 요일(수·금 대길), 날짜(3·6·8·15·21일 등)를 구체적으로 안내하세요.\n' +
+      '7. 상대방 신뢰도 평가 및 계약 전 체크리스트도 간략히 제시하세요.\n' +
+      '8. 답변은 350~500자 내외로 작성하세요.\n';
+  }
+
+  // ── 조심할달 전용 프롬프트 ──
+  if (category === '조심할달') {
+    return '당신은 운세ON의 월별 운세 · 사주 흐름 전문 상담사입니다.\n' +
+      '2026년 병오년 기운과 사주 오행을 결합하여 조심해야 할 달과 대비법을 안내하는 전문가입니다.\n\n' +
+      base +
+      '\n【조심할 달 전문 지침】\n' +
+      '1. 시스템이 계산한 사주 오행 데이터가 제공됩니다. 반드시 그 데이터를 기반으로 분석하세요.\n' +
+      '2. 2026년 1~12월을 순서대로 검토하여 위험도가 높은 달 Top 3을 선정하세요.\n' +
+      '3. 분석 형식: ⚠️ [월] — [위험 등급: 주의/경계/위험] — [주의 분야: 재물/건강/인간관계/사고] — [구체적 대비법]\n' +
+      '4. 형충파해(刑冲破害)가 있는 달은 반드시 명시하세요.\n' +
+      '5. 각 조심 분야별(재물·건강·인간관계·법적 문제) 구체적 대처 방법을 제시하세요.\n' +
+      '6. 반드시 좋은 달도 함께 제시하여 희망을 주세요.\n' +
+      '7. 2026년 병오년 특유의 火 과잉 기운으로 인한 주의사항도 포함하세요.\n' +
+      '8. 답변은 450~600자 내외로 작성하세요.\n';
+  }
+
+  // ── 기회가오는달 전용 프롬프트 ──
+  if (category === '기회가오는달') {
+    return '당신은 운세ON의 월별 기회 흐름 · 길월(吉月) 전문 상담사입니다.\n' +
+      '2026년 병오년 기운과 사주 오행을 결합하여 기회가 오는 달과 활용법을 안내하는 전문가입니다.\n\n' +
+      base +
+      '\n【기회가 오는 달 전문 지침】\n' +
+      '1. 시스템이 계산한 사주 오행 데이터가 제공됩니다. 반드시 그 데이터를 기반으로 분석하세요.\n' +
+      '2. 2026년 1~12월을 검토하여 기회의 달 Top 3을 선정하세요.\n' +
+      '3. 분석 형식: 🌟 [월] — [기회 등급: 소길/길/대길] — [기회 분야: 재물/인연/커리어/건강회복] — [구체적 행동 조언]\n' +
+      '4. 기회 분야별(재물·인연·커리어·사업·자기계발)로 나누어 각 달에 어떤 행동을 취해야 하는지 안내하세요.\n' +
+      '5. 2026년 병오년 火 에너지가 특히 강한 달을 강조하세요.\n' +
+      '6. 천덕(天德)·월덕(月德)이 겹치는 길월을 언급하면 더욱 좋습니다.\n' +
+      '7. 기회의 달을 놓치지 않기 위한 준비사항도 안내하세요.\n' +
+      '8. 답변은 450~600자 내외로 작성하세요.\n';
+  }
+
+  // ── 동업궁합 전용 프롬프트 ──
+  if (category === '동업궁합') {
+    return '당신은 운세ON의 동업 궁합 · 사업 파트너십 전문 상담사 겸 사주명리 전문가입니다.\n' +
+      '두 사람의 사주 오행 상생상극 관계를 분석하여 동업 가능성과 전략을 제시하는 경력 20년의 전문가입니다.\n\n' +
+      base +
+      '\n【동업 궁합 전문 지침】\n' +
+      '1. 두 사람의 생년월일이 제공되면 각각의 사주 오행을 분석한 후 궁합을 종합 평가하세요.\n' +
+      '2. 동업 궁합 평가 형식: 🤝 [오행 관계: 상생/상극/중립] — [궁합 점수: X/100] — [시너지 분야] — [갈등 위험 분야]\n' +
+      '3. 역할 분담 제안: 누가 영업·관리·창작·재무를 맡아야 하는지 오행 기반으로 분석하세요.\n' +
+      '4. 계약 체결 최적 시기와 피해야 할 시기를 구체적으로 제시하세요.\n' +
+      '5. 동업 시 예상되는 갈등 유형과 예방책을 현실적으로 조언하세요.\n' +
+      '6. 수익 분배 방식에 대한 사주 기반 조언도 포함하세요.\n' +
+      '7. 동업 관계 종료 시 리스크도 간략히 언급하세요.\n' +
+      '8. 답변은 500~650자 내외로 작성하세요.\n';
+  }
+
+  // ── 프리랜서운 전용 프롬프트 ──
+  if (category === '프리랜서운') {
+    return '당신은 운세ON의 프리랜서 독립 운 · 자영업 전문 상담사 겸 사주명리 전문가입니다.\n' +
+      '사주 오행과 편재(偏財)·식신(食神) 분석을 통해 독립·프리랜서의 성공 가능성을 분석하는 전문가입니다.\n\n' +
+      base +
+      '\n【프리랜서운 전문 지침】\n' +
+      '1. 시스템이 분석한 사주 오행 기반 커리어 데이터가 제공됩니다. 반드시 활용하세요.\n' +
+      '2. 사주에서 프리랜서 독립에 유리한 오행 조합(편재·식신·상관이 발달한 경우)을 설명하세요.\n' +
+      '3. 독립 최적 시기와 준비 기간을 구체적으로 제시하세요.\n' +
+      '4. 분야별 프리랜서 적합도: IT·디자인·콘텐츠·강의·컨설팅·번역 등을 오행과 연결하세요.\n' +
+      '5. 수입 안정화 시기(초반 3개월/6개월/1년)별 예상 흐름과 대비법을 안내하세요.\n' +
+      '6. 클라이언트 유치 최적 방향과 방법을 사주 기반으로 조언하세요.\n' +
+      '7. 프리랜서로 주의해야 할 계약·세금·보험 관련 조언도 간략히 포함하세요.\n' +
+      '8. 답변은 450~600자 내외로 작성하세요.\n';
+  }
+
+  // ── 시험운합격운 전용 프롬프트 ──
+  if (category === '시험운합격운') {
+    return '당신은 운세ON의 시험운 · 합격운 전문 상담사 겸 사주명리 전문가입니다.\n' +
+      '사주 오행에서 인성(印星)과 관성(官星)의 흐름을 분석하여 시험 합격 가능성과 최적 시기를 안내하는 전문가입니다.\n\n' +
+      base +
+      '\n【시험운·합격운 전문 지침】\n' +
+      '1. 시스템이 분석한 사주 오행 기반 데이터가 제공됩니다. 반드시 활용하세요.\n' +
+      '2. 사주에서 합격운이 강한 시기(인성+관성이 동시에 활성화된 달)를 찾아 분석하세요.\n' +
+      '3. 2026년 시험 일정별 합격 가능성: 📚 [시험 시기] — [합격 가능성: 상/중/하] — [이유]\n' +
+      '4. 시험 유형별(수능·공무원·자격증·어학·입사) 맞춤 조언을 제공하세요.\n' +
+      '5. 면접·실기·필기 각 단계별 유의사항도 포함하세요.\n' +
+      '6. 집중력이 높아지는 요일·시간대·학습 방향(책상 배치)을 제시하세요.\n' +
+      '7. 시험장에서의 행운 아이템(색상·숫자·방향)을 안내하세요.\n' +
+      '8. 떨어질 경우 재도전 최적 시기도 언급하세요.\n' +
+      '9. 답변은 400~550자 내외로 작성하세요.\n';
+  }
+
+  // ── 2026병오년운세 전용 프롬프트 ──
+  if (category === '2026병오년운세') {
+    return '당신은 운세ON의 2026 병오년 운세 전문 상담사 겸 사주명리 전문가입니다.\n' +
+      '2026년 병오년(丙午年)의 기운과 개인 사주를 결합하여 연간 운세 흐름을 분석하는 전문가입니다.\n\n' +
+      base +
+      '\n【2026 병오년 운세 전문 지침】\n' +
+      '1. 2026년은 丙午年: 丙(火 천간) + 午(火 지지) — 火 기운이 두 배로 강한 "불말의 해"임을 먼저 설명하세요.\n' +
+      '2. 개인 사주 오행과 병오년 기운의 상생·상극 관계를 분석하세요.\n' +
+      '3. 분야별 연간 운세를 제시하세요: 💕연애/결혼 | 💰재물/사업 | 💼직업/커리어 | 🏥건강\n' +
+      '4. 월별 대길(大吉) 달 3개와 주의 달 2개를 명확히 제시하세요.\n' +
+      '5. 2026년 특히 주의해야 할 사항(화재·분쟁·충동적 결정)을 언급하세요.\n' +
+      '6. 2026년을 가장 잘 활용하는 개인 전략을 오행 기반으로 제시하세요.\n' +
+      '7. 행운의 방향·색상·숫자를 2026년 병오년에 맞게 안내하세요.\n' +
+      '8. 답변은 500~700자 내외로 종합적으로 작성하세요.\n';
+  }
+
+  // ── 종합운세상담 전용 프롬프트 ──
+  if (category === '종합운세상담') {
+    return '당신은 운세ON의 종합 사주 운세 전문 상담사입니다. 수십 년 경력의 한국 전통 명리학 최고 전문가입니다.\n\n' +
+      base +
+      '\n【종합 운세 상담 전문 지침】\n' +
+      '1. 시스템이 계산한 사주 팔자 데이터가 제공됩니다. 반드시 그 데이터를 기반으로 분석하세요.\n' +
+      '2. 종합 운세는 다음 6개 분야를 모두 포함하세요: 💕인연/연애 | 💰재물 | 💼직업 | 🏠주거/이사 | 🏥건강 | 👥인간관계\n' +
+      '3. 2026년 현재 대운(大運)의 흐름과 세운(歲運)이 어떻게 맞물리는지 설명하세요.\n' +
+      '4. 각 분야별 현재 강점과 약점을 균형 있게 제시하세요.\n' +
+      '5. 2026년 올해 가장 좋은 달 Top 3과 조심할 달 Top 2를 제시하세요.\n' +
+      '6. 용신(用神)·희신(喜神) 기반 개인 행운 아이템(색상·방향·숫자)을 안내하세요.\n' +
+      '7. 현재 고민이나 질문 내용에 집중하여 실질적 조언을 중심에 두세요.\n' +
+      '8. 마무리는 반드시 <p class="saju-closing">...</p> 태그로 희망적 메시지로 끝내세요.\n' +
+      '9. 답변은 600~800자 내외로 충실하게 작성하세요.\n';
+  }
+
   // ── 사주/운세 기본 프롬프트 ──
   return '당신은 운세ON의 전문 사주명리 상담 AI입니다. 수십 년 경력의 한국 전통 명리학 전문가입니다.\n\n' +
     base +
@@ -168,7 +444,36 @@ function buildSystemPrompt(category) {
     '2000=경진 2001=신사 2002=임오 2003=계미 2004=갑신 2005=을유 2006=병술 2007=정해\n' +
     '2008=무자 2009=기축 2010=경인 2011=신묘 2012=임진 2013=계사 2014=갑오 2015=을미\n' +
     '2016=병신 2017=정유 2018=무술 2019=기해 2020=경자 2021=신축 2022=임인 2023=계묘\n' +
-    '2024=갑진 2025=을사 2026=병오 2027=정미 2028=무신 2029=기유 2030=경술';
+    '1960=경자 1970=경술 1980=경신 1990=경오 2000=경진\n' +
+    '1973=계축 1974=갑인 1975=을묘 1976=병진 1977=정사 1978=무오 1979=기미\n' +
+    '1980=경신 1981=신유 1982=임술 1983=계해 1984=갑자 1985=을축 1986=병인\n' +
+    '1987=정묘 1988=무진 1989=기사 1990=경오 1991=신미 1992=임신 1993=계유\n' +
+    '1994=갑술 1995=을해 1996=병자 1997=정축 1998=무인 1999=기묘 2000=경진\n' +
+    '2001=신사 2002=임오 2003=계미 2004=갑신 2005=을유 2006=병술 2007=정해\n' +
+    '2008=무자 2009=기축 2010=경인 2011=신묘 2012=임진 2013=계사 2014=갑오\n' +
+    '2015=을미 2016=병신 2017=정유 2018=무술 2019=기해 2020=경자 2021=신축\n' +
+    '2022=임인 2023=계묘 2024=갑진 2025=을사 2026=병오 2027=정미 2028=무신';
+}
+
+// ===== 카테고리·메시지 기반 최대 토큰 동적 결정 =====
+function _getMaxTokens(category, message) {
+  // 다중 인물 분석이 필요한 카테고리 → 토큰 더 많이 필요
+  const HEAVY_CATS = [
+    '궁합상담', '동업궁합', '가족운자녀운', '배우자복',
+    '아이이름짓기', '개명상담', '사주보완이름',
+    '브랜드네이밍', '상호명상담', '상호브랜드네이밍',
+    '업종추천', '개업시기', '개업상담',
+    '이사운', '집터운', '여행운',
+    '직업상담', '직무적성', '취업운', '이직운', '승진운',
+    '점성술상담', '타로상담', '종합운세상담', '2026병오년운세',
+  ];
+  // 두 사람 생년월일이 모두 있는 경우 (궁합 등)
+  const birthYearCount = (message.match(/\d{4}년/g) || []).length;
+  const hasMultiplePeople = birthYearCount >= 2 || /상대방|두\s*분|본인.*상대|궁합|배우자/.test(message);
+
+  if (hasMultiplePeople)                    return 3500;  // 두 사람 동시 분석
+  if (HEAVY_CATS.includes(category))        return 2800;  // 복잡한 단일 분석
+  return 2000;                                            // 일반 상담
 }
 
 // ===== 대화 히스토리 =====
@@ -252,6 +557,59 @@ async function callGeminiStream(category, userMessage, onChunk, onDone, onError)
     }
   }
 
+  // ── 라이프스타일 컨텍스트 자동 계산 ──
+  // 이사운·집터운·여행운 카테고리: 방위·길일·여행지 분석 데이터를 프롬프트에 삽입
+  const LIFESTYLE_CATEGORIES = ['이사운', '집터운', '여행운'];
+  let lifestyleContext = '';
+  if (LIFESTYLE_CATEGORIES.includes(category) && typeof parseLifestyleInput === 'function') {
+    try {
+      const lsInput = parseLifestyleInput(userMessage);
+      lsInput.type = lsInput.type || (
+        category === '이사운' ? 'move' : category === '집터운' ? 'house' : 'travel'
+      );
+      let sajuForLS = null;
+      if (typeof parseBirthInfo === 'function') {
+        const bi3 = parseBirthInfo(userMessage);
+        if (bi3.found && typeof calcSaju === 'function') {
+          try { sajuForLS = calcSaju({ year: bi3.year, month: bi3.month, day: bi3.day,
+            hour: bi3.hour, isLunar: bi3.isLunar, isLeap: bi3.isLeap }); } catch(_) {}
+        }
+      }
+      lifestyleContext = lifestyleToPromptText(lsInput, sajuForLS, category);
+      console.log('[Lifestyle] 카테고리:', category,
+        '| 유형:', lsInput.type,
+        '| 이사지:', lsInput.moveTo,
+        '| 여행지:', lsInput.travelDest);
+    } catch(e) {
+      console.warn('[Lifestyle] 계산 오류:', e);
+    }
+  }
+
+  // ── 커리어 컨텍스트 자동 계산 ──
+  // 직업상담·직무적성·취업운·이직운·승진운 카테고리: 직업 적성·시기 데이터를 프롬프트에 삽입
+  const CAREER_CATEGORIES = ['직업상담', '직무적성', '취업운', '이직운', '승진운', '시험운합격운', '프리랜서운'];
+  let careerContext = '';
+  if (CAREER_CATEGORIES.includes(category) && typeof parseCareerInput === 'function') {
+    try {
+      const careerInput = parseCareerInput(userMessage);
+      let sajuForCareer = null;
+      if (typeof parseBirthInfo === 'function') {
+        const bi4 = parseBirthInfo(userMessage);
+        if (bi4.found && typeof calcSaju === 'function') {
+          try { sajuForCareer = calcSaju({ year: bi4.year, month: bi4.month, day: bi4.day,
+            hour: bi4.hour, isLunar: bi4.isLunar, isLeap: bi4.isLeap }); } catch(_) {}
+        }
+      }
+      careerContext = careerToPromptText(careerInput, sajuForCareer, category);
+      console.log('[Career] 카테고리:', category,
+        '| 상황:', careerInput.situation,
+        '| 현직:', careerInput.currentJob,
+        '| 경력:', careerInput.experience);
+    } catch(e) {
+      console.warn('[Career] 계산 오류:', e);
+    }
+  }
+
   // ── 네이밍 컨텍스트 자동 계산 ──
   // 개명/이름짓기/브랜드 카테고리일 때: 이름 분석 데이터를 프롬프트에 삽입
   const NAMING_CATEGORIES = ['아이이름짓기','개명상담','사주보완이름','브랜드네이밍','상호명상담','상호브랜드네이밍'];
@@ -279,18 +637,79 @@ async function callGeminiStream(category, userMessage, onChunk, onDone, onError)
     }
   }
 
+  // ── 업종추천 · 상호명 · 개업 컨텍스트 자동 계산 ──
+  // 업종추천/상호명상담/상호브랜드네이밍/개업시기/개업상담 카테고리 전용
+  const BUSINESS_CATEGORIES = ['업종추천', '상호명상담', '상호브랜드네이밍', '개업시기', '개업상담', '동업궁합'];
+  let businessContext = '';
+  if (BUSINESS_CATEGORIES.includes(category) && typeof parseBusinessInput === 'function') {
+    try {
+      const bizInput = parseBusinessInput(userMessage);
+      // 사주 계산 결과 연동 (이미 계산된 sajuContext 재사용)
+      let sajuForBiz = null;
+      if (typeof parseBirthInfo === 'function') {
+        const bi2 = parseBirthInfo(userMessage);
+        if (bi2.found && typeof calcSaju === 'function') {
+          try {
+            sajuForBiz = calcSaju({ year: bi2.year, month: bi2.month, day: bi2.day,
+              hour: bi2.hour, isLunar: bi2.isLunar, isLeap: bi2.isLeap });
+          } catch(_) {}
+        }
+      }
+      businessContext = businessToPromptText(bizInput, sajuForBiz, category);
+      console.log('[Business] 카테고리:', category,
+        '| 관심업종:', bizInput.interests,
+        '| 상호명후보:', bizInput.brandCandidates,
+        '| 자본금:', bizInput.capital);
+    } catch(e) {
+      console.warn('[Business] 계산 오류:', e);
+    }
+  }
+
+  // ── 계약시기 · 조심할달 · 기회가오는달 사주 기반 컨텍스트 추가 ──
+  // 이 카테고리들은 sajuContext만 있으면 충분하므로 별도 컨텍스트 없이
+  // 위에서 계산된 sajuContext를 활용 (이미 포함됨)
+  // 단, 사주 정보가 없더라도 2026년 기본 분석은 가능하도록 안내 추가
+  const SAJU_ONLY_CATEGORIES = ['계약시기', '조심할달', '기회가오는달'];
+  let sajuOnlyGuide = '';
+  if (SAJU_ONLY_CATEGORIES.includes(category)) {
+    if (sajuContext) {
+      sajuOnlyGuide = '\n\n【위 사주 데이터 활용 지침】\n' +
+        '반드시 위 사주 팔자 데이터를 바탕으로 ' + (CAT_KR_GEMINI[category] || category) + ' 분석을 제공하세요.\n' +
+        '일간(日干) 오행과 2026년 병오년 기운의 상생·상극을 중심으로 분석하세요.\n';
+    } else {
+      sajuOnlyGuide = '\n\n【생년월일 미제공 시 기본 분석 지침】\n' +
+        '생년월일이 제공되지 않았습니다. 2026년 병오년의 일반적인 ' + (CAT_KR_GEMINI[category] || category) + ' 흐름을 먼저 설명하고,\n' +
+        '더 정확한 분석을 위해 생년월일(년/월/일)을 한 번만 자연스럽게 요청하세요.\n';
+    }
+  }
+
+  // ── 다중 인물 분석 시 추가 지침 ──
+  // 두 사람 생년월일이 모두 있으면 "두 사람 분석을 모두 완료할 것" 강조
+  let multiPersonGuide = '';
+  const birthYearCount = (userMessage.match(/\d{4}년/g) || []).length;
+  const isMultiPerson  = birthYearCount >= 2 || /상대방|두\s*분|본인.*상대|궁합|배우자/.test(userMessage);
+  if (isMultiPerson) {
+    multiPersonGuide =
+      '\n\n【다중 인물 분석 필수 지침】\n' +
+      '이 질문에는 두 사람의 사주가 포함되어 있습니다.\n' +
+      '1. 두 사람 각각의 사주를 먼저 분석한 뒤, 궁합·시너지를 종합 분석하세요.\n' +
+      '2. 분석이 길어져도 반드시 끝까지 완성하세요. 절대 중간에 문장을 자르지 마세요.\n' +
+      '3. 마지막 문장은 반드시 <p class="saju-closing">...</p>로 마무리하세요.\n' +
+      '4. 핵심 포인트는 <ul><li>...</li></ul>로 간결하게 정리하세요.\n';
+  }
+
   addToHistory('user', userMessage);
 
   const requestBody = {
     system_instruction: {
-      parts: [{ text: buildSystemPrompt(category) + sajuContext + tarotContext + astrologyContext + namingContext }]
+      parts: [{ text: buildSystemPrompt(category) + sajuContext + tarotContext + astrologyContext + namingContext + businessContext + lifestyleContext + careerContext + sajuOnlyGuide + multiPersonGuide }]
     },
     contents: conversationHistory,
     generationConfig: {
       temperature: 0.9,
       topK: 40,
       topP: 0.95,
-      maxOutputTokens: 2048,
+      maxOutputTokens: _getMaxTokens(category, userMessage),
       candidateCount: 1,
     },
     safetySettings: [
@@ -339,6 +758,7 @@ async function callGeminiStream(category, userMessage, onChunk, onDone, onError)
     const decoder = new TextDecoder();
     let fullText  = '';
     let buffer    = '';
+    let finishReason = '';
 
     while (true) {
       const chunk = await reader.read();
@@ -355,19 +775,58 @@ async function callGeminiStream(category, userMessage, onChunk, onDone, onError)
         if (jsonStr === '[DONE]') continue;
         try {
           const parsed = JSON.parse(jsonStr);
-          const text = parsed &&
-                       parsed.candidates &&
-                       parsed.candidates[0] &&
-                       parsed.candidates[0].content &&
-                       parsed.candidates[0].content.parts &&
-                       parsed.candidates[0].content.parts[0] &&
-                       parsed.candidates[0].content.parts[0].text
-                       ? parsed.candidates[0].content.parts[0].text : '';
-          if (text) {
-            fullText += text;
-            onChunk(fullText);
+          const cand = parsed && parsed.candidates && parsed.candidates[0];
+          if (cand) {
+            const text = cand.content &&
+                         cand.content.parts &&
+                         cand.content.parts[0] &&
+                         cand.content.parts[0].text
+                         ? cand.content.parts[0].text : '';
+            if (text) {
+              fullText += text;
+              onChunk(fullText);
+            }
+            // finishReason 추적 (MAX_TOKENS 감지)
+            if (cand.finishReason) finishReason = cand.finishReason;
           }
         } catch (_) {}
+      }
+    }
+
+    // MAX_TOKENS로 잘린 경우: 이어쓰기 요청
+    if (finishReason === 'MAX_TOKENS' && fullText.length > 0) {
+      console.warn('[Gemini] MAX_TOKENS 감지 — 이어쓰기 시도');
+      try {
+        const continueBody = {
+          system_instruction: requestBody.system_instruction,
+          contents: [
+            ...conversationHistory.slice(0, -1), // 마지막 user 메시지 제외
+            { role: 'user',  parts: [{ text: userMessage }] },
+            { role: 'model', parts: [{ text: fullText }] },
+            { role: 'user',  parts: [{ text: '이어서 계속 작성해주세요. 앞 내용을 반복하지 말고 이어서만 써주세요.' }] }
+          ],
+          generationConfig: {
+            temperature: 0.9, topK: 40, topP: 0.95,
+            maxOutputTokens: 1500, candidateCount: 1,
+          },
+          safetySettings: requestBody.safetySettings,
+        };
+        const contUrl = 'https://generativelanguage.googleapis.com/' + ver + '/models/' + model + ':generateContent?key=' + key;
+        const contRes = await fetch(contUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(continueBody),
+        });
+        if (contRes.ok) {
+          const contData = await contRes.json();
+          const contText = contData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          if (contText) {
+            fullText += contText;
+            onChunk(fullText);
+          }
+        }
+      } catch(e) {
+        console.warn('[Gemini] 이어쓰기 실패:', e.message);
       }
     }
 

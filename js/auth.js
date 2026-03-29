@@ -514,8 +514,11 @@ function toggleUserMenu() {
 function logout() {
   if (!confirm('로그아웃 하시겠습니까?')) return;
   setCurrentUser(null);
+  // 포인트·초기화 플래그 제거 (다음 로그인 시 계정 포인트로 복원)
   localStorage.removeItem('sajuon_points');
   localStorage.removeItem('sajuon_initialized');
+  // 이용 내역도 세션 초기화 (계정 로그인 시 계정 데이터 사용)
+  // ※ sajuon_history는 유지 (비회원도 볼 수 있도록)
   window.location.href = 'index.html';
 }
 

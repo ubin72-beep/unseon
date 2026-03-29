@@ -257,7 +257,10 @@ function parseBusinessInput(text) {
   const industryPat = text.match(/([가-힣]+(?:업|점|원|관|소|가게|샵|몰|센터|학원|클리닉))/);
   if (industryPat) result.industry = industryPat[1];
 
-  if (result.birthYear || result.interests.length > 0 || result.brandCandidates.length > 0) {
+  // 동업궁합: 생년월일만 있어도 분석 가능
+  if (/동업|파트너십|합동\s*창업/.test(text)) result.businessType = 'partner';
+
+  if (result.birthYear || result.interests.length > 0 || result.brandCandidates.length > 0 || result.industry || result.businessType) {
     result.found = true;
   }
 
@@ -615,9 +618,38 @@ function businessToPromptText(input, saju, category) {
     text += '   참고 예시: ' + guide.examples.join(', ') + '\n';
   }
 
+  // ── 동업궁합 전용 분석 ──
+  if (category === '동업궁합' && saju) {
+    text += '\n【동업 파트너 분석 데이터】\n';
+    text += '📊 본인 사주 오행: ';
+    if (saju.oheng) {
+      Object.entries(saju.oheng).forEach(([k,v]) => { text += k + ':' + v + ' '; });
+    }
+    text += '\n';
+    if (saju.dayGan) {
+      text += '🔑 일간(日干): ' + saju.dayGan + '\n';
+      const bizType = BUSINESS_TYPE_BY_OHENG[saju.yongshin] || BUSINESS_TYPE_BY_OHENG['土'];
+      text += '💼 사업 성향: ' + bizType.type + ' — ' + bizType.style + '\n';
+    }
+    // 동업 가능성 분석 기초 데이터
+    text += '\n【오행 상생상극 관계표】\n';
+    text += '상생(相生): 木→火→土→金→水→木 (순서대로 생해줌)\n';
+    text += '상극(相剋): 木→土, 火→金, 土→水, 金→木, 水→火 (극함)\n';
+    text += '중립: 같은 오행 (比劫 관계 — 경쟁 가능, 협력도 가능)\n';
+    text += '\n개업 길일: 월요일·목요일 대길 | 3·6·8·13·15·21일 길일\n';
+    text += '계약 서명 주의 날: 4·9·14·19일\n';
+  }
+
   // AI 지침
   text += '\n【AI 상담 지침】\n';
-  if (isIndustryConsult) {
+  if (category === '동업궁합') {
+    text += '1. 두 사람의 사주 오행 상생·상극 관계를 분석하여 동업 궁합 점수(100점 만점)를 제시하세요.\n';
+    text += '2. 역할 분담 제안: 누가 영업·관리·창작·재무를 맡으면 좋은지 오행 기반으로 분석하세요.\n';
+    text += '3. 계약 체결 최적 시기와 피해야 할 시기를 구체적으로 제시하세요.\n';
+    text += '4. 동업 시 예상되는 갈등 유형과 예방책을 현실적으로 조언하세요.\n';
+    text += '5. 수익 분배 방식에 대한 사주 기반 조언도 포함하세요.\n';
+    text += '6. 두 번째 사람의 생년월일이 없으면 한 번만 자연스럽게 요청하세요.\n';
+  } else if (isIndustryConsult) {
     text += '1. 위 사주 오행 분석을 반드시 기반으로 업종을 추천하세요.\n';
     text += '2. 추천 순위를 1~5위로 명확히 제시하고 각각의 이유를 설명하세요.\n';
     text += '3. 자본금 정보가 있으면 현실적인 창업 방식을 제안하세요.\n';

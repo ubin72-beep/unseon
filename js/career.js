@@ -287,6 +287,8 @@ function parseCareerInput(text) {
   else if (/이직|전직|이동/.test(text))        result.situation = 'change';
   else if (/승진|진급|팀장|임원/.test(text))   result.situation = 'promotion';
   else if (/적성|어떤 일|맞는 직업|직무/.test(text)) result.situation = 'aptitude';
+  else if (/시험|자격증|합격|공무원 시험|수능|어학/.test(text)) result.situation = 'exam';
+  else if (/프리랜서|독립|1인 사업|퇴사 후|개인 사업자/.test(text)) result.situation = 'freelance';
 
   // 현재 직종 파싱
   const jobKeywords = ['개발자', '디자이너', '교사', '강사', '간호사', '의사', '변호사',
@@ -525,8 +527,9 @@ function careerToPromptText(input, saju, category) {
     }
   }
 
-  // AI 지침
-  text += '\n【AI 상담 지침】\n';
+  // AI 지침 (시험운·프리랜서운은 내부에서 별도 섹션 추가 후 AI 지침 포함)
+  const _skipAIGuide = (category === '시험운합격운' || category === '프리랜서운');
+  if (!_skipAIGuide) text += '\n【AI 상담 지침】\n';
 
   if (category === '직무적성') {
     text += '1. 사주 오행 기반 직업 유형을 가장 먼저 명확히 제시하세요.\n';
@@ -553,6 +556,53 @@ function careerToPromptText(input, saju, category) {
     text += '3. 승진을 위한 구체적 업무 전략과 어필 포인트를 제시하세요.\n';
     text += '4. 승진 발령 가능성 높은 달과 그 이유를 명확히 설명하세요.\n';
     text += '5. 승진 실패 시 대안 경로도 함께 안내하세요.\n';
+  } else if (category === '시험운합격운') {
+    // 시험·자격증 정보 추가 (AI 지침 포함)
+    text += '\n【시험·자격증 데이터】\n';
+    text += '📚 2026년 시험 최적 달: 3월(봄 집중력 최고), 4월(성장 기운), 9월(하반기 최적), 10월(수확의 달)\n';
+    text += '⚠️  시험 주의 달: 7~8월(火 기운 과다, 집중력 저하), 12월(연말 분산)\n';
+    if (aptitude) {
+      const OHENG_EXAM_MAP = {
+        '木': ['국어·교육 자격증', '환경기사', '사회복지사', 'OPIC', '논술 시험'],
+        '火': ['방송·미디어 자격증', '예술 관련', '미용사', '스포츠지도사', '마케팅 자격'],
+        '土': ['부동산 공인중개사', '사회복지사', '세무사', '행정사', '국가직 공무원'],
+        '金': ['IT 자격증', '정보처리기사', '법무사', '의료 관련', '회계사·세무사'],
+        '水': ['TOEIC·어학', '데이터분석사', '금융 자격', '컨설팅 자격', '번역·통역'],
+      };
+      text += '\n🎯 이 사주 오행(' + aptitude.dominantOheng + ')에 맞는 추천 시험 분야: ';
+      const examRecs = OHENG_EXAM_MAP[aptitude.dominantOheng] || [];
+      text += examRecs.slice(0,4).join(', ') + '\n';
+    }
+    text += '\n【AI 상담 지침】\n';
+    text += '1. 사주 인성(印星)·관성(官星) 흐름으로 합격운을 분석하세요.\n';
+    text += '2. 2026년 월별 합격 가능성을 명확히 제시하세요.\n';
+    text += '3. 응시할 시험 유형(수능·공무원·자격증·어학)에 맞는 맞춤 조언을 하세요.\n';
+    text += '4. 시험장에서의 행운 아이템(색상·숫자·방향)을 안내하세요.\n';
+    text += '5. 불합격 시 재도전 최적 시기도 반드시 포함하세요.\n';
+  } else if (category === '프리랜서운') {
+    // 프리랜서 관련 사주 데이터 추가 (AI 지침 포함)
+    text += '\n【프리랜서 독립운 데이터】\n';
+    if (aptitude) {
+      const freelanceFit = {
+        '水': '최상 ✅ (유연성+정보 활용 탁월)',
+        '木': '상 ✅ (창의성+기획 강점)',
+        '火': '상 ✅ (표현력+소통, 콘텐츠·마케팅 적합)',
+        '金': '중상 (전문성 기반 독립 가능)',
+        '土': '중 (안정성 중시, 파트타임 후 단계적 전환 추천)',
+      };
+      text += '💼 오행 기반 프리랜서 적합도: ' + (freelanceFit[aptitude.dominantOheng] || '중') + '\n';
+      const careerCats = aptitude.categories || {};
+      const topCatKey = Object.keys(careerCats)[0];
+      if (topCatKey) text += '🔑 주력 프리랜서 분야: ' + (careerCats[topCatKey] || []).slice(0,4).join(', ') + '\n';
+    }
+    text += '📅 독립 최적 시기 (2026년): 3~4월(봄 새 출발), 9~10월(하반기 결단)\n';
+    text += '⚠️  주의 시기: 7~8월(수입 불안정 가능), 12월(신규 계약 지연)\n';
+    text += '\n【AI 상담 지침】\n';
+    text += '1. 사주 편재(偏財)·식신(食神)·상관(傷官) 발달 여부로 프리랜서 적합성을 분석하세요.\n';
+    text += '2. 독립 최적 시기와 준비 기간(최소 3~6개월)을 구체적으로 제시하세요.\n';
+    text += '3. IT·디자인·콘텐츠·강의·컨설팅 등 분야별 적합도를 오행과 연결하세요.\n';
+    text += '4. 수입 안정화 시기(3개월/6개월/1년)별 예상 흐름을 안내하세요.\n';
+    text += '5. 클라이언트 유치 방향과 계약·세금 관련 실용 조언도 포함하세요.\n';
   } else {
     // 직업상담 기본
     text += '1. 사주 오행 기반 직업 적성 분석을 먼저 제시하세요.\n';
