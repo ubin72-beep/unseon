@@ -1,0 +1,74 @@
+# robots.txt — 운세ON (unseon.co.kr)
+# 구글, 네이버, 다음 검색엔진 크롤러 설정
+
+# ===== 전체 허용 =====
+User-agent: *
+Allow: /
+
+# ===== 크롤링 제외 경로 (관리자·인증 페이지) =====
+Disallow: /admin.html
+Disallow: /auth.html
+Disallow: /payment-complete.html
+Disallow: /js/
+Disallow: /css/
+
+# ===== 구글봇 =====
+User-agent: Googlebot
+Allow: /
+Allow: /index.html
+Allow: /chat.html
+Allow: /pricing.html
+Allow: /terms.html
+Allow: /privacy.html
+Allow: /refund.html
+Disallow: /admin.html
+Disallow: /auth.html
+Disallow: /payment-complete.html
+Crawl-delay: 1
+
+# ===== 네이버봇 =====
+User-agent: Yeti
+Allow: /
+Allow: /index.html
+Allow: /chat.html
+Allow: /pricing.html
+Disallow: /admin.html
+Disallow: /auth.html
+Crawl-delay: 1
+
+# ===== 다음봇 =====
+User-agent: Daum
+Allow: /
+Allow: /index.html
+Allow: /chat.html
+Disallow: /admin.html
+Disallow: /auth.html
+Crawl-delay: 1
+
+# ===== 빙봇 (마이크로소프트) =====
+User-agent: bingbot
+Allow: /
+Disallow: /admin.html
+Disallow: /auth.html
+Crawl-delay: 2
+
+# ===== 이미지 크롤러 허용 =====
+User-agent: Googlebot-Image
+Allow: /images/
+Allow: /css/
+
+# ===== 악성 봇 차단 =====
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# ===== 사이트맵 =====
+Sitemap: https://unseon.co.kr/sitemap.xml

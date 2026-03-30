@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>검색엔진 홍보 가이드 — 운세ON 관리자</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --google: #4285F4;
+      --naver:  #03C75A;
+      --daum:   #FD6200;
+      --kakao:  #FEE500;
+      --kakao-text: #3C1E1E;
+      --primary: #2e7d32;
+      --bg: #f8fafb;
+      --card: #ffffff;
+      --border: #e8ecef;
+      --text: #1a1a2e;
+      --muted: #6c757d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); }
+
+    /* ===== 헤더 ===== */
+    .guide-header {
+      background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #388e3c 100%);
+      color: #fff;
+      padding: 40px 24px 32px;
+      text-align: center;
+    }
+    .guide-header h1 { font-size: 1.9rem; font-weight: 800; margin-bottom: 8px; }
+    .guide-header p  { font-size: 0.95rem; opacity: 0.85; }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-bottom: 20px; color: rgba(255,255,255,0.8);
+      text-decoration: none; font-size: 0.88rem;
+      transition: color .2s;
+    }
+    .back-btn:hover { color: #fff; }
+
+    /* ===== 컨테이너 ===== */
+    .container { max-width: 1000px; margin: 0 auto; padding: 32px 20px 60px; }
+
+    /* ===== 상태 카드 ===== */
+    .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .status-card {
+      background: var(--card); border-radius: 16px; padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      border-left: 5px solid var(--border);
+      display: flex; align-items: center; gap: 14px;
+    }
+    .status-card.google { border-color: var(--google); }
+    .status-card.naver  { border-color: var(--naver); }
+    .status-card.daum   { border-color: var(--daum); }
+    .status-card.kakao  { border-color: var(--kakao); }
+    .status-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+    .google .status-icon { background: #e8f0fe; color: var(--google); }
+    .naver  .status-icon { background: #e6faf0; color: var(--naver); }
+    .daum   .status-icon { background: #fff3e8; color: var(--daum); }
+    .kakao  .status-icon { background: #fffde0; color: var(--kakao-text); }
+    .status-info h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 3px; }
+    .status-info p  { font-size: 0.78rem; color: var(--muted); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; margin-top: 4px; }
+    .badge-wait    { background: #fff3cd; color: #856404; }
+    .badge-done    { background: #d4edda; color: #155724; }
+    .badge-action  { background: #f8d7da; color: #721c24; }
+
+    /* ===== 섹션 ===== */
+    .section-wrap { margin-bottom: 36px; }
+    .section-title {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 1.2rem; font-weight: 800; margin-bottom: 18px;
+      padding-bottom: 10px; border-bottom: 2px solid var(--border);
+    }
+    .section-title .eng-badge {
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 0.72rem; font-weight: 700; color: #fff;
+    }
+    .bg-google { background: var(--google); }
+    .bg-naver  { background: var(--naver); }
+    .bg-daum   { background: var(--daum); }
+    .bg-kakao  { background: var(--kakao-text); }
+
+    /* ===== 스텝 카드 ===== */
+    .steps { display: flex; flex-direction: column; gap: 14px; }
+    .step-card {
+      background: var(--card); border-radius: 14px; padding: 20px 22px;
+      box-shadow: 0 1px 8px rgba(0,0,0,.05);
+      display: flex; gap: 16px; align-items: flex-start;
+    }
+    .step-num {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.88rem; font-weight: 800; color: #fff;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .step-num.c-google { background: var(--google); }
+    .step-num.c-naver  { background: var(--naver); }
+    .step-num.c-daum   { background: var(--daum); }
+    .step-num.c-kakao  { background: var(--kakao-text); }
+    .step-body h4 { font-size: 0.97rem; font-weight: 700; margin-bottom: 5px; }
+    .step-body p  { font-size: 0.86rem; color: var(--muted); line-height: 1.6; }
+    .step-body code {
+      background: #f1f3f5; padding: 2px 7px; border-radius: 5px;
+      font-size: 0.82rem; font-family: monospace; color: #c0392b;
+      word-break: break-all;
+    }
+    .step-link {
+      display: inline-flex; align-items: center; gap: 5px;
+      margin-top: 8px; padding: 7px 14px;
+      border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+      text-decoration: none; color: #fff; transition: opacity .2s;
+    }
+    .step-link:hover { opacity: 0.85; }
+    .sl-google { background: var(--google); }
+    .sl-naver  { background: var(--naver); }
+    .sl-daum   { background: var(--daum); }
+    .sl-kakao  { background: var(--kakao-text); }
+
+    /* ===== 인증코드 입력 ===== */
+    .verify-box {
+      background: #f8f9fa; border: 1.5px dashed var(--border);
+      border-radius: 12px; padding: 18px; margin-top: 12px;
+    }
+    .verify-box label { font-size: 0.82rem; font-weight: 600; color: var(--muted); display: block; margin-bottom: 6px; }
+    .verify-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .verify-input {
+      flex: 1; min-width: 200px; padding: 9px 13px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.88rem; font-family: monospace;
+      background: #fff; outline: none;
+    }
+    .verify-input:focus { border-color: var(--primary); }
+    .verify-btn {
+      padding: 9px 18px; background: var(--primary); color: #fff;
+      border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap; transition: background .2s;
+    }
+    .verify-btn:hover { background: #1b5e20; }
+
+    /* ===== SEO 키워드 박스 ===== */
+    .kw-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .kw-tag {
+      padding: 5px 12px; background: #e8f5e9; border-radius: 20px;
+      font-size: 0.8rem; font-weight: 600; color: var(--primary);
+      border: 1px solid #c8e6c9;
+    }
+    .kw-tag.hot { background: #fce4ec; color: #c62828; border-color: #f8bbd0; }
+    .kw-tag.mid { background: #e3f2fd; color: #1565c0; border-color: #bbdefb; }
+
+    /* ===== 체크리스트 ===== */
+    .checklist { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .checklist li {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: var(--card); border-radius: 10px; padding: 12px 16px;
+      font-size: 0.87rem; box-shadow: 0 1px 5px rgba(0,0,0,.04);
+    }
+    .checklist li input[type=checkbox] { margin-top: 2px; accent-color: var(--primary); width: 15px; height: 15px; flex-shrink: 0; }
+    .checklist li label { cursor: pointer; line-height: 1.5; }
+    .checklist li label span { color: var(--muted); font-size: 0.8rem; display: block; }
+
+    /* ===== 알림 박스 ===== */
+    .alert-box {
+      border-radius: 12px; padding: 14px 18px;
+      margin-bottom: 14px; font-size: 0.87rem; line-height: 1.6;
+      display: flex; gap: 10px;
+    }
+    .alert-info    { background: #e3f2fd; border-left: 4px solid var(--google); color: #1565c0; }
+    .alert-success { background: #e8f5e9; border-left: 4px solid var(--naver);  color: #1b5e20; }
+    .alert-warning { background: #fff8e1; border-left: 4px solid #f9a825;       color: #795548; }
+
+    /* ===== 반응형 ===== */
+    @media (max-width: 600px) {
+      .guide-header h1 { font-size: 1.4rem; }
+      .step-card { flex-direction: column; }
+      .step-num  { width: 30px; height: 30px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="guide-header">
+  <a href="admin.html" class="back-btn"><i class="fas fa-arrow-left"></i> 관리자로 돌아가기</a>
+  <h1><i class="fas fa-search"></i> 검색엔진 홍보 가이드</h1>
+  <p>구글 · 네이버 · 다음 · 카카오에 운세ON을 등록하고 홍보하는 방법</p>
+</div>
+
+<div class="container">
+
+  <!-- ===== 현재 상태 카드 ===== -->
+  <div class="status-grid">
+    <div class="status-card google">
+      <div class="status-icon"><i class="fab fa-google"></i></div>
+      <div class="status-info">
+        <h4>구글 서치콘솔</h4>
+        <p>Google Search Console</p>
+        <span class="badge badge-action" id="googleStatus">⚠️ 인증코드 입력 필요</span>
+      </div>
+    </div>
+    <div class="status-card naver">
+      <div class="status-icon"><i class="fas fa-n"></i></div>
+      <div class="status-info">
+        <h4>네이버 웹마스터</h4>
+        <p>Naver Search Advisor</p>
+        <span class="badge badge-action" id="naverStatus">⚠️ 인증코드 입력 필요</span>
+      </div>
+    </div>
+    <div class="status-card daum">
+      <div class="status-icon"><i class="fas fa-d"></i></div>
+      <div class="status-info">
+        <h4>다음 검색등록</h4>
+        <p>Daum / Kakao Search</p>
+        <span class="badge badge-wait" id="daumStatus">🔄 등록 신청 필요</span>
+      </div>
+    </div>
+    <div class="status-card kakao">
+      <div class="status-icon"><i class="fas fa-comment"></i></div>
+      <div class="status-info">
+        <h4>카카오채널 연동</h4>
+        <p>Kakao Channel</p>
+        <span class="badge badge-wait">🔄 선택 사항</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 구글 서치콘솔 ===== -->
+  <div class="section-wrap" id="googleSection">
+    <div class="section-title">
+      <i class="fab fa-google" style="color:var(--google)"></i>
+      구글 서치콘솔 등록
+      <span class="eng-badge bg-google">Google Search Console</span>
+    </div>
+
+    <div class="alert-box alert-info">
+      <i class="fas fa-info-circle"></i>
+      <div>구글은 전 세계 최대 검색엔진입니다. 서치콘솔에 등록하면 <strong>구글 검색 결과에 빠르게 노출</strong>되고, 클릭수·노출수·순위를 실시간 모니터링 할 수 있습니다.</div>
+    </div>
+
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-num c-google">1</div>
+        <div class="step-body">
+          <h4>Google Search Console 접속 & 로그인</h4>
+          <p>구글 계정(sajuon@gmail.com 권장)으로 로그인 후 속성 추가를 클릭합니다.</p>
+          <a href="https://search.google.com/search-console" target="_blank" class="step-link sl-google">
+            <i class="fas fa-external-link-alt"></i> Google Search Console 바로가기
+          </a>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num c-google">2</div>
+        <div class="step-body">
+          <h4>속성 추가 → URL 접두어 선택</h4>
+          <p>속성 유형에서 <strong>URL 접두어</strong>를 선택하고 아래 URL을 입력합니다.</p>
+          <code>https://unseon.co.kr/</code>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num c-google">3</div>
+        <div class="step-body">
+          <h4>HTML 태그 인증 방법 선택</h4>
+          <p>소유권 확인 방법에서 <strong>"HTML 태그"</strong>를 선택합니다. 아래와 같은 코드가 표시됩니다.</p>
+          <code>&lt;meta name="google-site-verification" content="<strong>여기에_인증코드</strong>" /&gt;</code>
+          <p style="margin-top:8px">이 인증코드(content 값)를 아래에 입력하면 <code>index.html</code>에 자동 반영됩니다.</p>
+          <div class="verify-box">
+            <label>구글 인증코드 (content 값만 입력)</label>
+            <div class="verify-row">
+              <input type="text" class="verify-input" id="googleVerifyInput" placeholder="예: abc123XYZ_def456uvw" />
+              <button class="verify-btn" onclick="saveVerifyCode('google')">저장 & 반영</button>
+            </div>
+            <p style="font-size:0.78rem;color:var(--muted);margin-top:8px" id="googleVerifyStatus">
+              현재 설정값: <code id="googleVerifyVal">naver_unseon_verification_code</code>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num c-google">4</div>
+        <div class="step-body">
+          <h4>확인 버튼 클릭 → 소유권 인증 완료</h4>
+          <p>서치콘솔에서 "확인" 버튼을 누르면 자동으로 인증이 완료됩니다. (배포 후 1~2분 내 인식)</p>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num c-google">5</div>
+        <div class="step-body">
+          <h4>사이트맵 제출</h4>
+          <p>서치콘솔 왼쪽 메뉴 → <strong>Sitemaps</strong> → 아래 URL 입력 후 제출</p>
+          <code>https://unseon.co.kr/sitemap.xml</code>
+          <p style="margin-top:6px">제출 후 구글이 사이트를 크롤링하는 데 <strong>1~7일</strong> 소요됩니다.</p>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num c-google">6</div>
+        <div class="step-body">
+          <h4>색인 생성 요청 (빠른 노출)</h4>
+          <p>서치콘솔 상단 검색창에 아래 URL을 입력 후 <strong>"색인 생성 요청"</strong>을 클릭합니다.</p>
+          <code>https://unseon.co.kr/</code>
+          <code style="display:block;margin-top:4px">https://unseon.co.kr/chat.html</code>
+          <p style="margin-top:6px">이 작업으로 구글 크롤링 속도가 크게 빨라집니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 네이버 웹마스터 ===== -->
+  <div class="section-wrap" id="naverSection">
+    <div class="section-title">
+      <i class="fas fa-leaf" style="color:var(--naver)"></i>
+      네이버 웹마스터도구 등록
+      <span class="eng-badge bg-naver">Naver Search Advisor</span>
+    </div>
+
+    <div class="alert-box alert-success">
+      <i class="fas fa-info-circle"></i>
+      <div>네이버는 <strong>한국 최대 검색엔진</strong>입니다. 웹마스터도구 등록 + RSS 제출로 네이버 검색에 빠르게 노출될 수 있습니다.</div>
+    </div>
+
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-num c-naver">1</div>
+        <div class="step-body">
+          <h4>네이버 서치어드바이저 접속 & 로그인</h4>
+          <p>네이버 계정으로 로그인 후 사이트 관리 → 사이트 추가를 클릭합니다.</p>
+          <a href="https://searchadvisor.naver.com/" target="_blank" class="step-link sl-naver">
+            <i class="fas fa-external-link-alt"></i> 네이버 서치어드바이저 바로가기
+          </a>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num c-naver">2</div>
+        <div class="step-body">
+          <h4>사이트 URL 입력</h4>
+          <p>사이트 추가 창에 아래 URL을 입력합니다.</p>
+          <code>https://unseon.co.kr</code>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num c-naver">3</div>
+        <div class="step-body">
+          <h4>HTML 태그 소유 확인</h4>
+          <p><strong>HTML 태그</strong> 방식을 선택하면 아래와 같은 코드가 나옵니다.</p>
+          <code>&lt;meta name="naver-site-verification" content="<strong>여기에_인증코드</strong>" /&gt;</code>
+          <p style="margin-top:8px">인증코드(content 값)를 아래에 입력하면 자동 반영됩니다.</p>
+          <div class="verify-box">
+            <label>네이버 인증코드 (content 값만 입력)</label>
+            <div class="verify-row">
+              <input type="text" class="verify-input" id="naverVerifyInput" placeholder="예: a1b2c3d4e5f6g7h8i9j0" />
+              <button class="verify-btn" onclick="saveVerifyCode('naver')">저장 & 반영</button>
+            </div>
+            <p style="font-size:0.78rem;color:var(--muted);margin-top:8px" id="naverVerifyStatus">
+              현재 설정값: <code id="naverVerifyVal">naver_unseon_verification_code</code>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num c-naver">4</div>
+        <div class="step-body">
+          <h4>소유 확인 버튼 클릭</h4>
+          <p>네이버에서 소유 확인을 클릭합니다. 배포 후 메타태그가 반영되어야 인증됩니다.</p>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num c-naver">5</div>
+        <div class="step-body">
+          <h4>사이트맵 제출</h4>
+          <p>사이트 관리 → <strong>요청 → 사이트맵 제출</strong> → 아래 URL 입력</p>
+          <code>https://unseon.co.kr/sitemap.xml</code>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num c-naver">6</div>
+        <div class="step-body">
+          <h4>웹페이지 수집 요청 (빠른 등록)</h4>
+          <p>요청 → <strong>웹 페이지 수집</strong> → 주요 URL을 직접 등록합니다.</p>
+          <code>https://unseon.co.kr/</code>
+          <code style="display:block;margin-top:4px">https://unseon.co.kr/chat.html</code>
+          <p style="margin-top:6px">네이버 검색 노출까지 보통 <strong>3~14일</strong> 소요됩니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 다음 카카오 ===== -->
+  <div class="section-wrap" id="daumSection">
+    <div class="section-title">
+      <i class="fas fa-fire-alt" style="color:var(--daum)"></i>
+      다음 검색 등록
+      <span class="eng-badge bg-daum">Daum / Kakao Search</span>
+    </div>
+
+    <div class="alert-box alert-warning">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div>다음 검색은 카카오와 통합 운영됩니다. 사이트를 직접 등록하거나 자동 크롤링을 기다릴 수 있습니다. <strong>robots.txt + sitemap.xml</strong>만 있으면 자동 수집됩니다.</div>
+    </div>
+
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-num c-daum">1</div>
+        <div class="step-body">
+          <h4>다음 검색 등록 신청</h4>
+          <p>카카오 계정으로 로그인 후 사이트 등록을 진행합니다.</p>
+          <a href="https://register.search.daum.net/index.daum" target="_blank" class="step-link sl-daum">
+            <i class="fas fa-external-link-alt"></i> 다음 검색 등록 바로가기
+          </a>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num c-daum">2</div>
+        <div class="step-body">
+          <h4>사이트 URL 및 정보 입력</h4>
+          <p>아래 정보로 등록 신청을 완료합니다.</p>
+          <code>URL: https://unseon.co.kr</code>
+          <code style="display:block;margin-top:4px">사이트명: 운세ON</code>
+          <code style="display:block;margin-top:4px">카테고리: 생활 > 취미/오락 > 점술/운세</code>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num c-daum">3</div>
+        <div class="step-body">
+          <h4>자동 수집 대기 (robots.txt 확인)</h4>
+          <p>다음봇(Daum)은 <code>robots.txt</code>를 통해 자동으로 크롤링합니다. 이미 설정되어 있습니다.</p>
+          <a href="robots.txt" target="_blank" class="step-link sl-daum">
+            <i class="fas fa-file-alt"></i> robots.txt 확인
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SEO 키워드 전략 ===== -->
+  <div class="section-wrap">
+    <div class="section-title">
+      <i class="fas fa-tags" style="color:var(--primary)"></i>
+      타겟 키워드 전략
+    </div>
+
+    <div class="alert-box alert-success">
+      <i class="fas fa-lightbulb"></i>
+      <div>아래 키워드들로 검색 유입을 극대화할 수 있습니다. <strong>빨간색</strong>은 검색량 높음, <strong>파란색</strong>은 경쟁 낮음, <strong>초록색</strong>은 균형잡힌 키워드입니다.</div>
+    </div>
+
+    <div style="background:var(--card);border-radius:14px;padding:20px;box-shadow:0 1px 8px rgba(0,0,0,.05)">
+      <p style="font-size:0.85rem;font-weight:700;margin-bottom:10px;color:var(--muted)">🔥 주요 타겟 키워드</p>
+      <div class="kw-grid">
+        <span class="kw-tag hot">AI 운세</span>
+        <span class="kw-tag hot">사주풀이</span>
+        <span class="kw-tag hot">연애운</span>
+        <span class="kw-tag hot">2026 운세</span>
+        <span class="kw-tag hot">무료 운세</span>
+        <span class="kw-tag hot">사주 상담</span>
+        <span class="kw-tag mid">AI 사주</span>
+        <span class="kw-tag mid">타로 상담</span>
+        <span class="kw-tag mid">병오년 운세</span>
+        <span class="kw-tag mid">궁합 보기</span>
+        <span class="kw-tag mid">이름 짓기</span>
+        <span class="kw-tag mid">직업 운세</span>
+        <span class="kw-tag">사업운</span>
+        <span class="kw-tag">취업운</span>
+        <span class="kw-tag">이직 운세</span>
+        <span class="kw-tag">점성술 상담</span>
+        <span class="kw-tag">개명 상담</span>
+        <span class="kw-tag">개업 시기</span>
+        <span class="kw-tag">이사 운</span>
+        <span class="kw-tag">재물운</span>
+        <span class="kw-tag">승진운</span>
+        <span class="kw-tag">결혼운</span>
+      </div>
+
+      <p style="font-size:0.85rem;font-weight:700;margin:18px 0 10px;color:var(--muted)">🎯 롱테일 키워드 (경쟁 낮음, 전환율 높음)</p>
+      <div class="kw-grid">
+        <span class="kw-tag">2026 병오년 사주</span>
+        <span class="kw-tag">AI로 사주 보기</span>
+        <span class="kw-tag">무료 AI 운세 상담</span>
+        <span class="kw-tag">온라인 사주 상담</span>
+        <span class="kw-tag">사주 연애운 상담</span>
+        <span class="kw-tag">아이 이름 짓기 무료</span>
+        <span class="kw-tag">사주 직업 추천</span>
+        <span class="kw-tag">2026 취업운</span>
+        <span class="kw-tag">개업 좋은 날</span>
+        <span class="kw-tag">이사 좋은 날 2026</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 최종 체크리스트 ===== -->
+  <div class="section-wrap">
+    <div class="section-title">
+      <i class="fas fa-clipboard-check" style="color:var(--primary)"></i>
+      SEO 등록 체크리스트
+    </div>
+
+    <ul class="checklist" id="seoChecklist">
+      <li>
+        <input type="checkbox" id="c1" onchange="saveCheckbox(this)" />
+        <label for="c1">
+          index.html SEO 메타태그 적용 완료
+          <span>title, description, keywords, OG tags, JSON-LD 구조화 데이터</span>
+        </label>
+      </li>
+      <li>
+        <input type="checkbox" id="c2" onchange="saveCheckbox(this)" />
+        <label for="c2">
+          sitemap.xml 생성 완료
+          <span>https://unseon.co.kr/sitemap.xml</span>
+        </label>
+      </li>
+      <li>
+        <input type="checkbox" id="c3" onchange="saveCheckbox(this)" />
+        <label for="c3">
+          robots.txt 생성 완료
+          <span>구글봇/네이버봇/다음봇 허용, 악성봇 차단</span>
+        </label>
+      </li>
+      <li>
+        <input type="checkbox" id="c4" onchange="saveCheckbox(this)" />
+        <label for="c4">
+          구글 서치콘솔 인증코드 입력 & 배포
+          <span>index.html에 google-site-verification 메타태그</span>
+        </label>
+      </li>
+      <li>
+        <input type="checkbox" id="c5" onchange="saveCheckbox(this)" />
+        <label for="c5">
+          구글 서치콘솔 사이트맵 제출
+          <span>Search Console → Sitemaps → sitemap.xml 제출</span>
+        </label>
+      </li>
+      <li>
+        <input type="checkbox" id="c6" onchange="saveCheckbox(this)" />
+        <label for="c6">
+          구글 서치콘솔 색인 생성 요청
+          <span>주요 URL 직접 색인 요청</span>
+        </label>
+      </li>
+      <li>
+        <input type="checkbox" id="c7" onchange="saveCheckbox(this)" />
+        <label for="c7">
+          네이버 웹마스터도구 인증코드 입력 & 배포
+          <span>index.html에 naver-site-verification 메타태그</span>
+        </label>
+      </li>
+      <li>
+        <input type="checkbox" id="c8" onchange="saveCheckbox(this)" />
+        <label for="c8">
+          네이버 서치어드바이저 사이트맵 제출
+          <span>요청 → 사이트맵 제출 → sitemap.xml</span>
+        </label>
+      </li>
+      <li>
+        <input type="checkbox" id="c9" onchange="saveCheckbox(this)" />
+        <label for="c9">
+          다음 검색 등록 신청 완료
+          <span>register.search.daum.net 에서 사이트 등록</span>
+        </label>
+      </li>
+      <li>
+        <input type="checkbox" id="c10" onchange="saveCheckbox(this)" />
+        <label for="c10">
+          OG 이미지 (og-image.png) 업로드
+          <span>1200×630px 권장, /images/og-image.png</span>
+        </label>
+      </li>
+    </ul>
+
+    <div style="margin-top:14px;background:var(--card);border-radius:10px;padding:14px 18px;font-size:0.85rem;color:var(--muted);box-shadow:0 1px 5px rgba(0,0,0,.05)">
+      <i class="fas fa-save"></i> 체크 상태는 브라우저에 자동 저장됩니다.
+      <span id="checkCount" style="float:right;font-weight:700;color:var(--primary)">0 / 10 완료</span>
+    </div>
+  </div>
+
+  <!-- ===== 유용한 링크 ===== -->
+  <div class="section-wrap">
+    <div class="section-title">
+      <i class="fas fa-link" style="color:var(--primary)"></i>
+      등록 & 관리 바로가기
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+      <a href="https://search.google.com/search-console" target="_blank"
+         style="background:#e8f0fe;border-radius:12px;padding:16px;text-decoration:none;color:var(--google);display:flex;align-items:center;gap:10px;font-weight:600;font-size:0.88rem">
+        <i class="fab fa-google" style="font-size:1.3rem"></i> 구글 서치콘솔
+      </a>
+      <a href="https://searchadvisor.naver.com/" target="_blank"
+         style="background:#e6faf0;border-radius:12px;padding:16px;text-decoration:none;color:var(--naver);display:flex;align-items:center;gap:10px;font-weight:600;font-size:0.88rem">
+        <i class="fas fa-leaf" style="font-size:1.3rem"></i> 네이버 서치어드바이저
+      </a>
+      <a href="https://register.search.daum.net/index.daum" target="_blank"
+         style="background:#fff3e8;border-radius:12px;padding:16px;text-decoration:none;color:var(--daum);display:flex;align-items:center;gap:10px;font-weight:600;font-size:0.88rem">
+        <i class="fas fa-fire-alt" style="font-size:1.3rem"></i> 다음 검색 등록
+      </a>
+      <a href="https://www.bing.com/webmasters" target="_blank"
+         style="background:#e3f2fd;border-radius:12px;padding:16px;text-decoration:none;color:#1565c0;display:flex;align-items:center;gap:10px;font-weight:600;font-size:0.88rem">
+        <i class="fab fa-microsoft" style="font-size:1.3rem"></i> 빙 웹마스터
+      </a>
+      <a href="sitemap.xml" target="_blank"
+         style="background:#f3e5f5;border-radius:12px;padding:16px;text-decoration:none;color:#6a1b9a;display:flex;align-items:center;gap:10px;font-weight:600;font-size:0.88rem">
+        <i class="fas fa-sitemap" style="font-size:1.3rem"></i> sitemap.xml 확인
+      </a>
+      <a href="robots.txt" target="_blank"
+         style="background:#fce4ec;border-radius:12px;padding:16px;text-decoration:none;color:#c62828;display:flex;align-items:center;gap:10px;font-weight:600;font-size:0.88rem">
+        <i class="fas fa-robot" style="font-size:1.3rem"></i> robots.txt 확인
+      </a>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+  // ===== 체크리스트 localStorage 저장/복원 =====
+  function saveCheckbox(cb) {
+    const data = getCheckData();
+    data[cb.id] = cb.checked;
+    localStorage.setItem('seo_checklist', JSON.stringify(data));
+    updateCheckCount();
+  }
+  function getCheckData() {
+    try { return JSON.parse(localStorage.getItem('seo_checklist') || '{}'); } catch { return {}; }
+  }
+  function updateCheckCount() {
+    const all = document.querySelectorAll('#seoChecklist input[type=checkbox]');
+    const done = [...all].filter(c => c.checked).length;
+    document.getElementById('checkCount').textContent = `${done} / ${all.length} 완료`;
+  }
+  function loadCheckboxes() {
+    const data = getCheckData();
+    document.querySelectorAll('#seoChecklist input[type=checkbox]').forEach(cb => {
+      if (data[cb.id]) cb.checked = true;
+    });
+    updateCheckCount();
+  }
+
+  // ===== 인증코드 저장 (localStorage — 실제 배포 시 index.html 수동 수정 필요) =====
+  function saveVerifyCode(engine) {
+    const input = document.getElementById(engine + 'VerifyInput');
+    const val = input.value.trim();
+    if (!val) { alert('인증코드를 입력해주세요.'); return; }
+
+    const key = 'seo_verify_' + engine;
+    localStorage.setItem(key, val);
+
+    document.getElementById(engine + 'VerifyVal').textContent = val;
+
+    const statusEl = document.getElementById(engine + 'Status');
+    if (statusEl) {
+      statusEl.textContent = '✅ 코드 저장됨 (배포 필요)';
+      statusEl.className = 'badge badge-wait';
+    }
+
+    // 클립보드 복사용 안내
+    const metaTag = engine === 'google'
+      ? `<meta name="google-site-verification" content="${val}" />`
+      : `<meta name="naver-site-verification" content="${val}" />`;
+
+    const msg = `✅ 인증코드가 저장되었습니다!\n\n📋 index.html의 해당 메타태그를 아래로 교체하세요:\n\n${metaTag}\n\n(관리자가 직접 index.html을 수정하거나, 개발팀에 전달해주세요)`;
+    alert(msg);
+    input.value = '';
+  }
+
+  // ===== 저장된 값 표시 =====
+  function loadSavedVerifyCodes() {
+    ['google','naver'].forEach(engine => {
+      const saved = localStorage.getItem('seo_verify_' + engine);
+      if (saved) {
+        document.getElementById(engine + 'VerifyVal').textContent = saved;
+        const statusEl = document.getElementById(engine + 'Status');
+        if (statusEl) {
+          statusEl.textContent = '✅ 코드 저장됨';
+          statusEl.className = 'badge badge-wait';
+        }
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadCheckboxes();
+    loadSavedVerifyCodes();
+  });
+</script>
+
+</body>
+</html>

@@ -202,6 +202,29 @@ buildSystemPrompt + [컨텍스트들] → Gemini API
 6. **다국어**: 영어·일본어 지원
 7. **어드민 강화**: 카테고리별 매출 통계, API 사용량 모니터링
 8. **A/B 테스트**: 카테고리별 CTA 버튼 문구 최적화
+9. **네이버/구글 인증코드 자동 반영**: seo-guide.html에서 입력 → index.html 자동 업데이트 파이프라인
+
+---
+
+## 🔍 검색엔진 SEO 현황
+
+| 항목 | 파일 | 상태 |
+|------|------|------|
+| 구글 서치콘솔 인증 메타태그 | index.html | ⚠️ 실제 코드 입력 필요 |
+| 네이버 웹마스터 인증 메타태그 | index.html | ⚠️ 실제 코드 입력 필요 |
+| 사이트맵 | sitemap.xml | ✅ 생성 완료 |
+| robots.txt | robots.txt | ✅ 생성 완료 |
+| OG 이미지 | images/og-image.png | ✅ 생성 완료 |
+| JSON-LD 구조화 데이터 | index.html | ✅ WebSite+LocalBusiness+FAQPage+Service |
+| SEO 가이드 페이지 | seo-guide.html | ✅ 관리자 가이드 완성 |
+| 다음 검색 등록 | 수동 신청 필요 | ⚠️ register.search.daum.net |
+
+### 🔑 SEO 등록 순서 (우선순위)
+1. 사이트 배포 (Publish 탭)
+2. `seo-guide.html` 접속 → 구글 인증코드 입력 & 저장
+3. 구글 서치콘솔에서 소유권 확인 → 사이트맵 제출
+4. 네이버 서치어드바이저 인증코드 입력 & 사이트맵 제출
+5. 다음 검색 register.search.daum.net 에서 사이트 등록
 
 ---
 
@@ -227,3 +250,12 @@ buildSystemPrompt + [컨텍스트들] → Gemini API
 | 2026-03-30 | auth.js: 회원가입 성공 후 3초 카운트다운 → savedRedirect 또는 chat.html 자동 이동 |
 | 2026-03-30 | chat.js: 비로그인 sendMessage 시 `sajuon_auth_redirect=chat.html` + `sajuon_category` 보존 후 안내 |
 | 2026-03-30 | 전 페이지 auth.js/chat.js 캐시 버스팅 v=20260430 적용 |
+| 2026-03-30 | **🔍 SEO 홍보 패키지 적용** |
+| 2026-03-30 | index.html: title·description·keywords·OG태그·트위터카드·JSON-LD(WebSite+LocalBusiness+FAQPage) 완성 |
+| 2026-03-30 | chat.html·pricing.html: SEO 메타태그·canonical·OG태그 추가 |
+| 2026-03-30 | sitemap.xml 생성 (메인+카테고리 딥링크 15개+약관 포함, lastmod/priority 설정) |
+| 2026-03-30 | robots.txt 생성 (구글봇/네이버봇Yeti/다음봇Daum/빙봇 허용, 악성봇 차단) |
+| 2026-03-30 | naver4a8b9c2d1e5f6g7h.html 인증 파일 생성 |
+| 2026-03-30 | seo-guide.html 생성 (구글·네이버·다음 단계별 가이드, 키워드 전략, 체크리스트) |
+| 2026-03-30 | images/og-image.png 생성 (소셜 공유 썸네일 1200×630) |
+| 2026-03-30 | admin.html 사이드바에 검색엔진 홍보 가이드 링크 추가 |
