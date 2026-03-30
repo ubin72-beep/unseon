@@ -222,3 +222,8 @@ buildSystemPrompt + [컨텍스트들] → Gemini API
 | 2026-03-29 | **회원 인증 연동 — 결제·채팅 로그인 필수화, 계정 포인트 양방향 동기화 구현** |
 | 2026-03-29 | career.js: 시험운합격운·프리랜서운 전용 careerToPromptText 분기 추가 (오행별 시험유형 DB, 프리랜서 적합도 분석) |
 | 2026-03-29 | business.js: 동업궁합 전용 businessToPromptText 분기 추가 (오행 상생상극 테이블, 역할분담, 계약길일) |
+| 2026-03-30 | **🚨 핵심 버그 수정 — auth.js DOMContentLoaded 리다이렉트가 chat.html·pricing.html에서도 실행되던 문제 해결** |
+| 2026-03-30 | auth.js: `isAuthPage` 체크 추가로 DOMContentLoaded 리다이렉트를 auth.html 전용으로 제한 |
+| 2026-03-30 | auth.js: 회원가입 성공 후 3초 카운트다운 → savedRedirect 또는 chat.html 자동 이동 |
+| 2026-03-30 | chat.js: 비로그인 sendMessage 시 `sajuon_auth_redirect=chat.html` + `sajuon_category` 보존 후 안내 |
+| 2026-03-30 | 전 페이지 auth.js/chat.js 캐시 버스팅 v=20260430 적용 |
