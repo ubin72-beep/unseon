@@ -82,9 +82,53 @@
 <!-- 알림 토스트 -->
 <div class="toast" id="adminToast"></div>
 
-<script src="js/auth.js?v=20260402"></script>
-<script src="js/main.js?v=20260402"></script>
-<script src="js/gemini.js?v=20260402"></script>
-<script src="js/admin.js?v=20260402"></script>
+<!-- ===== 관리자 로그인 오버레이 ===== -->
+<div class="admin-login-overlay" id="adminLoginOverlay">
+  <div class="admin-login-box">
+    <div class="admin-login-logo">
+      운세<span>ON</span>
+      <span class="admin-login-badge">관리자</span>
+    </div>
+    <h2 class="admin-login-title"><i class="fas fa-lock"></i> 관리자 로그인</h2>
+    <p class="admin-login-desc">관리자 계정으로 로그인하세요</p>
+
+    <div class="admin-login-form">
+      <form onsubmit="adminLogin();return false;" autocomplete="on">
+      <div class="admin-login-field">
+        <label><i class="fas fa-user"></i> 아이디</label>
+        <input type="text" id="adminIdInput" placeholder="관리자 아이디 입력"
+               autocomplete="username" />
+      </div>
+      <div class="admin-login-field">
+        <label><i class="fas fa-lock"></i> 비밀번호</label>
+        <div class="admin-pw-wrap">
+          <input type="password" id="adminPwInput" placeholder="비밀번호 입력"
+                 autocomplete="current-password" />
+          <button type="button" class="admin-pw-toggle" onclick="toggleAdminPw()">
+            <i class="fas fa-eye" id="adminPwEyeIcon"></i>
+          </button>
+        </div>
+      </div>
+      <div class="admin-login-error" id="adminLoginError"></div>
+      <button type="submit" class="admin-login-btn" id="adminLoginBtn">
+        <span id="adminLoginBtnText"><i class="fas fa-sign-in-alt"></i> 로그인</span>
+        <span id="adminLoginBtnLoading" style="display:none"><i class="fas fa-spinner fa-spin"></i> 확인 중...</span>
+      </button>
+      </form>
+    </div>
+
+    <p class="admin-login-hint">
+      <i class="fas fa-shield-alt"></i> 관리자 전용 페이지입니다
+    </p>
+    <a href="index.html" class="admin-login-back">
+      <i class="fas fa-arrow-left"></i> 사이트로 돌아가기
+    </a>
+  </div>
+</div>
+
+<script src="js/auth.js?v=20260430"></script>
+<script src="js/main.js?v=20260430"></script>
+<script src="js/gemini.js?v=20260430"></script>
+<script src="js/admin.js?v=20260430"></script>
 </body>
 </html>
