@@ -595,8 +595,68 @@
   </div>
 </footer>
 
-<script src="js/auth.js?v=20260430"></script>
-<script src="js/main.js?v=20260430"></script>
-<script>document.addEventListener('DOMContentLoaded', initAuthHeader);</script>
+<script src="js/auth.js?v=20260501"></script>
+<script src="js/main.js?v=20260501"></script>
+<script>
+/* =====================================================
+   index.html 전용 초기화 — 단 1회 실행 보장
+   ===================================================== */
+(function() {
+  // 중복 실행 완전 방지
+  if (window.__indexInitialized) return;
+  window.__indexInitialized = true;
+
+  function runInit() {
+    // 1) 포인트 초기화 (로그인 유저 포인트 동기화 포함)
+    if (typeof initPoints === 'function') initPoints();
+
+    // 2) 헤더 포인트 표시 업데이트
+    if (typeof updateHeaderPoints === 'function') updateHeaderPoints();
+
+    // 3) 헤더 인증 상태 — 단 1회만 실행 (dataset.authInit 체크)
+    if (typeof initAuthHeader === 'function') initAuthHeader();
+
+    // 4) 헤더 스크롤 효과
+    if (typeof initHeader === 'function') initHeader();
+
+    // 5) 햄버거 메뉴
+    if (typeof initHamburger === 'function') initHamburger();
+
+    // 6) 히어로 입력
+    if (typeof initHeroInput === 'function') initHeroInput();
+
+    // 7) 카테고리 탭
+    if (typeof initCatTabs === 'function') initCatTabs();
+
+    // 8) 후기
+    if (typeof renderReviews === 'function') renderReviews();
+
+    // 9) FAQ
+    if (typeof renderFAQ === 'function') renderFAQ();
+
+    // 10) 관리자 배너 설정 반영
+    try {
+      var b = JSON.parse(localStorage.getItem('sajuon_banner') || 'null');
+      if (b) {
+        if (b.heroTitle) {
+          var t = document.querySelector('.hero-title');
+          if (t) t.innerHTML = b.heroTitle;
+        }
+        if (b.heroBadge) {
+          var bg = document.querySelector('.hero-badge');
+          if (bg) bg.innerHTML = '<i class="fas fa-gift"></i> ' + b.heroBadge;
+        }
+      }
+    } catch(e) {}
+  }
+
+  // DOM 준비 여부에 따라 즉시 또는 이벤트 후 실행
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runInit);
+  } else {
+    runInit();
+  }
+})();
+</script>
 </body>
 </html>

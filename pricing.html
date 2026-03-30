@@ -404,19 +404,16 @@
   </div>
 </div>
 
-<script src="js/auth.js?v=20260430"></script>
-<script src="js/main.js?v=20260430"></script>
+<script src="js/auth.js?v=20260501"></script>
+<script src="js/main.js?v=20260501"></script>
 <script src="js/kakaopay.js?v=20260430"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  initAuthHeader();
+// pricing.html 전용 초기화 — 단 1회 실행 보장
+(function() {
+  if (window.__pricingInitialized) return;
+  window.__pricingInitialized = true;
 
-  // 헤더 스크롤
-  const header = document.getElementById('siteHeader');
-  window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 10));
-  document.getElementById('hamburger')?.addEventListener('click', () =>
-    document.getElementById('mainNav')?.classList.toggle('open'));
-
+  function runPricingInit() {
   // ★ 로그인 상태 체크
   const currentUser = (function() {
     try { return JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); } catch { return null; }
@@ -471,7 +468,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 이용 내역 렌더링
   renderHistory();
-});
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runPricingInit);
+  } else {
+    runPricingInit();
+  }
+})();
 
 function renderHistory() {
   const hist = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
