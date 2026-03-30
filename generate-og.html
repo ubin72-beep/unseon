@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <title>OG 이미지 생성기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    body { background:#111; display:flex; flex-direction:column; align-items:center; padding:30px; font-family:'Noto Sans KR',sans-serif; }
+    canvas { border-radius:12px; box-shadow:0 8px 40px rgba(0,0,0,.6); max-width:100%; }
+    .btn { margin-top:20px; padding:14px 36px; background:#2e7d32; color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; font-family:'Noto Sans KR',sans-serif; }
+    .btn:hover { background:#1b5e20; }
+    p { color:#aaa; margin-top:10px; font-size:0.85rem; }
+  </style>
+</head>
+<body>
+<canvas id="ogCanvas" width="1200" height="630"></canvas>
+<button class="btn" onclick="downloadOG()">⬇️ og-image.png 다운로드</button>
+<p>다운로드 후 /images/og-image.png 로 업로드하세요</p>
+
+<script>
+// 폰트 로드 대기 후 그리기
+document.fonts.ready.then(() => { drawOG(); });
+
+function drawOG() {
+  const canvas = document.getElementById('ogCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = 1200, H = 630;
+
+  // ── 배경 그라디언트
+  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+  bgGrad.addColorStop(0,   '#0a2a0e');
+  bgGrad.addColorStop(0.5, '#1b5e20');
+  bgGrad.addColorStop(1,   '#2e7d32');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── 우측 빛나는 원형 글로우
+  const glow = ctx.createRadialGradient(940, 300, 20, 940, 300, 320);
+  glow.addColorStop(0,   'rgba(255,215,0,0.25)');
+  glow.addColorStop(0.5, 'rgba(255,193,7,0.08)');
+  glow.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── 별 파티클
+  ctx.fillStyle = 'rgba(255,215,0,0.7)';
+  const stars = [
+    [750,80,3],[820,150,2],[700,200,2],[900,100,2.5],[830,250,1.5],
+    [980,180,2],[1050,90,1.5],[1100,200,2],[670,300,1.5],[1050,320,2.5],
+    [750,400,1.5],[920,380,2],[1080,400,1.5],[800,480,2],[1000,460,1.5],
+  ];
+  stars.forEach(([x,y,r]) => {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  // ── 음양 기호 (우측)
+  drawYinYang(ctx, 940, 310, 130);
+
+  // ── 장식선 (좌측 세로)
+  const lineGrad = ctx.createLinearGradient(0, 80, 0, 550);
+  lineGrad.addColorStop(0, 'rgba(255,215,0,0)');
+  lineGrad.addColorStop(0.5, 'rgba(255,215,0,0.6)');
+  lineGrad.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.strokeStyle = lineGrad;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(680, 80);
+  ctx.lineTo(680, 550);
+  ctx.stroke();
+
+  // ── 브랜드명 "운세ON"
+  ctx.font = '900 96px "Noto Sans KR", sans-serif';
+  ctx.textBaseline = 'alphabetic';
+
+  // 텍스트 그림자
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetX = 3;
+  ctx.shadowOffsetY = 3;
+
+  // "운세" 흰색
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('운세', 80, 220);
+
+  // "ON" 골드
+  const onWidth = ctx.measureText('운세').width;
+  const onGrad = ctx.createLinearGradient(80 + onWidth, 140, 80 + onWidth, 220);
+  onGrad.addColorStop(0, '#FFD700');
+  onGrad.addColorStop(1, '#FFA000');
+  ctx.fillStyle = onGrad;
+  ctx.fillText('ON', 80 + onWidth + 6, 220);
+
+  ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+
+  // ── 서브타이틀
+  ctx.font = '700 38px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.fillText('AI 사주 · 타로 · 운세 상담', 80, 300);
+
+  // ── 구분선
+  const sepGrad = ctx.createLinearGradient(80, 0, 600, 0);
+  sepGrad.addColorStop(0, 'rgba(255,215,0,0.8)');
+  sepGrad.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.strokeStyle = sepGrad;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(80, 330);
+  ctx.lineTo(600, 330);
+  ctx.stroke();
+
+  // ── 카테고리 태그들
+  const tags = ['연애운', '궁합', '사업운', '직업운', '이름짓기', '타로', '점성술'];
+  let tx = 80;
+  const ty = 390;
+  ctx.font = '600 22px "Noto Sans KR", sans-serif';
+  tags.forEach((tag, i) => {
+    const tw = ctx.measureText(tag).width + 28;
+    // 배경
+    const tagBg = ctx.createLinearGradient(tx, ty-30, tx, ty+10);
+    tagBg.addColorStop(0, 'rgba(255,255,255,0.15)');
+    tagBg.addColorStop(1, 'rgba(255,255,255,0.05)');
+    ctx.fillStyle = tagBg;
+    roundRect(ctx, tx, ty-30, tw, 40, 8);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,215,0,0.3)';
+    ctx.lineWidth = 1;
+    roundRect(ctx, tx, ty-30, tw, 40, 8);
+    ctx.stroke();
+    // 텍스트
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillText(tag, tx+14, ty);
+    tx += tw + 10;
+  });
+
+  // ── 하단 정보바
+  const barGrad = ctx.createLinearGradient(0, 540, 0, 630);
+  barGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  barGrad.addColorStop(1, 'rgba(0,0,0,0.5)');
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(0, 540, W, 90);
+
+  // 좌측 URL
+  ctx.font = '500 24px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.fillText('unseon.co.kr', 80, 600);
+
+  // 우측 문구
+  ctx.textAlign = 'right';
+  ctx.font = '700 24px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255,215,0,0.8)';
+  ctx.fillText('신규 가입 500P 무료 지급 🎁', W-80, 600);
+  ctx.textAlign = 'left';
+
+  // ── 로고 위 작은 배지
+  ctx.font = '600 18px "Noto Sans KR", sans-serif';
+  const badgeTxt = '🔮 2026 병오년 운세 오픈';
+  const bw = ctx.measureText(badgeTxt).width + 24;
+  ctx.fillStyle = 'rgba(255,215,0,0.15)';
+  roundRect(ctx, 80, 112, bw, 34, 17);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,215,0,0.5)';
+  ctx.lineWidth = 1;
+  roundRect(ctx, 80, 112, bw, 34, 17);
+  ctx.stroke();
+  ctx.fillStyle = '#FFD700';
+  ctx.fillText(badgeTxt, 92, 136);
+}
+
+// ── 음양 기호 그리기
+function drawYinYang(ctx, cx, cy, r) {
+  // 외곽 골드 글로우
+  const glowR = ctx.createRadialGradient(cx, cy, r*0.5, cx, cy, r*1.6);
+  glowR.addColorStop(0, 'rgba(255,215,0,0.15)');
+  glowR.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glowR;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r*1.6, 0, Math.PI*2);
+  ctx.fill();
+
+  // 외곽 테두리 원
+  ctx.strokeStyle = 'rgba(255,215,0,0.4)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r+8, 0, Math.PI*2);
+  ctx.stroke();
+
+  // 흰 반원 (상단)
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, -Math.PI/2, Math.PI/2, true);
+  ctx.arc(cx, cy - r/2, r/2, Math.PI/2, -Math.PI/2, true);
+  ctx.arc(cx, cy + r/2, r/2, Math.PI/2, -Math.PI/2, false);
+  ctx.closePath();
+  ctx.fill();
+
+  // 어두운 반원 (하단)
+  ctx.fillStyle = 'rgba(10,42,14,0.9)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, -Math.PI/2, Math.PI/2, false);
+  ctx.arc(cx, cy + r/2, r/2, -Math.PI/2, Math.PI/2, false);
+  ctx.arc(cx, cy - r/2, r/2, -Math.PI/2, Math.PI/2, true);
+  ctx.closePath();
+  ctx.fill();
+
+  // 외곽선
+  ctx.strokeStyle = 'rgba(255,215,0,0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.stroke();
+
+  // 작은 원들
+  ctx.fillStyle = 'rgba(10,42,14,0.9)';
+  ctx.beginPath(); ctx.arc(cx, cy - r/2, r/6, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.beginPath(); ctx.arc(cx, cy + r/2, r/6, 0, Math.PI*2); ctx.fill();
+}
+
+// ── 둥근 사각형
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.arcTo(x+w, y, x+w, y+r, r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+  ctx.lineTo(x+r, y+h);
+  ctx.arcTo(x, y+h, x, y+h-r, r);
+  ctx.lineTo(x, y+r);
+  ctx.arcTo(x, y, x+r, y, r);
+  ctx.closePath();
+}
+
+// ── 다운로드
+function downloadOG() {
+  const canvas = document.getElementById('ogCanvas');
+  const link = document.createElement('a');
+  link.download = 'og-image.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>
