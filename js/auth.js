@@ -359,6 +359,30 @@ function handleRegister(e) {
     // 탭 숨기기
     const tabs = document.querySelector('.auth-tabs');
     if (tabs) tabs.style.display = 'none';
+
+    // ★ 3초 후 자동으로 리다이렉트 (savedRedirect 또는 chat.html)
+    const savedRedirect = sessionStorage.getItem('sajuon_auth_redirect');
+    const autoTarget = savedRedirect || 'chat.html';
+    sessionStorage.removeItem('sajuon_auth_redirect');
+
+    // 카운트다운 표시
+    if (successScreen) {
+      const countEl = document.createElement('p');
+      countEl.id = 'regAutoRedirect';
+      countEl.style.cssText = 'font-size:0.82rem;color:var(--text-muted);margin-top:10px';
+      countEl.textContent = '3초 후 자동으로 이동합니다...';
+      successScreen.appendChild(countEl);
+      let count = 3;
+      const countTimer = setInterval(() => {
+        count--;
+        if (count > 0) {
+          countEl.textContent = `${count}초 후 자동으로 이동합니다...`;
+        } else {
+          clearInterval(countTimer);
+          window.location.href = autoTarget;
+        }
+      }, 1000);
+    }
   }, 1100);
 }
 
@@ -403,8 +427,12 @@ function hashPw(pw) {
   return 'h_' + Math.abs(hash).toString(36) + '_' + pw.length;
 }
 
-// ===== 초기화 =====
+// ===== 초기화 (auth.html 전용) =====
 document.addEventListener('DOMContentLoaded', () => {
+  // auth.html 페이지에서만 실행 — 다른 페이지에서 auth.js가 로드돼도 리다이렉트하지 않음
+  const isAuthPage = !!(document.getElementById('loginForm') || document.getElementById('registerForm'));
+  if (!isAuthPage) return;
+
   // 저장된 이메일 자동 입력
   const savedEmail = localStorage.getItem('sajuon_remember_email');
   if (savedEmail) {
@@ -419,10 +447,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const tab = params.get('tab');
   if (tab === 'register') switchTab('register');
 
-  // 이미 로그인 상태면 리다이렉트
+  // 이미 로그인 상태면 저장된 이동 대상 또는 index.html로 리다이렉트
   const user = getCurrentUser();
   if (user) {
-    window.location.href = 'index.html';
+    const redirect = sessionStorage.getItem('sajuon_auth_redirect') || 'index.html';
+    sessionStorage.removeItem('sajuon_auth_redirect');
+    window.location.href = redirect;
   }
 });
 
@@ -430,26 +460,38 @@ document.addEventListener('DOMContentLoaded', () => {
    헤더 공통 인증 상태 관리 (다른 페이지에서도 사용)
    ========================================= */
 function initAuthHeader() {
-  const user = getCurrentUser();
+  // ★ DOM 기반 중복 실행 방지 — 같은 페이지에서 여러 번 호출해도 1회만 동작
   const headerActions = document.querySelector('.header-actions');
   if (!headerActions) return;
+  if (headerActions.dataset.authInit === 'true') return;
+  headerActions.dataset.authInit = 'true';
 
-  // 기존 버튼 재배치
-  const chargeBtn = headerActions.querySelector('.btn-charge');
+  // ★ 로그인 상태 재확인 및 포인트 동기화
+  const user = getCurrentUser();
+
+  // 포인트를 계정 데이터와 동기화 (로그인 시)
+  if (user && user.id) {
+    const userPts = parseInt(user.points || '0', 10);
+    const storedPts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+    // 계정 포인트가 더 정확함 — 동기화
+    if (userPts !== storedPts) {
+      localStorage.setItem('sajuon_points', String(userPts));
+    }
+  }
+
+  const pts = user ? parseInt(localStorage.getItem('sajuon_points') || (user.points || '0'), 10) : 0;
+
+  // 기존 포인트 표시 업데이트
   const pointDisplay = headerActions.querySelector('.point-display');
+  const chargeBtn = headerActions.querySelector('.btn-charge');
+  if (pointDisplay) {
+    const valEl = pointDisplay.querySelector('[id$="PointVal"]') || pointDisplay.querySelector('span');
+    if (valEl) valEl.textContent = pts.toLocaleString();
+  }
 
   if (user) {
-    // 로그인 상태
-    // 포인트 동기화
-    const pts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
-    if (pointDisplay) {
-      const valEl = pointDisplay.querySelector('[id$="PointVal"]') || pointDisplay.querySelector('span');
-      if (valEl) valEl.textContent = pts.toLocaleString();
-    }
-
-    // 기존 로그인/회원가입 버튼 제거 후 유저 메뉴 추가
-    const existingUserMenu = headerActions.querySelector('.user-menu-wrap');
-    if (!existingUserMenu) {
+    // ★ 로그인 상태 — 유저 메뉴 추가 (이미 있으면 패스)
+    if (!headerActions.querySelector('.user-menu-wrap')) {
       const userMenu = document.createElement('div');
       userMenu.className = 'user-menu-wrap';
       userMenu.innerHTML = `
@@ -473,7 +515,6 @@ function initAuthHeader() {
           <button class="user-logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
         </div>
       `;
-      // 충전 버튼 앞에 삽입
       if (chargeBtn) {
         headerActions.insertBefore(userMenu, chargeBtn);
       } else {
@@ -481,7 +522,7 @@ function initAuthHeader() {
       }
     }
   } else {
-    // 비로그인 상태 — 로그인/회원가입 버튼 추가
+    // ★ 비로그인 상태 — 로그인/회원가입 버튼 추가 (이미 있으면 패스)
     if (!headerActions.querySelector('.btn-login')) {
       const loginBtn = document.createElement('a');
       loginBtn.href = 'auth.html';
