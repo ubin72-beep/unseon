@@ -70,6 +70,18 @@ function getPoints() {
   return p;
 }
 function initPoints() {
+  // ★ 로그인 유저가 있으면 절대 초기화하지 않음 (레이스 컨디션 방지)
+  try {
+    const currentUser = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+    if (currentUser && currentUser.id) {
+      // 로그인 상태: 계정 포인트를 sajuon_points에 동기화
+      const userPts = parseInt(currentUser.points || '0', 10);
+      localStorage.setItem('sajuon_points', String(userPts));
+      localStorage.setItem('sajuon_initialized', 'true');
+      return;
+    }
+  } catch(e) {}
+  // 비로그인 최초 방문만 500P 무료 지급
   if (!localStorage.getItem('sajuon_initialized')) {
     localStorage.setItem('sajuon_points', '500');
     localStorage.setItem('sajuon_initialized', 'true');
@@ -234,29 +246,22 @@ function goChatCategory(cat) {
 }
 
 // ===== 초기화 =====
-document.addEventListener('DOMContentLoaded', () => {
-  initPoints();
-  updateHeaderPoints();
-  initHeader();
-  initHamburger();
-  initHeroInput();
-  initCatTabs();
-  renderReviews();
-  renderFAQ();
+// ★ 각 페이지 인라인 스크립트 또는 chat.js가 직접 제어
+// main.js는 함수 정의만 담당 — 자동 DOMContentLoaded 실행 없음
+// (pricing.html, terms.html 등 단순 페이지에서만 아래 코드가 동작)
+(function() {
+  var p = location.pathname;
+  // index.html, chat.html — 해당 페이지 전용 인라인 스크립트가 초기화를 담당
+  var skipPages = ['/', '/index.html', '/chat.html'];
+  var skip = skipPages.some(function(s) { return p === s || p.endsWith(s); });
+  if (skip) return;
 
-  // 배너 문구 관리자 설정 반영
-  try {
-    const bannerSettings = localStorage.getItem('sajuon_banner');
-    if (bannerSettings) {
-      const b = JSON.parse(bannerSettings);
-      if (b.heroTitle) {
-        const el = document.querySelector('.hero-title');
-        if (el) el.innerHTML = b.heroTitle;
-      }
-      if (b.heroBadge) {
-        const el = document.querySelector('.hero-badge:first-child');
-        if (el) el.innerHTML = '<i class="fas fa-gift"></i> ' + b.heroBadge;
-      }
-    }
-  } catch(e) {}
-});
+  // pricing.html, terms.html 등 기타 페이지 — 단 1회만 초기화
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof initPoints === 'function') initPoints();
+    if (typeof updateHeaderPoints === 'function') updateHeaderPoints();
+    if (typeof initAuthHeader === 'function') initAuthHeader();
+    if (typeof initHeader === 'function') initHeader();
+    if (typeof initHamburger === 'function') initHamburger();
+  });
+})();
