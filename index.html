@@ -173,12 +173,37 @@
       <a href="index.html" class="nav-link active">홈</a>
       <a href="chat.html" class="nav-link">AI 상담</a>
       <a href="pricing.html" class="nav-link">요금 충전</a>
+      <a href="admin.html" class="nav-link nav-admin" id="navAdminLink"><i class="fas fa-cog"></i> 관리자</a>
     </nav>
-    <div class="header-actions">
-      <div class="point-display" id="headerPoints">
+    <div class="header-actions" id="headerActions">
+      <div class="point-display" id="headerPoints" style="display:none">
         <i class="fas fa-coins"></i> <span id="headerPointVal">0</span>P
       </div>
-      <a href="pricing.html" class="btn btn-charge">충전하기</a>
+      <!-- 비로그인 버튼 -->
+      <a href="auth.html" class="btn btn-login" id="btnLogin"><i class="fas fa-sign-in-alt"></i> 로그인</a>
+      <a href="auth.html?tab=register" class="btn btn-signup" id="btnSignup"><i class="fas fa-user-plus"></i> 회원가입</a>
+      <!-- 로그인 후 버튼 (기본 숨김) -->
+      <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
+        <button class="user-menu-btn" onclick="toggleUserMenu()">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <span class="user-name-label" id="userNameLabel">사용자</span>
+          <i class="fas fa-chevron-down" style="font-size:0.7rem"></i>
+        </button>
+        <div class="user-dropdown" id="userDropdown" style="display:none">
+          <div class="user-dropdown-header">
+            <div class="user-dropdown-name" id="dropdownName"></div>
+            <div class="user-dropdown-email" id="dropdownEmail"></div>
+            <div class="user-dropdown-pt"><i class="fas fa-coins"></i> <span id="dropdownPt">0</span>P</div>
+          </div>
+          <div class="user-dropdown-links">
+            <a href="pricing.html"><i class="fas fa-coins"></i> 포인트 충전</a>
+            <a href="pricing.html#history"><i class="fas fa-history"></i> 이용 내역</a>
+            <a href="mypage.html"><i class="fas fa-user-cog"></i> 내 정보</a>
+          </div>
+          <button class="user-logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
+        </div>
+      </div>
+      <a href="pricing.html" class="btn btn-charge" id="btnCharge">충전하기</a>
       <button class="hamburger" id="hamburger" aria-label="메뉴">
         <span></span><span></span><span></span>
       </button>
@@ -577,6 +602,7 @@
         <a href="privacy.html">개인정보처리방침</a>
         <a href="refund.html">환불정책</a>
         <a href="auth.html">로그인 / 회원가입</a>
+        <a href="admin.html"><i class="fas fa-cog"></i> 관리자</a>
       </div>
     </div>
   </div>
@@ -593,68 +619,74 @@
   </div>
 </footer>
 
-<script src="js/auth.js?v=20260501"></script>
-<script src="js/main.js?v=20260501"></script>
+<script src="js/auth.js?v=20260502"></script>
+<script src="js/main.js?v=20260502"></script>
 <script>
 /* =====================================================
-   index.html 전용 초기화 — 단 1회 실행 보장
+   index.html 전용 초기화
    ===================================================== */
-(function() {
-  // 중복 실행 완전 방지
-  if (window.__indexInitialized) return;
-  window.__indexInitialized = true;
+document.addEventListener('DOMContentLoaded', function() {
 
-  function runInit() {
-    // 1) 포인트 초기화 (로그인 유저 포인트 동기화 포함)
-    if (typeof initPoints === 'function') initPoints();
+  /* ── 1. 헤더 로그인 상태 반영 ── */
+  var user = null;
+  try { user = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); } catch(e) {}
 
-    // 2) 헤더 포인트 표시 업데이트
-    if (typeof updateHeaderPoints === 'function') updateHeaderPoints();
+  var btnLogin      = document.getElementById('btnLogin');
+  var btnSignup     = document.getElementById('btnSignup');
+  var userMenuWrap  = document.getElementById('userMenuWrap');
+  var headerPoints  = document.getElementById('headerPoints');
+  var headerPointVal= document.getElementById('headerPointVal');
+  var btnCharge     = document.getElementById('btnCharge');
+  var navAdminLink  = document.getElementById('navAdminLink');
 
-    // 3) 헤더 인증 상태 — 단 1회만 실행 (dataset.authInit 체크)
-    if (typeof initAuthHeader === 'function') initAuthHeader();
+  if (user && user.id) {
+    /* 로그인 상태 */
+    var pts = parseInt(user.points || localStorage.getItem('sajuon_points') || '0', 10);
+    localStorage.setItem('sajuon_points', String(pts));
 
-    // 4) 헤더 스크롤 효과
-    if (typeof initHeader === 'function') initHeader();
+    if (btnLogin)  btnLogin.style.display  = 'none';
+    if (btnSignup) btnSignup.style.display = 'none';
+    if (userMenuWrap) {
+      userMenuWrap.style.display = 'flex';
+      document.getElementById('userAvatar').textContent  = user.name ? user.name[0] : 'U';
+      document.getElementById('userNameLabel').textContent = user.name || '사용자';
+      document.getElementById('dropdownName').textContent  = user.name || '';
+      document.getElementById('dropdownEmail').textContent = user.email || '';
+      document.getElementById('dropdownPt').textContent    = pts.toLocaleString();
+    }
+    if (headerPoints)   headerPoints.style.display   = 'flex';
+    if (headerPointVal) headerPointVal.textContent   = pts.toLocaleString();
 
-    // 5) 햄버거 메뉴
-    if (typeof initHamburger === 'function') initHamburger();
+    /* 관리자 여부 — admin 계정이면 nav에 관리자 링크 표시 */
+    if (navAdminLink) navAdminLink.style.display = 'none'; // 기본 숨김 (nav에서는 비공개)
 
-    // 6) 히어로 입력
-    if (typeof initHeroInput === 'function') initHeroInput();
-
-    // 7) 카테고리 탭
-    if (typeof initCatTabs === 'function') initCatTabs();
-
-    // 8) 후기
-    if (typeof renderReviews === 'function') renderReviews();
-
-    // 9) FAQ
-    if (typeof renderFAQ === 'function') renderFAQ();
-
-    // 10) 관리자 배너 설정 반영
-    try {
-      var b = JSON.parse(localStorage.getItem('sajuon_banner') || 'null');
-      if (b) {
-        if (b.heroTitle) {
-          var t = document.querySelector('.hero-title');
-          if (t) t.innerHTML = b.heroTitle;
-        }
-        if (b.heroBadge) {
-          var bg = document.querySelector('.hero-badge');
-          if (bg) bg.innerHTML = '<i class="fas fa-gift"></i> ' + b.heroBadge;
-        }
-      }
-    } catch(e) {}
-  }
-
-  // DOM 준비 여부에 따라 즉시 또는 이벤트 후 실행
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', runInit);
   } else {
-    runInit();
+    /* 비로그인 상태 */
+    if (btnLogin)    btnLogin.style.display    = 'inline-flex';
+    if (btnSignup)   btnSignup.style.display   = 'inline-flex';
+    if (userMenuWrap) userMenuWrap.style.display = 'none';
+    if (headerPoints) headerPoints.style.display = 'none';
+    if (navAdminLink) navAdminLink.style.display  = 'none';
   }
-})();
+
+  /* ── 2. 나머지 초기화 ── */
+  if (typeof initHeader    === 'function') initHeader();
+  if (typeof initHamburger === 'function') initHamburger();
+  if (typeof initHeroInput === 'function') initHeroInput();
+  if (typeof initCatTabs   === 'function') initCatTabs();
+  if (typeof renderReviews === 'function') renderReviews();
+  if (typeof renderFAQ     === 'function') renderFAQ();
+
+  /* ── 3. 관리자 배너 설정 반영 ── */
+  try {
+    var b = JSON.parse(localStorage.getItem('sajuon_banner') || 'null');
+    if (b) {
+      if (b.heroTitle) { var t = document.querySelector('.hero-title'); if (t) t.innerHTML = b.heroTitle; }
+      if (b.heroBadge) { var bg = document.querySelector('.hero-badge'); if (bg) bg.innerHTML = '<i class="fas fa-gift"></i> ' + b.heroBadge; }
+    }
+  } catch(e) {}
+
+});
 </script>
 </body>
 </html>
