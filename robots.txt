@@ -5,12 +5,14 @@
 User-agent: *
 Allow: /
 
-# ===== 크롤링 제외 경로 (관리자·인증 페이지) =====
+# ===== 크롤링 제외 경로 (관리자·인증·결제 페이지 완전 차단) =====
 Disallow: /admin.html
 Disallow: /auth.html
 Disallow: /payment-complete.html
+Disallow: /seo-guide.html
 Disallow: /js/
 Disallow: /css/
+Disallow: /tools/
 
 # ===== 구글봇 =====
 User-agent: Googlebot
@@ -24,6 +26,10 @@ Allow: /refund.html
 Disallow: /admin.html
 Disallow: /auth.html
 Disallow: /payment-complete.html
+Disallow: /seo-guide.html
+Disallow: /js/
+Disallow: /css/
+Disallow: /tools/
 Crawl-delay: 1
 
 # ===== 네이버봇 =====
@@ -34,6 +40,7 @@ Allow: /chat.html
 Allow: /pricing.html
 Disallow: /admin.html
 Disallow: /auth.html
+Disallow: /seo-guide.html
 Crawl-delay: 1
 
 # ===== 다음봇 =====
@@ -43,6 +50,7 @@ Allow: /index.html
 Allow: /chat.html
 Disallow: /admin.html
 Disallow: /auth.html
+Disallow: /seo-guide.html
 Crawl-delay: 1
 
 # ===== 빙봇 (마이크로소프트) =====
@@ -50,6 +58,7 @@ User-agent: bingbot
 Allow: /
 Disallow: /admin.html
 Disallow: /auth.html
+Disallow: /seo-guide.html
 Crawl-delay: 2
 
 # ===== 이미지 크롤러 허용 =====
@@ -68,6 +77,12 @@ User-agent: MJ12bot
 Disallow: /
 
 User-agent: DotBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: YandexBot
 Disallow: /
 
 # ===== 사이트맵 =====

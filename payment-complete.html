@@ -12,37 +12,25 @@
   <style>
     body { background: var(--bg-base); display: flex; flex-direction: column; min-height: 100vh; }
     .complete-wrap {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 20px;
+      flex: 1; display: flex; align-items: center;
+      justify-content: center; padding: 40px 20px;
     }
     .complete-card {
-      background: #fff;
-      border-radius: 24px;
-      padding: 48px 40px;
-      text-align: center;
-      max-width: 480px;
-      width: 100%;
+      background: #fff; border-radius: 24px;
+      padding: 48px 40px; text-align: center;
+      max-width: 480px; width: 100%;
       box-shadow: 0 8px 40px rgba(44,95,79,0.12);
     }
     .complete-icon { font-size: 4rem; margin-bottom: 16px; }
     .complete-title { font-size: 1.6rem; font-weight: 800; color: var(--text-dark); margin-bottom: 8px; }
-    .complete-sub { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 28px; }
+    .complete-sub { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 28px; line-height: 1.6; }
     .complete-info {
-      background: var(--bg-base);
-      border-radius: 14px;
-      padding: 20px 24px;
-      text-align: left;
-      margin-bottom: 24px;
+      background: var(--bg-base); border-radius: 14px;
+      padding: 20px 24px; text-align: left; margin-bottom: 24px;
     }
     .complete-info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.9rem;
+      display: flex; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem;
     }
     .complete-info-row:last-child { border-bottom: none; }
     .complete-info-row span:first-child { color: var(--text-muted); }
@@ -50,11 +38,8 @@
     .complete-actions { display: flex; flex-direction: column; gap: 10px; }
     .complete-actions .btn { justify-content: center; }
     .processing-anim {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      padding: 20px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 16px; padding: 20px;
     }
     .processing-spinner {
       width: 56px; height: 56px;
@@ -66,21 +51,14 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .processing-text { font-size: 1rem; font-weight: 600; color: var(--text-dark); }
     .processing-sub { font-size: 0.85rem; color: var(--text-muted); }
-    .fail-card .complete-icon { filter: grayscale(0.3); }
-    .cancel-card .complete-icon { }
     .point-big { font-size: 2rem; font-weight: 900; color: var(--primary); }
     .order-no { font-size: 0.75rem; color: var(--text-light); margin-top: 8px; }
     .test-notice-bar {
-      background: #fff3cd;
-      color: #856404;
-      font-size: 0.8rem;
-      padding: 10px 16px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      background: #fff3cd; color: #856404; font-size: 0.8rem;
+      padding: 10px 16px; border-radius: 10px; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
     }
+    .btn-lg { padding: 14px 28px !important; font-size: 1rem !important; }
   </style>
 </head>
 <body>
@@ -107,19 +85,27 @@
   </div>
 </div>
 
-<script src="js/auth.js"></script>
-<script src="js/kakaopay.js"></script>
+<script src="js/auth.js?v=20260501"></script>
+<script src="js/kakaopay.js?v=20260501"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // 헤더 포인트
+  // 헤더 포인트 표시
   const pts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
-  document.getElementById('headerPointVal').textContent = pts.toLocaleString();
+  const headerPtEl = document.getElementById('headerPointVal');
+  if (headerPtEl) headerPtEl.textContent = pts.toLocaleString();
 
   // URL 파라미터 확인
   const params = new URLSearchParams(window.location.search);
-  const result = params.get('result');
+  const result  = params.get('result');
   const pgToken = params.get('pg_token');
 
+  // 파라미터가 없으면 pricing으로 이동
+  if (!result) {
+    window.location.href = 'pricing.html';
+    return;
+  }
+
+  // 처리 딜레이 (UX)
   setTimeout(() => {
     if (result === 'success') {
       renderSuccess(pgToken);
@@ -128,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (result === 'cancel') {
       renderCancel();
     } else {
-      // 파라미터 없으면 pricing으로 이동
       window.location.href = 'pricing.html';
     }
   }, 1000);
@@ -138,43 +123,59 @@ function renderSuccess(pgToken) {
   const pending = JSON.parse(sessionStorage.getItem('kakao_pending_plan') || 'null');
   const card = document.getElementById('completeCard');
 
-  if (!pending) {
+  if (!pending || !pending.plan) {
     renderFail();
     return;
   }
 
-  // 포인트 지급
+  // ① 포인트 지급
   const currentPts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
   const newPts = currentPts + pending.plan.point;
   localStorage.setItem('sajuon_points', String(newPts));
 
-  // 이용 내역 저장
+  // ② 사용자 계정 동기화
+  try {
+    const currentUser = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+    if (currentUser && currentUser.id) {
+      const users = JSON.parse(localStorage.getItem('sajuon_users') || '[]');
+      const idx = users.findIndex(u => u.id === currentUser.id);
+      if (idx !== -1) {
+        users[idx].points = newPts;
+        localStorage.setItem('sajuon_users', JSON.stringify(users));
+      }
+      currentUser.points = newPts;
+      localStorage.setItem('sajuon_current_user', JSON.stringify(currentUser));
+    }
+  } catch(e) {}
+
+  // ③ 이용 내역 저장
+  const isTest = !pgToken || String(pgToken).startsWith('KAKAO_TEST');
   const hist = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
   hist.unshift({
     date: new Date().toLocaleString('ko-KR'),
     type: '충전',
     point: `+${pending.plan.point.toLocaleString()}P`,
-    memo: `카카오페이 · ${pending.plan.name}`,
+    memo: `카카오페이 · ${pending.plan.name}${pending.plan.bonus > 0 ? ` (+${pending.plan.bonus.toLocaleString()}P 보너스)` : ''}`,
     orderId: pending.orderId,
     amount: pending.plan.amount,
-    pgToken: pgToken,
-    status: '결제완료'
+    pgToken: pgToken || 'test',
+    status: isTest ? '테스트완료' : '결제완료'
   });
   localStorage.setItem('sajuon_history', JSON.stringify(hist));
 
-  // 헤더 업데이트
-  document.getElementById('headerPointVal').textContent = newPts.toLocaleString();
+  // ④ 헤더 업데이트
+  const headerPt = document.getElementById('headerPointVal');
+  if (headerPt) headerPt.textContent = newPts.toLocaleString();
 
-  // 세션 정리
+  // ⑤ 세션 정리
   sessionStorage.removeItem('kakao_pending_plan');
   sessionStorage.removeItem('kakao_tid');
   sessionStorage.removeItem('kakao_order_id');
 
-  const isTest = pending.pgToken && String(pending.pgToken).startsWith('KAKAO_TEST');
-
+  // ⑥ 결제 완료 화면 렌더링
   card.innerHTML = `
     <div class="complete-icon">🎉</div>
-    <div class="complete-title">결제 완료!</div>
+    <div class="complete-title">충전 완료!</div>
     <div class="complete-sub">포인트가 즉시 지급되었습니다</div>
     ${isTest ? `<div class="test-notice-bar"><i class="fas fa-flask"></i> 테스트 결제입니다 (실제 결제 아님)</div>` : ''}
     <div class="complete-info">
@@ -214,7 +215,6 @@ function renderSuccess(pgToken) {
 
 function renderFail() {
   const card = document.getElementById('completeCard');
-  card.classList.add('fail-card');
   card.innerHTML = `
     <div class="complete-icon">😢</div>
     <div class="complete-title">결제에 실패했습니다</div>
@@ -235,7 +235,6 @@ function renderFail() {
 
 function renderCancel() {
   const card = document.getElementById('completeCard');
-  card.classList.add('cancel-card');
   card.innerHTML = `
     <div class="complete-icon">🙅</div>
     <div class="complete-title">결제가 취소되었습니다</div>

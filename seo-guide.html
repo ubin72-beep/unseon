@@ -621,6 +621,169 @@
 
 </div><!-- /container -->
 
+<!-- ====== 카카오페이 실서비스 전환 가이드 섹션 ====== -->
+<div class="container" style="max-width:960px;margin:0 auto;padding:0 20px 60px">
+
+  <div class="section-wrap" style="border-top:4px solid #FFE812">
+    <div class="section-title">
+      <i class="fas fa-comment" style="color:#3A1D1D"></i>
+      카카오페이 실서비스 전환 가이드
+    </div>
+
+    <!-- 현재 상태 표시 -->
+    <div style="background:linear-gradient(135deg,#fff8e1,#fff3cd);border:2px solid #ffc107;border-radius:14px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px">
+      <span style="font-size:2rem">⚠️</span>
+      <div>
+        <strong style="color:#e65100;font-size:1rem;display:block;margin-bottom:4px">현재 테스트 모드로 운영 중</strong>
+        <span style="color:#6d4c00;font-size:0.88rem">실제 결제가 발생하지 않습니다. 아래 절차를 완료하면 실결제로 전환됩니다.</span>
+      </div>
+    </div>
+
+    <!-- STEP 1: 카카오페이 사업자 가맹 -->
+    <div style="background:#fff;border-radius:14px;border:1.5px solid #e8ecef;padding:24px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:36px;height:36px;background:#FFE812;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#3A1D1D;flex-shrink:0">1</div>
+        <h3 style="font-size:1.05rem;font-weight:700;color:#1a1a2e">카카오페이 사업자 가맹 신청</h3>
+      </div>
+      <ol style="list-style:decimal;padding-left:20px;color:#444;font-size:0.9rem;line-height:2">
+        <li><a href="https://business.kakao.com/" target="_blank" style="color:#3A1D1D;font-weight:600">카카오 비즈니스</a> 접속 → 로그인</li>
+        <li>서비스 신청 → <strong>카카오페이 결제</strong> 선택</li>
+        <li>사업자 정보 입력 (사업자등록번호: 537-08-03349)</li>
+        <li>통신판매업 신고증 업로드 (준비 후 진행)</li>
+        <li>심사 승인 후 <strong>CID (가맹점 ID)</strong> 발급받기</li>
+      </ol>
+      <div style="background:#f0f4f2;border-radius:8px;padding:12px 16px;margin-top:12px;font-size:0.83rem;color:#555">
+        <i class="fas fa-info-circle" style="color:#2e7d32"></i>
+        심사 기간: 영업일 기준 3~7일 / 문의: kakaopay@kakao.com
+      </div>
+    </div>
+
+    <!-- STEP 2: js/kakaopay.js 수정 -->
+    <div style="background:#fff;border-radius:14px;border:1.5px solid #e8ecef;padding:24px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:36px;height:36px;background:#FFE812;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#3A1D1D;flex-shrink:0">2</div>
+        <h3 style="font-size:1.05rem;font-weight:700;color:#1a1a2e">js/kakaopay.js 설정값 변경</h3>
+      </div>
+      <p style="font-size:0.88rem;color:#555;margin-bottom:14px">파일 상단의 두 줄만 수정하면 됩니다:</p>
+      <div style="background:#1a1a2e;border-radius:10px;padding:18px 20px;font-family:monospace;font-size:0.88rem;color:#e0e0e0;position:relative">
+        <div style="color:#f48fb1">// 수정 전 (테스트)</div>
+        <div>const IS_TEST_MODE = <span style="color:#80cbc4">true</span>;</div>
+        <div>const KAKAO_CID = IS_TEST_MODE ? <span style="color:#ffcc02">'TC0ONETIME'</span> : <span style="color:#f48fb1">'C여기에_실제_CID_입력'</span>;</div>
+        <br>
+        <div style="color:#a5d6a7">// 수정 후 (실서비스)</div>
+        <div>const IS_TEST_MODE = <span style="color:#80cbc4">false</span>;</div>
+        <div>const KAKAO_CID = IS_TEST_MODE ? <span style="color:#ffcc02">'TC0ONETIME'</span> : <span style="color:#a5d6a7">'실제_CID_여기입력'</span>;</div>
+      </div>
+      <div style="background:#fff3cd;border-radius:8px;padding:12px 16px;margin-top:12px;font-size:0.83rem;color:#856404;display:flex;gap:8px">
+        <i class="fas fa-exclamation-triangle" style="margin-top:1px;flex-shrink:0"></i>
+        <span><strong>보안 주의:</strong> 실서비스에서는 카카오 Admin API Key가 프론트엔드에 노출되면 안 됩니다. 결제 준비(ready) API 호출은 반드시 서버사이드에서 처리해야 합니다. 현재 구조는 서버 없는 환경용 참고 코드입니다.</span>
+      </div>
+    </div>
+
+    <!-- STEP 3: 도메인/URL 설정 -->
+    <div style="background:#fff;border-radius:14px;border:1.5px solid #e8ecef;padding:24px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:36px;height:36px;background:#FFE812;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#3A1D1D;flex-shrink:0">3</div>
+        <h3 style="font-size:1.05rem;font-weight:700;color:#1a1a2e">리다이렉트 URL 확인</h3>
+      </div>
+      <p style="font-size:0.88rem;color:#555;margin-bottom:14px">카카오페이 결제 완료/실패/취소 후 이동할 URL이 정확히 설정되어 있는지 확인하세요:</p>
+      <table style="width:100%;border-collapse:collapse;font-size:0.86rem">
+        <thead>
+          <tr style="background:#f5f5f5">
+            <th style="padding:10px 14px;text-align:left;border-radius:8px 0 0 0;border-bottom:2px solid #eee">구분</th>
+            <th style="padding:10px 14px;text-align:left;border-bottom:2px solid #eee">URL</th>
+            <th style="padding:10px 14px;text-align:left;border-radius:0 8px 0 0;border-bottom:2px solid #eee">상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;color:#888">approval_url</td>
+            <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;font-family:monospace;font-size:0.8rem">https://unseon.co.kr/payment-complete.html?result=success</td>
+            <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0"><span style="background:#e8f5f0;color:#2c5f4f;padding:3px 9px;border-radius:20px;font-size:0.78rem;font-weight:600">✅ 설정됨</span></td>
+          </tr>
+          <tr>
+            <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;color:#888">fail_url</td>
+            <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;font-family:monospace;font-size:0.8rem">https://unseon.co.kr/payment-complete.html?result=fail</td>
+            <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0"><span style="background:#e8f5f0;color:#2c5f4f;padding:3px 9px;border-radius:20px;font-size:0.78rem;font-weight:600">✅ 설정됨</span></td>
+          </tr>
+          <tr>
+            <td style="padding:10px 14px;color:#888">cancel_url</td>
+            <td style="padding:10px 14px;font-family:monospace;font-size:0.8rem">https://unseon.co.kr/payment-complete.html?result=cancel</td>
+            <td style="padding:10px 14px"><span style="background:#e8f5f0;color:#2c5f4f;padding:3px 9px;border-radius:20px;font-size:0.78rem;font-weight:600">✅ 설정됨</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="background:#f0f4f2;border-radius:8px;padding:12px 16px;margin-top:12px;font-size:0.83rem;color:#555">
+        <i class="fas fa-info-circle" style="color:#2e7d32"></i>
+        카카오페이 파트너 사이트에서도 동일한 URL을 Whitelist에 등록해야 합니다.
+      </div>
+    </div>
+
+    <!-- STEP 4: 모바일 결제 -->
+    <div style="background:#fff;border-radius:14px;border:1.5px solid #e8ecef;padding:24px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:36px;height:36px;background:#FFE812;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#3A1D1D;flex-shrink:0">4</div>
+        <h3 style="font-size:1.05rem;font-weight:700;color:#1a1a2e">모바일 결제 URL 자동 처리</h3>
+      </div>
+      <p style="font-size:0.88rem;color:#555;margin-bottom:12px">카카오페이는 PC/모바일에서 각각 다른 리다이렉트 URL을 사용합니다:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="background:#f9f9f9;border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:1.5rem;margin-bottom:8px">🖥️</div>
+          <div style="font-weight:700;color:#333;margin-bottom:6px">PC</div>
+          <div style="font-family:monospace;font-size:0.78rem;color:#555">next_redirect_pc_url</div>
+          <div style="font-size:0.8rem;color:#888;margin-top:4px">팝업/리다이렉트</div>
+        </div>
+        <div style="background:#f9f9f9;border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:1.5rem;margin-bottom:8px">📱</div>
+          <div style="font-weight:700;color:#333;margin-bottom:6px">모바일</div>
+          <div style="font-family:monospace;font-size:0.78rem;color:#555">next_redirect_mobile_url</div>
+          <div style="font-size:0.8rem;color:#888;margin-top:4px">카카오앱 연동</div>
+        </div>
+      </div>
+      <div style="background:#e8f5f0;border-radius:8px;padding:12px 16px;margin-top:12px;font-size:0.83rem;color:#1b5e20">
+        <i class="fas fa-check-circle"></i>
+        <strong>현재 코드에 모바일 분기 처리가 포함되어 있습니다.</strong> 서버 연동 완료 후 자동으로 동작합니다.
+      </div>
+    </div>
+
+    <!-- STEP 5: 통신판매업 신고 -->
+    <div style="background:#fff;border-radius:14px;border:1.5px solid #e8ecef;padding:24px;margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:36px;height:36px;background:#FFE812;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#3A1D1D;flex-shrink:0">5</div>
+        <h3 style="font-size:1.05rem;font-weight:700;color:#1a1a2e">통신판매업 신고 (필수)</h3>
+      </div>
+      <div style="background:#fce4ec;border-radius:8px;padding:14px 18px;font-size:0.88rem;color:#b71c1c;margin-bottom:14px">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong> 전자상거래법 위반 주의:</strong> 온라인 결제 서비스는 통신판매업 신고가 의무입니다.
+      </div>
+      <ol style="list-style:decimal;padding-left:20px;color:#444;font-size:0.9rem;line-height:2">
+        <li><a href="https://www.ftc.go.kr/" target="_blank" style="color:#1565c0;font-weight:600">공정거래위원회 사이버몰</a> 또는 <a href="https://www.gov.kr/" target="_blank" style="color:#1565c0;font-weight:600">정부24</a> 접속</li>
+        <li>통신판매업 신고 → 사업자 정보 입력</li>
+        <li>신고필증 발급 후 사이트에 신고번호 표시</li>
+        <li>pricing.html footer에 신고번호 추가 필요</li>
+      </ol>
+    </div>
+
+    <!-- 실서비스 전환 체크리스트 -->
+    <div style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:2px solid #a5d6a7;border-radius:14px;padding:24px">
+      <h3 style="font-size:1rem;font-weight:700;color:#1b5e20;margin-bottom:16px">
+        <i class="fas fa-clipboard-check"></i> 실서비스 전환 체크리스트
+      </h3>
+      <ul style="list-style:none;padding:0;color:#2e7d32;font-size:0.9rem;line-height:2.2">
+        <li>☐ 사업자등록증 확보</li>
+        <li>☐ 통신판매업 신고 완료 + 신고번호 획득</li>
+        <li>☐ 카카오페이 가맹 신청 → 심사 통과 → CID 발급</li>
+        <li>☐ js/kakaopay.js 에서 IS_TEST_MODE = false 변경</li>
+        <li>☐ KAKAO_CID 에 실제 CID 입력</li>
+        <li>☐ 카카오페이 파트너 사이트에서 허용 도메인 등록</li>
+        <li>☐ 실결제 테스트 1회 진행 (소액 결제 → 환불 확인)</li>
+        <li>☐ 구매 내역 / 환불 정책 페이지 최신화</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
 <script>
   // ===== 체크리스트 localStorage 저장/복원 =====
   function saveCheckbox(cb) {

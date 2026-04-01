@@ -39,7 +39,7 @@
       <a href="index.html" class="nav-link">홈</a>
       <a href="chat.html" class="nav-link">AI 상담</a>
       <a href="pricing.html" class="nav-link active">요금 충전</a>
-      <a href="admin.html" class="nav-link nav-admin"><i class="fas fa-cog"></i> 관리자</a>
+      <!-- 관리자 링크 비공개 처리 -->
     </nav>
     <div class="header-actions">
       <div class="point-display">
@@ -77,11 +77,9 @@
     <!-- 카카오페이 결제 안내 -->
     <div class="pay-method-bar">
       <div class="pay-method-item active">
-        <img src="https://developers.kakao.com/assets/img/about/logos/kakaopaylogo.png"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
-             alt="카카오페이" style="height:28px"/>
-        <span class="pay-method-fallback" style="display:none">
-          <i class="fas fa-comment" style="color:#FFE812"></i> 카카오페이
+        <span style="display:flex;align-items:center;gap:8px">
+          <i class="fas fa-comment" style="color:#FFE812;font-size:1.4rem"></i>
+          <strong style="color:#3A1D1D;font-size:1.05rem;font-weight:700">카카오페이</strong>
         </span>
       </div>
       <span class="pay-method-desc">카드 · 카카오머니 · 계좌이체 모두 가능</span>
@@ -161,6 +159,8 @@
           <i class="fas fa-comment"></i> 카카오페이로 충전
         </button>
       </div>
+      <!-- 보너스 미리보기 -->
+      <div id="customBonusPreview" style="min-height:22px;font-size:0.88rem;margin:8px 0 4px;transition:all 0.2s"></div>
       <div class="bonus-guide">
         <span class="bonus-item">₩20,000~ <strong>+10% 보너스</strong></span>
         <span class="bonus-item">₩50,000~ <strong>+20% 보너스</strong></span>

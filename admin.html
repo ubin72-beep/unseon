@@ -4,16 +4,23 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>관리자 대시보드 — 운세ON</title>
+  <!-- 검색엔진 수집 완전 차단 -->
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
   <link rel="stylesheet" href="css/style.css"/>
   <link rel="stylesheet" href="css/admin.css"/>
+  <style>
+    /* ★ 인증 전 레이아웃 완전 차단 — 스크립트 로드 전 깜빡임 방지 */
+    .admin-layout { display: none !important; }
+    .admin-layout.auth-ok { display: flex !important; }
+  </style>
 </head>
 <body class="admin-body">
 
-<!-- ADMIN LAYOUT -->
-<div class="admin-layout">
+<!-- ADMIN LAYOUT — 인증 성공 후 JS가 auth-ok 클래스 추가 -->
+<div class="admin-layout" id="adminLayout">
 
   <!-- 사이드바 -->
   <aside class="admin-sidebar" id="adminSidebar">
@@ -52,11 +59,17 @@
       <button type="button" class="admin-nav-item" data-section="ai" onclick="switchSection('ai')" id="aiMenuBtn">
         <i class="fas fa-robot"></i> AI 설정
       </button>
+      <button type="button" class="admin-nav-item" data-section="security" onclick="switchSection('security')">
+        <i class="fas fa-shield-alt"></i> 보안·계정 설정
+      </button>
       <a href="seo-guide.html" class="admin-nav-item" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;background:rgba(255,152,0,0.12);border:1px solid rgba(255,152,0,0.3)">
         <i class="fas fa-search" style="color:#ff9800"></i> 검색엔진 홍보 가이드
       </a>
     </nav>
     <div class="admin-sidebar-footer">
+      <button onclick="adminLogout()" class="admin-back-btn" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;color:inherit">
+        <i class="fas fa-sign-out-alt"></i> 로그아웃
+      </button>
       <a href="index.html" class="admin-back-btn"><i class="fas fa-home"></i> 사이트로 돌아가기</a>
     </div>
   </aside>
@@ -129,6 +142,6 @@
 <script src="js/auth.js?v=20260501"></script>
 <script src="js/main.js?v=20260501"></script>
 <script src="js/gemini.js?v=20260430"></script>
-<script src="js/admin.js?v=20260430"></script>
+<script src="js/admin.js?v=20260501"></script>
 </body>
 </html>
