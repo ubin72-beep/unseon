@@ -3,6 +3,150 @@
    관리자 대시보드 기능
    ========================================= */
 
+// =========================================
+// 관리자 인증 시스템
+// =========================================
+const ADMIN_SESSION_KEY = 'sajuon_admin_auth';
+const ADMIN_SESSION_TTL = 2 * 60 * 60 * 1000; // 2시간
+
+// ★ 기본 관리자 계정
+// localStorage에 'sajuon_admin_cred' 가 있으면 커스텀 계정 우선 사용
+function getAdminCredentials() {
+  try {
+    const saved = localStorage.getItem('sajuon_admin_cred');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.id && parsed.pw) return parsed;
+    }
+  } catch(_) {}
+  // ★ 기본값 — 반드시 로그인 후 변경하세요!
+  return { id: 'unseon_admin', pw: hashAdminPw('Unseon@2026!') };
+}
+
+function hashAdminPw(pw) {
+  let hash = 0;
+  for (let i = 0; i < pw.length; i++) {
+    const c = pw.charCodeAt(i);
+    hash = ((hash << 5) - hash) + c;
+    hash = hash & hash;
+  }
+  return 'adm_' + Math.abs(hash).toString(36) + '_' + pw.length;
+}
+
+function isAdminLoggedIn() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem(ADMIN_SESSION_KEY) || 'null');
+    if (!s || !s.ts) return false;
+    if (Date.now() - s.ts > ADMIN_SESSION_TTL) {
+      sessionStorage.removeItem(ADMIN_SESSION_KEY);
+      return false;
+    }
+    return s.ok === true;
+  } catch(_) { return false; }
+}
+
+function setAdminSession() {
+  sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({ ok: true, ts: Date.now() }));
+}
+
+function clearAdminSession() {
+  sessionStorage.removeItem(ADMIN_SESSION_KEY);
+}
+
+function showAdminOverlay() {
+  // ★ 레이아웃 완전 숨김 (display:none + auth-ok 클래스 제거)
+  const layout = document.getElementById('adminLayout');
+  if (layout) layout.classList.remove('auth-ok');
+  const overlay = document.getElementById('adminLoginOverlay');
+  if (overlay) overlay.style.display = 'flex';
+}
+
+function hideAdminOverlay() {
+  const overlay = document.getElementById('adminLoginOverlay');
+  if (overlay) {
+    overlay.style.animation = 'adminOverlayOut 0.3s ease forwards';
+    setTimeout(() => { overlay.style.display = 'none'; }, 280);
+  }
+  // ★ 레이아웃 표시 (auth-ok 클래스 추가)
+  const layout = document.getElementById('adminLayout');
+  if (layout) layout.classList.add('auth-ok');
+}
+
+function adminLogin() {
+  const idEl  = document.getElementById('adminIdInput');
+  const pwEl  = document.getElementById('adminPwInput');
+  const errEl = document.getElementById('adminLoginError');
+  const btn   = document.getElementById('adminLoginBtn');
+  const btnTxt = document.getElementById('adminLoginBtnText');
+  const btnLd  = document.getElementById('adminLoginBtnLoading');
+
+  const id = idEl?.value?.trim();
+  const pw = pwEl?.value;
+
+  if (errEl) errEl.textContent = '';
+
+  if (!id || !pw) {
+    if (errEl) errEl.textContent = '아이디와 비밀번호를 입력해주세요.';
+    if (!id) idEl?.focus(); else pwEl?.focus();
+    return;
+  }
+
+  // 로딩
+  if (btn) btn.disabled = true;
+  if (btnTxt) btnTxt.style.display = 'none';
+  if (btnLd)  btnLd.style.display  = 'inline';
+
+  setTimeout(() => {
+    const cred = getAdminCredentials();
+    if (id === cred.id && hashAdminPw(pw) === cred.pw) {
+      // 성공
+      setAdminSession();
+      hideAdminOverlay();
+      showToast('✅ 관리자로 로그인되었습니다');
+      // 대시보드 초기화
+      initAdminDashboard();
+    } else {
+      // 실패
+      if (errEl) errEl.textContent = '❌ 아이디 또는 비밀번호가 올바르지 않습니다.';
+      if (pwEl)  { pwEl.value = ''; pwEl.focus(); }
+      if (btn)   btn.disabled = false;
+      if (btnTxt) btnTxt.style.display = 'inline';
+      if (btnLd)  btnLd.style.display  = 'none';
+      // 입력창 흔들기
+      const box = document.querySelector('.admin-login-box');
+      if (box) { box.style.animation = 'none'; setTimeout(() => { box.style.animation = 'adminShake 0.4s ease'; }, 10); }
+    }
+  }, 700);
+}
+
+function toggleAdminPw() {
+  const input = document.getElementById('adminPwInput');
+  const icon  = document.getElementById('adminPwEyeIcon');
+  if (!input) return;
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  if (icon) icon.className = isHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
+
+function adminLogout() {
+  if (!confirm('관리자 로그아웃 하시겠습니까?')) return;
+  clearAdminSession();
+  showAdminOverlay();
+  const idEl = document.getElementById('adminIdInput');
+  const pwEl = document.getElementById('adminPwInput');
+  if (idEl) idEl.value = '';
+  if (pwEl) pwEl.value = '';
+}
+
+// 관리자 비밀번호 변경 (대시보드 내에서 사용)
+function changeAdminPassword(newId, newPw) {
+  if (!newId || !newPw || newPw.length < 8) {
+    alert('아이디와 8자 이상의 비밀번호를 입력해주세요.'); return false;
+  }
+  localStorage.setItem('sajuon_admin_cred', JSON.stringify({ id: newId, pw: hashAdminPw(newPw) }));
+  return true;
+}
+
 // ===== 섹션 정의 =====
 const SECTIONS = {
   dash:     { title: '대시보드',         render: renderDash },
@@ -15,6 +159,7 @@ const SECTIONS = {
   members:  { title: '회원 관리',        render: renderMembersAdmin },
   points:   { title: '포인트 조작',      render: renderPointsAdmin },
   ai:       { title: 'AI 설정',          render: renderAISettings },
+  security: { title: '보안·계정 설정',   render: renderSecurity },
 };
 
 let currentSection = 'dash';
@@ -1389,16 +1534,46 @@ window.deleteGeminiKey    = deleteGeminiKey;
 window.testGeminiKey      = testGeminiKey;
 window.toggleKeyVisibility = toggleKeyVisibility;
 window.listGeminiModels   = listGeminiModels;
+window.adminLogin         = adminLogin;
+window.adminLogout        = adminLogout;
+window.toggleAdminPw      = toggleAdminPw;
+window.changeAdminPassword = changeAdminPassword;
+
+// =========================================
+// 대시보드 초기화 (로그인 성공 후 실행)
+// =========================================
+function initAdminDashboard() {
+  initPoints();
+  updateAdminPt();
+  initAdminNav();
+  const hash = location.hash.replace('#', '') || 'dash';
+  switchSection(SECTIONS[hash] ? hash : 'dash');
+}
 
 // =========================================
 // 초기화
 // =========================================
 document.addEventListener('DOMContentLoaded', () => {
-  initPoints();
-  updateAdminPt();
-  initAdminNav();
+  // 로그아웃 버튼 동적 추가 (사이드바 하단)
+  const sidebarFooter = document.querySelector('.admin-sidebar-footer');
+  if (sidebarFooter && !document.getElementById('adminLogoutBtn')) {
+    const logoutBtn = document.createElement('button');
+    logoutBtn.id = 'adminLogoutBtn';
+    logoutBtn.className = 'admin-logout-btn';
+    logoutBtn.onclick = adminLogout;
+    logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> 관리자 로그아웃';
+    sidebarFooter.appendChild(logoutBtn);
+  }
 
-  // URL 해시로 섹션 결정
-  const hash = location.hash.replace('#', '') || 'dash';
-  switchSection(SECTIONS[hash] ? hash : 'dash');
+  // 인증 확인
+  if (isAdminLoggedIn()) {
+    hideAdminOverlay();
+    initAdminDashboard();
+  } else {
+    showAdminOverlay();
+    // 오버레이 표시 후 포커스
+    setTimeout(() => {
+      document.getElementById('adminIdInput')?.focus();
+    }, 300);
+  }
 });
