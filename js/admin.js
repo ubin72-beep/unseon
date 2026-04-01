@@ -1551,27 +1551,219 @@ function initAdminDashboard() {
 }
 
 // =========================================
+// 보안·계정 설정 섹션
+// =========================================
+function renderSecurity(container) {
+  const cred = getAdminCredentials();
+  container.innerHTML = `
+    <div style="max-width:560px;margin:0 auto;padding:8px 0">
+
+      <!-- 현재 계정 정보 -->
+      <div class="admin-card" style="margin-bottom:24px;border-left:4px solid #2e7d32">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-user-shield" style="color:#2e7d32"></i> 현재 관리자 계정
+        </h3>
+        <div style="background:#f8fafb;border-radius:10px;padding:16px 20px;font-size:0.9rem;line-height:2.2">
+          <div style="display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding-bottom:8px;margin-bottom:8px">
+            <span style="color:#888">아이디</span>
+            <strong style="font-family:monospace;color:#1a1a2e">${cred.id}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="color:#888">비밀번호</span>
+            <strong style="color:#1a1a2e">••••••••••</strong>
+          </div>
+        </div>
+        <div style="background:#e8f5e9;border-radius:8px;padding:10px 14px;margin-top:12px;font-size:0.82rem;color:#1b5e20">
+          <i class="fas fa-info-circle"></i> 세션 유효 시간: <strong>2시간</strong> (브라우저 닫으면 자동 로그아웃)
+        </div>
+      </div>
+
+      <!-- 계정 변경 폼 -->
+      <div class="admin-card" style="border-left:4px solid #1565c0">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-key" style="color:#1565c0"></i> 관리자 계정 변경
+        </h3>
+        <p style="font-size:0.83rem;color:#888;margin-bottom:20px">변경 후 즉시 새 계정으로 재로그인이 필요합니다.</p>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;color:#444;display:block;margin-bottom:6px">
+              <i class="fas fa-user"></i> 새 아이디 (영문·숫자·언더바, 4~20자)
+            </label>
+            <input type="text" id="secNewId" placeholder="새 아이디 입력"
+              maxlength="20"
+              style="width:100%;padding:12px 16px;border:1.5px solid #ddd;border-radius:10px;font-size:0.9rem;outline:none;transition:border 0.2s"
+              onfocus="this.style.borderColor='#2e7d32'" onblur="this.style.borderColor='#ddd'"/>
+          </div>
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;color:#444;display:block;margin-bottom:6px">
+              <i class="fas fa-lock"></i> 새 비밀번호 (영문+숫자+특수문자, 8자 이상)
+            </label>
+            <div style="position:relative">
+              <input type="password" id="secNewPw" placeholder="새 비밀번호 입력"
+                maxlength="50"
+                style="width:100%;padding:12px 48px 12px 16px;border:1.5px solid #ddd;border-radius:10px;font-size:0.9rem;outline:none;transition:border 0.2s"
+                onfocus="this.style.borderColor='#2e7d32'" onblur="this.style.borderColor='#ddd'"
+                oninput="checkSecPwStrength(this.value)"/>
+              <button type="button" onclick="toggleSecPw('secNewPw','secPwEye')"
+                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aaa;font-size:1rem">
+                <i class="fas fa-eye" id="secPwEye"></i>
+              </button>
+            </div>
+            <!-- 비밀번호 강도 바 -->
+            <div style="margin-top:8px">
+              <div style="height:4px;background:#eee;border-radius:4px;overflow:hidden">
+                <div id="secPwBar" style="height:100%;width:0%;transition:width 0.3s,background 0.3s;border-radius:4px"></div>
+              </div>
+              <span id="secPwLabel" style="font-size:0.78rem;color:#aaa"></span>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;color:#444;display:block;margin-bottom:6px">
+              <i class="fas fa-lock"></i> 비밀번호 확인
+            </label>
+            <input type="password" id="secNewPwConfirm" placeholder="비밀번호 다시 입력"
+              maxlength="50"
+              style="width:100%;padding:12px 16px;border:1.5px solid #ddd;border-radius:10px;font-size:0.9rem;outline:none;transition:border 0.2s"
+              onfocus="this.style.borderColor='#2e7d32'" onblur="this.style.borderColor='#ddd'"/>
+          </div>
+
+          <div id="secErrMsg" style="font-size:0.85rem;color:#c62828;min-height:20px"></div>
+
+          <!-- 현재 비밀번호 확인 -->
+          <div style="background:#fff8e1;border-radius:10px;padding:14px 16px">
+            <label style="font-size:0.85rem;font-weight:600;color:#e65100;display:block;margin-bottom:6px">
+              <i class="fas fa-shield-alt"></i> 현재 비밀번호 (본인 확인)
+            </label>
+            <div style="position:relative">
+              <input type="password" id="secCurrentPw" placeholder="현재 비밀번호 입력"
+                style="width:100%;padding:12px 48px 12px 16px;border:1.5px solid #ffcc80;border-radius:10px;font-size:0.9rem;outline:none;background:#fffde7;transition:border 0.2s"
+                onfocus="this.style.borderColor='#e65100'" onblur="this.style.borderColor='#ffcc80'"/>
+              <button type="button" onclick="toggleSecPw('secCurrentPw','secCurPwEye')"
+                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aaa;font-size:1rem">
+                <i class="fas fa-eye" id="secCurPwEye"></i>
+              </button>
+            </div>
+          </div>
+
+          <button onclick="doChangeAdminAccount()"
+            style="width:100%;padding:14px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border:none;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;transition:opacity 0.2s;display:flex;align-items:center;justify-content:center;gap:8px"
+            onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
+            <i class="fas fa-save"></i> 계정 정보 변경하기
+          </button>
+        </div>
+      </div>
+
+      <!-- 보안 주의사항 -->
+      <div class="admin-card" style="border-left:4px solid #c62828;margin-top:24px">
+        <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:12px;color:#c62828">
+          <i class="fas fa-exclamation-triangle"></i> 보안 주의사항
+        </h3>
+        <ul style="list-style:none;padding:0;font-size:0.85rem;color:#555;line-height:2">
+          <li>🔴 기본 계정(admin/unseon2026!) 그대로 사용하지 마세요</li>
+          <li>🔴 비밀번호는 영문+숫자+특수문자 조합 8자 이상 권장</li>
+          <li>🟡 브라우저 자동완성에 비밀번호 저장 후 관리 필요</li>
+          <li>🟡 admin.html URL을 외부에 공유하지 마세요</li>
+          <li>🟢 세션은 2시간 후 자동 만료됩니다</li>
+        </ul>
+      </div>
+
+    </div>
+  `;
+}
+
+/* 보안 섹션 헬퍼 함수들 */
+function toggleSecPw(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon  = document.getElementById(iconId);
+  if (!input) return;
+  const hidden = input.type === 'password';
+  input.type = hidden ? 'text' : 'password';
+  if (icon) icon.className = hidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
+
+function checkSecPwStrength(pw) {
+  const bar   = document.getElementById('secPwBar');
+  const label = document.getElementById('secPwLabel');
+  if (!bar || !label) return;
+  let score = 0;
+  if (pw.length >= 8)  score++;
+  if (pw.length >= 12) score++;
+  if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+  if (/\d/.test(pw))   score++;
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pw)) score++;
+  const levels = [
+    { w:'0%',   c:'#eee',    t:'' },
+    { w:'25%',  c:'#c62828', t:'매우 약함' },
+    { w:'50%',  c:'#e65100', t:'약함' },
+    { w:'75%',  c:'#f9a825', t:'보통' },
+    { w:'90%',  c:'#2e7d32', t:'강함' },
+    { w:'100%', c:'#1b5e20', t:'매우 강함' },
+  ];
+  const lvl = pw.length === 0 ? 0 : Math.min(5, Math.ceil(score));
+  const l = levels[lvl];
+  bar.style.width = l.w; bar.style.background = l.c;
+  label.textContent = l.t; label.style.color = l.c;
+}
+
+function doChangeAdminAccount() {
+  const newId      = document.getElementById('secNewId')?.value?.trim();
+  const newPw      = document.getElementById('secNewPw')?.value;
+  const newPwConf  = document.getElementById('secNewPwConfirm')?.value;
+  const currentPw  = document.getElementById('secCurrentPw')?.value;
+  const errEl      = document.getElementById('secErrMsg');
+
+  const setErr = (msg) => { if (errEl) errEl.textContent = msg; };
+  setErr('');
+
+  // 현재 비밀번호 확인
+  if (!currentPw) { setErr('❌ 현재 비밀번호를 입력해주세요.'); return; }
+  const cred = getAdminCredentials();
+  if (hashAdminPw(currentPw) !== cred.pw) { setErr('❌ 현재 비밀번호가 올바르지 않습니다.'); return; }
+
+  // 새 아이디 검증
+  if (!newId || newId.length < 4) { setErr('❌ 아이디는 4자 이상 입력해주세요.'); return; }
+  if (!/^[a-zA-Z0-9_가-힣]+$/.test(newId)) { setErr('❌ 아이디는 영문·숫자·언더바·한글만 사용 가능합니다.'); return; }
+
+  // 새 비밀번호 검증
+  if (!newPw || newPw.length < 8) { setErr('❌ 비밀번호는 8자 이상 입력해주세요.'); return; }
+  if (!/[a-zA-Z]/.test(newPw))   { setErr('❌ 비밀번호에 영문을 포함해주세요.'); return; }
+  if (!/\d/.test(newPw))         { setErr('❌ 비밀번호에 숫자를 포함해주세요.'); return; }
+  if (newPw !== newPwConf)       { setErr('❌ 비밀번호가 일치하지 않습니다.'); return; }
+
+  // 저장
+  const newCred = { id: newId, pw: hashAdminPw(newPw) };
+  localStorage.setItem('sajuon_admin_cred', JSON.stringify(newCred));
+
+  showToast('✅ 계정 정보가 변경되었습니다. 새 계정으로 재로그인해주세요.', 3500);
+
+  // 1.5초 후 로그아웃 처리
+  setTimeout(() => {
+    clearAdminSession();
+    showAdminOverlay();
+    // 입력창 초기화 및 포커스
+    const idEl = document.getElementById('adminIdInput');
+    const pwEl = document.getElementById('adminPwInput');
+    if (idEl) { idEl.value = newId; }
+    if (pwEl) { pwEl.value = ''; pwEl.focus(); }
+    // 에러 초기화
+    const errLogin = document.getElementById('adminLoginError');
+    if (errLogin) errLogin.textContent = `새 아이디(${newId})로 로그인해주세요.`;
+  }, 1500);
+}
+
+// =========================================
 // 초기화
 // =========================================
 document.addEventListener('DOMContentLoaded', () => {
-  // 로그아웃 버튼 동적 추가 (사이드바 하단)
-  const sidebarFooter = document.querySelector('.admin-sidebar-footer');
-  if (sidebarFooter && !document.getElementById('adminLogoutBtn')) {
-    const logoutBtn = document.createElement('button');
-    logoutBtn.id = 'adminLogoutBtn';
-    logoutBtn.className = 'admin-logout-btn';
-    logoutBtn.onclick = adminLogout;
-    logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> 관리자 로그아웃';
-    sidebarFooter.appendChild(logoutBtn);
-  }
+  // ★ 가장 먼저 레이아웃 완전 차단 상태 확인 (CSS display:none 이므로 추가 처리 불필요)
 
-  // 인증 확인
+  // 인증 확인 — 세션 유효 시 대시보드 표시, 아니면 오버레이
   if (isAdminLoggedIn()) {
     hideAdminOverlay();
     initAdminDashboard();
   } else {
     showAdminOverlay();
-    // 오버레이 표시 후 포커스
     setTimeout(() => {
       document.getElementById('adminIdInput')?.focus();
     }, 300);
