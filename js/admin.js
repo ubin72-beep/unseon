@@ -54,7 +54,6 @@ function clearAdminSession() {
 }
 
 function showAdminOverlay() {
-  // ★ 레이아웃 완전 숨김 (display:none + auth-ok 클래스 제거)
   const layout = document.getElementById('adminLayout');
   if (layout) layout.classList.remove('auth-ok');
   const overlay = document.getElementById('adminLoginOverlay');
