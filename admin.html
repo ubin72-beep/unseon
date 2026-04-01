@@ -12,9 +12,11 @@
   <link rel="stylesheet" href="css/style.css"/>
   <link rel="stylesheet" href="css/admin.css"/>
   <style>
-    /* ★ 인증 전 레이아웃 완전 차단 — 스크립트 로드 전 깜빡임 방지 */
-    .admin-layout { display: none !important; }
-    .admin-layout.auth-ok { display: flex !important; }
+    /* ★ 인증 전 레이아웃 완전 차단 */
+    #adminLayout { display: none !important; }
+    #adminLayout.auth-ok { display: flex !important; }
+    /* 로그인 오버레이 기본 숨김 (JS가 flex로 변경) */
+    #adminLoginOverlay { display: none; }
   </style>
 </head>
 <body class="admin-body">
@@ -95,8 +97,8 @@
 <!-- 알림 토스트 -->
 <div class="toast" id="adminToast"></div>
 
-<!-- ===== 관리자 로그인 오버레이 ===== -->
-<div class="admin-login-overlay" id="adminLoginOverlay">
+<!-- ===== 관리자 로그인 오버레이 — 기본 표시, 인증 후 JS가 숨김 ===== -->
+<div class="admin-login-overlay" id="adminLoginOverlay" style="display:flex">
   <div class="admin-login-box">
     <div class="admin-login-logo">
       운세<span>ON</span>
@@ -139,9 +141,9 @@
   </div>
 </div>
 
-<script src="js/auth.js?v=20260501"></script>
-<script src="js/main.js?v=20260501"></script>
-<script src="js/gemini.js?v=20260430"></script>
-<script src="js/admin.js?v=20260501"></script>
+<script src="js/auth.js?v=20260502"></script>
+<script src="js/main.js?v=20260502"></script>
+<script src="js/gemini.js?v=20260502"></script>
+<script src="js/admin.js?v=20260502"></script>
 </body>
 </html>
