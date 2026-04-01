@@ -44,7 +44,6 @@
       <a href="index.html" class="nav-link">홈</a>
       <a href="chat.html" class="nav-link active">AI 상담</a>
       <a href="pricing.html" class="nav-link">요금 충전</a>
-      <!-- 관리자 링크 비공개 처리 -->
     </nav>
     <div class="header-actions">
       <div class="point-display" id="headerPoints">
@@ -226,6 +225,25 @@
 
 <script src="js/auth.js?v=20260501"></script>
 <script src="js/main.js?v=20260501"></script>
+<script>
+/* chat.html 헤더 인증 초기화 */
+(function() {
+  if (window.__chatHeaderInit) return;
+  window.__chatHeaderInit = true;
+  function runChatHeaderInit() {
+    if (typeof initPoints === 'function') initPoints();
+    if (typeof updateHeaderPoints === 'function') updateHeaderPoints();
+    if (typeof initAuthHeader === 'function') initAuthHeader();
+    if (typeof initHeader === 'function') initHeader();
+    if (typeof initHamburger === 'function') initHamburger();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runChatHeaderInit);
+  } else {
+    runChatHeaderInit();
+  }
+})();
+</script>
 <script src="js/saju.js?v=20260406"></script>
 <script src="js/tarot.js?v=20260406"></script>
 <script src="js/astrology.js?v=20260406"></script>
