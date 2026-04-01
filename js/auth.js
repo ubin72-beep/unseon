@@ -510,7 +510,6 @@ function initAuthHeader() {
             <a href="pricing.html"><i class="fas fa-coins"></i> 포인트 충전</a>
             <a href="pricing.html#history"><i class="fas fa-history"></i> 이용 내역</a>
             <a href="mypage.html"><i class="fas fa-user-cog"></i> 내 정보</a>
-            <a href="admin.html"><i class="fas fa-cog"></i> 관리자</a>
           </div>
           <button class="user-logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
         </div>
@@ -526,14 +525,12 @@ function initAuthHeader() {
     if (!headerActions.querySelector('.btn-login')) {
       const loginBtn = document.createElement('a');
       loginBtn.href = 'auth.html';
-      loginBtn.className = 'btn btn-outline btn-login';
-      loginBtn.style.cssText = 'padding:8px 16px;font-size:0.88rem';
+      loginBtn.className = 'btn btn-login';
       loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> 로그인';
 
       const signupBtn = document.createElement('a');
       signupBtn.href = 'auth.html?tab=register';
-      signupBtn.className = 'btn btn-primary btn-signup';
-      signupBtn.style.cssText = 'padding:8px 16px;font-size:0.88rem';
+      signupBtn.className = 'btn btn-signup';
       signupBtn.innerHTML = '<i class="fas fa-user-plus"></i> 회원가입';
 
       if (chargeBtn) {
