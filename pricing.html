@@ -39,7 +39,6 @@
       <a href="index.html" class="nav-link">홈</a>
       <a href="chat.html" class="nav-link">AI 상담</a>
       <a href="pricing.html" class="nav-link active">요금 충전</a>
-      <!-- 관리자 링크 비공개 처리 -->
     </nav>
     <div class="header-actions">
       <div class="point-display">
@@ -414,6 +413,11 @@
   window.__pricingInitialized = true;
 
   function runPricingInit() {
+  // ★ 헤더 인증 초기화 (로그인/회원가입 버튼 또는 유저메뉴)
+  if (typeof initAuthHeader === 'function') initAuthHeader();
+  if (typeof initHeader === 'function') initHeader();
+  if (typeof initHamburger === 'function') initHamburger();
+
   // ★ 로그인 상태 체크
   const currentUser = (function() {
     try { return JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); } catch { return null; }
