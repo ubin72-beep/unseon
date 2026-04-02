@@ -2,6 +2,18 @@
    사주ON — 관리자 페이지 CSS
    ========================================= */
 
+/* ===== 로그인 오버레이 — 최우선 표시 ===== */
+.admin-login-overlay {
+  position: fixed !important;
+  top: 0 !important; left: 0 !important;
+  width: 100vw !important; height: 100vh !important;
+  background: linear-gradient(135deg, #0a1628 0%, #0d2137 40%, #0a2a0e 100%) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999 !important;
+}
+
 body.admin-body {
   background: #f0f4f2;
   overflow: hidden;
@@ -374,3 +386,220 @@ body.admin-body {
 @media (max-width: 480px) {
   .stat-grid { grid-template-columns: 1fr; }
 }
+
+/* =========================================
+   관리자 로그인 오버레이 — 상단에서 정의됨
+   ========================================= */
+
+@keyframes adminOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes adminOverlayOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes adminShake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-8px); }
+  40%      { transform: translateX(8px); }
+  60%      { transform: translateX(-5px); }
+  80%      { transform: translateX(5px); }
+}
+@keyframes adminBoxIn {
+  from { opacity: 0; transform: translateY(28px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.admin-login-box {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 24px;
+  padding: 44px 40px 36px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+  animation: adminBoxIn 0.5s cubic-bezier(.22,.68,0,1.2) 0.1s both;
+}
+
+.admin-login-logo {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.admin-login-logo span:first-child {
+  color: #4CAF50;
+}
+.admin-login-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(76,175,80,0.2);
+  color: #81C784;
+  border: 1px solid rgba(76,175,80,0.4);
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+}
+
+.admin-login-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  margin: 16px 0 6px;
+}
+.admin-login-title i {
+  color: #FFD700;
+  margin-right: 6px;
+}
+.admin-login-desc {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 28px;
+}
+
+.admin-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+
+.admin-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.admin-login-field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.3px;
+}
+.admin-login-field label i {
+  margin-right: 5px;
+  color: #4CAF50;
+}
+.admin-login-field input {
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #fff;
+  font-size: 0.95rem;
+  font-family: 'Noto Sans KR', sans-serif;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  width: 100%;
+}
+.admin-login-field input::placeholder {
+  color: rgba(255,255,255,0.25);
+}
+.admin-login-field input:focus {
+  border-color: #4CAF50;
+  background: rgba(76,175,80,0.08);
+}
+
+.admin-pw-wrap {
+  position: relative;
+}
+.admin-pw-wrap input {
+  padding-right: 44px;
+}
+.admin-pw-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.35);
+  cursor: pointer;
+  font-size: 0.88rem;
+  padding: 4px;
+  transition: color 0.2s;
+}
+.admin-pw-toggle:hover { color: rgba(255,255,255,0.7); }
+
+.admin-login-error {
+  min-height: 20px;
+  font-size: 0.82rem;
+  color: #EF9A9A;
+  text-align: center;
+  font-weight: 500;
+}
+
+.admin-login-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #2e7d32, #4CAF50);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(46,125,50,0.4);
+  margin-top: 4px;
+}
+.admin-login-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1b5e20, #388e3c);
+  box-shadow: 0 6px 20px rgba(46,125,50,0.5);
+  transform: translateY(-1px);
+}
+.admin-login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.admin-login-hint {
+  margin-top: 22px;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.25);
+}
+.admin-login-hint i { margin-right: 5px; color: rgba(255,215,0,0.4); }
+
+.admin-login-back {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.35);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.admin-login-back:hover { color: rgba(255,255,255,0.65); }
+.admin-login-back i { margin-right: 5px; }
+
+/* 관리자 로그아웃 버튼 */
+.admin-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(239,83,80,0.12);
+  border: 1px solid rgba(239,83,80,0.25);
+  border-radius: 8px;
+  color: rgba(239,83,80,0.8);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.admin-logout-btn:hover {
+  background: rgba(239,83,80,0.2);
+  color: #EF5350;
+}
+
