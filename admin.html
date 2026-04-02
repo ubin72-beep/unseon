@@ -9,14 +9,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
-  <link rel="stylesheet" href="css/style.css"/>
-  <link rel="stylesheet" href="css/admin.css"/>
+  <link rel="stylesheet" href="css/style.css?v=20260502"/>
+  <link rel="stylesheet" href="css/admin.css?v=20260502"/>
   <style>
-    /* ★ 인증 전 레이아웃 완전 차단 */
-    #adminLayout { display: none !important; }
-    #adminLayout.auth-ok { display: flex !important; }
-    /* 로그인 오버레이 기본 숨김 (JS가 flex로 변경) */
-    #adminLoginOverlay { display: none; }
+    /* 대시보드: 인증 전 숨김, 인증 후 표시 */
+    #adminLayout { display: none; }
+    #adminLayout.auth-ok { display: flex; }
   </style>
 </head>
 <body class="admin-body">
@@ -97,8 +95,8 @@
 <!-- 알림 토스트 -->
 <div class="toast" id="adminToast"></div>
 
-<!-- ===== 관리자 로그인 오버레이 — 기본 표시, 인증 후 JS가 숨김 ===== -->
-<div class="admin-login-overlay" id="adminLoginOverlay" style="display:flex">
+<!-- ===== 관리자 로그인 오버레이 ===== -->
+<div class="admin-login-overlay" id="adminLoginOverlay">
   <div class="admin-login-box">
     <div class="admin-login-logo">
       운세<span>ON</span>
