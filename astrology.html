@@ -30,6 +30,21 @@
     body { background: #06041a; min-height: 100vh; }
     .container { max-width: 720px; margin: 0 auto; padding: 0 16px; }
 
+    /* 헤더는 full-width 유지 */
+    .site-header .container,
+    .site-header .header-inner {
+      max-width: 1160px;
+      flex-wrap: nowrap;
+      overflow: visible;
+    }
+    .site-header .main-nav {
+      flex-wrap: nowrap;
+      white-space: nowrap;
+    }
+    .site-header .nav-link {
+      white-space: nowrap;
+    }
+
     /* 헤더 다크 오버라이드 */
     .site-header {
       background: rgba(6,4,26,0.92);
