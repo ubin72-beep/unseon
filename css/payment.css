@@ -547,18 +547,23 @@
   position: fixed;
   bottom: 30px;
   left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.8);
+  transform: translateX(-50%) translateY(20px);
+  background: #1b5e20;
   color: #fff;
-  padding: 12px 24px;
+  padding: 13px 26px;
   border-radius: 30px;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
+  font-weight: 500;
   z-index: 99999;
-  animation: kpFadeInOut 3s ease;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  white-space: nowrap;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.22);
+  max-width: 90vw;
 }
-@keyframes kpFadeInOut {
-  0%,100% { opacity:0; }
-  15%,85% { opacity:1; }
+.kp-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* ── 이용 내역 배지 ── */
