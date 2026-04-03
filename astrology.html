@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- ===== SEO ===== -->
+  <title>AI 서양 점성술 — 운세ON | 출생 차트·별자리 운세·궁합 분석</title>
+  <meta name="description" content="운세ON 서양 점성술 완전판. 12 태양궁 정밀 계산, 달 별자리·어센던트·행성 위치, 12 하우스, 별자리 궁합 12×12 매트릭스, 2026년 월별 운세, Gemini AI 출생 차트 해석. 무료로 시작하세요!"/>
+  <meta name="keywords" content="서양점성술,별자리운세,출생차트,별자리궁합,어센던트,달별자리,행성위치,12하우스,2026운세,AI점성술,호로스코프"/>
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" href="https://unseon.co.kr/astrology.html"/>
+  <meta property="og:type"        content="website"/>
+  <meta property="og:site_name"   content="운세ON"/>
+  <meta property="og:title"       content="AI 서양 점성술 — 운세ON"/>
+  <meta property="og:description" content="출생 차트·달 별자리·궁합·2026 운세 완전 분석. AI가 당신의 별자리 비밀을 풀어드립니다!"/>
+  <meta property="og:url"         content="https://unseon.co.kr/astrology.html"/>
+  <meta property="og:image"       content="https://unseon.co.kr/images/og-image.png"/>
+  <meta property="og:locale"      content="ko_KR"/>
+  <meta name="twitter:card"       content="summary_large_image"/>
+  <meta name="theme-color"        content="#3d1e8f"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/astrology.css"/>
+
+  <style>
+    body { background: #06041a; min-height: 100vh; }
+    .container { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+
+    /* 헤더 다크 오버라이드 */
+    .site-header {
+      background: rgba(6,4,26,0.92);
+      border-bottom: 1px solid rgba(108,60,225,0.2);
+      backdrop-filter: blur(12px);
+    }
+    .site-header .logo         { color: #fff; }
+    .site-header .logo .logo-on{ color: var(--astro-gold,#f5c842); }
+    .site-header .nav-link     { color: rgba(255,255,255,0.65); }
+    .site-header .nav-link:hover,
+    .site-header .nav-link.active { color: #fff; }
+    .site-header .point-display{ color: var(--astro-gold,#f5c842); }
+
+    /* 섹션 래퍼 */
+    .section-card {
+      background: linear-gradient(135deg, #0d0b2e, #1a1650);
+      border: 1px solid rgba(108,60,225,0.2);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title .title-badge {
+      font-size: 0.68rem;
+      background: linear-gradient(135deg, rgba(108,60,225,0.4), rgba(78,205,196,0.3));
+      color: rgba(255,255,255,0.8);
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-weight: 600;
+      border: 1px solid rgba(108,60,225,0.3);
+    }
+    .section-subtitle {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
+    /* 구분선 */
+    .divider { height: 1px; background: rgba(255,255,255,0.07); margin: 16px 0; }
+
+    /* footer */
+    .site-footer {
+      background: rgba(6,4,26,0.95);
+      border-top: 1px solid rgba(108,60,225,0.15);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ★ 별 파티클 배경 -->
+<div class="astro-stars" id="astroStars"></div>
+
+<!-- 로딩 오버레이 -->
+<div class="astro-loading-overlay" id="astroLoading">
+  <div class="astro-loading-planets">
+    <div class="astro-load-sun">☀️</div>
+    <div class="astro-load-orbit astro-load-orbit-1"></div>
+    <div class="astro-load-orbit astro-load-orbit-2"></div>
+    <div class="astro-load-orbit astro-load-orbit-3"></div>
+  </div>
+  <div class="astro-loading-text">별자리를 계산하는 중...</div>
+  <div class="astro-loading-sub">행성의 위치를 추적하고 있습니다</div>
+</div>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="siteHeader">
+  <div class="container header-inner">
+    <a href="index.html" class="logo">운세<span class="logo-on">ON</span></a>
+    <nav class="main-nav" id="mainNav">
+      <a href="index.html"   class="nav-link">홈</a>
+      <a href="chat.html"    class="nav-link">AI 상담</a>
+      <a href="tarot.html"   class="nav-link">타로카드</a>
+      <a href="astrology.html" class="nav-link active">점성술</a>
+      <a href="pricing.html" class="nav-link">요금 충전</a>
+    </nav>
+    <div class="header-actions" id="headerActions">
+      <div class="point-display" id="headerPoints" style="display:none">
+        <i class="fas fa-coins"></i> <span id="headerPointVal">0</span>P
+      </div>
+      <a href="auth.html" class="btn btn-login" id="btnLogin"><i class="fas fa-sign-in-alt"></i> 로그인</a>
+      <a href="auth.html?tab=register" class="btn btn-signup" id="btnSignup"><i class="fas fa-user-plus"></i> 회원가입</a>
+      <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
+        <button class="user-menu-btn" onclick="toggleUserMenu()">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <span class="user-name-label" id="userNameLabel">사용자</span>
+          <i class="fas fa-chevron-down" style="font-size:0.7rem"></i>
+        </button>
+        <div class="user-dropdown" id="userDropdown" style="display:none">
+          <a href="auth.html" class="dropdown-item"><i class="fas fa-user"></i> 마이페이지</a>
+          <a href="pricing.html" class="dropdown-item"><i class="fas fa-coins"></i> 포인트 충전</a>
+          <a href="#" class="dropdown-item" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 로그아웃</a>
+        </div>
+      </div>
+      <a href="pricing.html" class="btn btn-charge" id="btnCharge" style="display:none">
+        <i class="fas fa-bolt"></i> 충전
+      </a>
+    </div>
+    <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main style="padding-top:80px; padding-bottom:60px; position:relative; z-index:1;">
+<div class="container">
+
+  <!-- ===== 히어로 ===== -->
+  <div class="astro-hero" style="padding-top:20px;padding-bottom:28px;">
+    <!-- 행성 궤도 애니메이션 -->
+    <div class="astro-orbit-wrap">
+      <div class="astro-orbit astro-orbit-3"></div>
+      <div class="astro-orbit astro-orbit-2"></div>
+      <div class="astro-orbit astro-orbit-1"></div>
+      <div class="astro-sun-center">☀️</div>
+      <!-- 궤도 행성들 -->
+      <div style="position:absolute;top:50%;left:50%;
+        animation:astroOrbitSpin 6s linear infinite;
+        --r:40px;transform-origin:0 0">
+        <div class="astro-planet-dot" style="background:#3498db;margin-top:-7px;margin-left:-7px">🌙</div>
+      </div>
+      <div style="position:absolute;top:50%;left:50%;
+        animation:astroOrbitSpin 10s linear infinite;
+        --r:65px;transform-origin:0 0">
+        <div class="astro-planet-dot" style="background:#e74c3c;margin-top:-7px;margin-left:-7px">♂️</div>
+      </div>
+      <div style="position:absolute;top:50%;left:50%;
+        animation:astroOrbitSpin 15s linear infinite;
+        --r:90px;transform-origin:0 0">
+        <div class="astro-planet-dot" style="background:#f39c12;margin-top:-7px;margin-left:-7px">♃</div>
+      </div>
+    </div>
+
+    <div class="astro-hero-badge">✨ 서양 점성술 AI 완전판</div>
+    <h1 class="astro-hero-title">
+      별자리가 말하는<br>
+      <span>당신의 운명</span>
+    </h1>
+    <p class="astro-hero-sub">
+      태양궁·달 별자리·어센던트·9개 행성 위치<br>
+      12 하우스·궁합·월별 운세 + AI 심층 해석
+    </p>
+  </div>
+
+  <!-- ===== 오늘의 별자리 ===== -->
+  <div class="today-astro-section">
+    <div class="today-astro-header">
+      <div class="today-astro-icon">🔮</div>
+      <div>
+        <div class="today-astro-title">오늘의 별자리 운세</div>
+        <div class="today-astro-date" id="todayDateLabel"></div>
+      </div>
+    </div>
+
+    <!-- 별자리 선택 그리드 -->
+    <div class="zodiac-pick-grid" id="zodiacPickGrid"></div>
+
+    <!-- 운세 결과 카드 -->
+    <div class="today-astro-card" id="todayAstroCard"></div>
+  </div>
+
+  <!-- ===== 포인트 안내 ===== -->
+  <div class="astro-point-notice">
+    <span class="astro-point-icon">💫</span>
+    <span>
+      출생 차트 + AI 해석: <strong style="color:#FFE812">100P</strong> 소모 ·
+      오늘의 운세 &amp; 궁합 기본 분석: <strong style="color:#FFE812">무료</strong> ·
+      <a href="pricing.html" class="astro-point-link">포인트 충전하기</a>
+    </span>
+  </div>
+
+  <!-- ===== 모드 탭 ===== -->
+  <div class="astro-mode-tabs">
+    <button class="astro-mode-tab active" data-mode="birth" onclick="switchMode('birth')">
+      🌟 출생 차트
+    </button>
+    <button class="astro-mode-tab" data-mode="compat" onclick="switchMode('compat')">
+      💕 별자리 궁합
+    </button>
+    <button class="astro-mode-tab" data-mode="monthly" onclick="switchMode('monthly')">
+      📅 월별 운세
+    </button>
+    <button class="astro-mode-tab" data-mode="zodiac" onclick="switchMode('zodiac')">
+      ♈ 별자리 사전
+    </button>
+  </div>
+
+  <!-- =================== 모드: 출생 차트 =================== -->
+  <div id="modeBirth">
+
+    <!-- 출생 정보 입력 폼 -->
+    <div class="birth-form-card" id="birthFormCard">
+      <div class="birth-form-title">
+        <div class="title-icon">📋</div>
+        출생 정보 입력
+      </div>
+      <p class="section-subtitle" style="margin-top:-10px">
+        정확한 출생 시간을 입력하면 어센던트(상승궁)와 미드헤븐까지 계산됩니다.
+      </p>
+
+      <div class="birth-form-row">
+        <div class="birth-form-group" style="flex:1.5">
+          <label class="birth-form-label">생년 *</label>
+          <input type="number" class="birth-form-input" id="birthYear"
+            placeholder="예: 1990" min="1900" max="2024"/>
+        </div>
+        <div class="birth-form-group">
+          <label class="birth-form-label">월 *</label>
+          <select class="birth-form-input" id="birthMonth">
+            <option value="">월</option>
+            <option value="1">1월</option><option value="2">2월</option>
+            <option value="3">3월</option><option value="4">4월</option>
+            <option value="5">5월</option><option value="6">6월</option>
+            <option value="7">7월</option><option value="8">8월</option>
+            <option value="9">9월</option><option value="10">10월</option>
+            <option value="11">11월</option><option value="12">12월</option>
+          </select>
+        </div>
+        <div class="birth-form-group">
+          <label class="birth-form-label">일 *</label>
+          <select class="birth-form-input" id="birthDay">
+            <option value="">일</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="birth-form-row">
+        <div class="birth-form-group">
+          <label class="birth-form-label">시 (선택)</label>
+          <select class="birth-form-input" id="birthHour">
+            <option value="">시각 선택</option>
+            <option value="0">0시 (자정)</option>
+            <option value="1">1시</option><option value="2">2시</option>
+            <option value="3">3시</option><option value="4">4시</option>
+            <option value="5">5시</option><option value="6">6시</option>
+            <option value="7">7시</option><option value="8">8시</option>
+            <option value="9">9시</option><option value="10">10시</option>
+            <option value="11">11시</option><option value="12">12시 (정오)</option>
+            <option value="13">13시</option><option value="14">14시</option>
+            <option value="15">15시</option><option value="16">16시</option>
+            <option value="17">17시</option><option value="18">18시</option>
+            <option value="19">19시</option><option value="20">20시</option>
+            <option value="21">21시</option><option value="22">22시</option>
+            <option value="23">23시</option>
+          </select>
+        </div>
+        <div class="birth-form-group">
+          <label class="birth-form-label">분 (선택)</label>
+          <input type="number" class="birth-form-input" id="birthMinute"
+            placeholder="0" min="0" max="59"/>
+        </div>
+        <div class="birth-form-group">
+          <label class="birth-form-label">출생 도시</label>
+          <select class="birth-form-input" id="birthCity">
+            <option value="seoul">서울</option>
+            <option value="busan">부산</option>
+            <option value="daegu">대구</option>
+            <option value="incheon">인천</option>
+            <option value="gwangju">광주</option>
+            <option value="daejeon">대전</option>
+            <option value="ulsan">울산</option>
+            <option value="suwon">수원</option>
+            <option value="jeju">제주</option>
+            <option value="overseas">해외</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 해외 출생 옵션 -->
+      <div id="overseasRow" class="birth-form-row" style="display:none">
+        <div class="birth-form-group">
+          <label class="birth-form-label">위도 (예: 35.69)</label>
+          <input type="number" class="birth-form-input" id="customLat" placeholder="37.5" step="0.01"/>
+        </div>
+        <div class="birth-form-group">
+          <label class="birth-form-label">경도 (예: 139.69)</label>
+          <input type="number" class="birth-form-input" id="customLon" placeholder="127.0" step="0.01"/>
+        </div>
+      </div>
+
+      <!-- 퀵태그 -->
+      <div class="astro-quick-tags" id="quickTags">
+        <button class="astro-quick-tag" onclick="quickFill(1990,3,15)">1990.3.15생 예시</button>
+        <button class="astro-quick-tag" onclick="quickFill(1995,7,22)">1995.7.22생 예시</button>
+        <button class="astro-quick-tag" onclick="quickFill(2000,12,3)">2000.12.3생 예시</button>
+        <button class="astro-quick-tag" onclick="quickFill(1985,5,8,14,30)">시간 포함 예시</button>
+      </div>
+
+      <button class="astro-submit-btn" id="calcBtn" onclick="startAstrologyCalc()">
+        <i class="fas fa-star"></i> 출생 차트 계산하기
+      </button>
+    </div>
+
+    <!-- 결과 섹션 -->
+    <div class="astro-result-section" id="astroResultSection">
+
+      <!-- 결과 배너 -->
+      <div class="astro-result-banner" id="resultBanner"></div>
+
+      <!-- 결과 탭 -->
+      <div class="astro-tabs">
+        <button class="astro-tab active" onclick="switchTab('overview')">🌟 종합</button>
+        <button class="astro-tab" onclick="switchTab('planets')">🪐 행성</button>
+        <button class="astro-tab" onclick="switchTab('houses')">🏠 하우스</button>
+        <button class="astro-tab" onclick="switchTab('aspects')">⚡ 어스펙트</button>
+        <button class="astro-tab" onclick="switchTab('year2026')">📅 2026 운세</button>
+        <button class="astro-tab" onclick="switchTab('ai')">🤖 AI 해석</button>
+      </div>
+
+      <!-- 종합 탭 -->
+      <div class="astro-tab-panel active" id="panel-overview">
+        <div id="overviewContent"></div>
+      </div>
+
+      <!-- 행성 탭 -->
+      <div class="astro-tab-panel" id="panel-planets">
+        <div class="planets-section">
+          <div class="planets-section-title">🪐 출생 시 행성 위치</div>
+          <div id="planetsContent"></div>
+        </div>
+        <div class="element-chart" id="elementChart"></div>
+        <div class="aspects-section" id="ascPanel">
+          <div class="planets-section-title" style="color:var(--astro-gold)">⬆️ 어센던트 &amp; 미드헤븐</div>
+          <div id="ascMcContent"></div>
+        </div>
+      </div>
+
+      <!-- 하우스 탭 -->
+      <div class="astro-tab-panel" id="panel-houses">
+        <div class="section-card" style="padding:20px">
+          <div class="section-title" style="font-size:0.9rem">
+            🏠 12 하우스 의미
+            <span class="title-badge">당신의 영역별 에너지</span>
+          </div>
+          <div class="houses-grid" id="housesContent"></div>
+        </div>
+      </div>
+
+      <!-- 어스펙트 탭 -->
+      <div class="astro-tab-panel" id="panel-aspects">
+        <div class="aspects-section">
+          <div class="planets-section-title" style="color:var(--astro-pink)">⚡ 주요 행성 각도 관계</div>
+          <div id="aspectsContent"></div>
+        </div>
+      </div>
+
+      <!-- 2026 운세 탭 -->
+      <div class="astro-tab-panel" id="panel-year2026">
+        <div id="year2026Content"></div>
+      </div>
+
+      <!-- AI 해석 탭 -->
+      <div class="astro-tab-panel" id="panel-ai">
+        <div class="ai-astro-section">
+          <div class="ai-astro-header">
+            <div class="ai-astro-title">🤖 AI 심층 점성술 해석</div>
+            <button class="ai-astro-btn" id="aiAstroBtn" onclick="requestAIAstrology()">
+              <i class="fas fa-magic"></i> AI 해석 받기
+            </button>
+          </div>
+          <p style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-bottom:12px;line-height:1.5">
+            20년 경력 점성술 마스터 수준의 Gemini AI가 출생 차트를 심층 분석합니다.<br>
+            태양궁·달 별자리·어센던트·행성 어스펙트·2026년 트랜짓을 종합하여 해석합니다.
+          </p>
+          <div class="ai-astro-loading" id="aiAstroLoading">
+            <div class="ai-astro-spin"></div>
+            <div class="ai-astro-loading-text">✨ AI가 별의 언어를 해석하는 중...</div>
+          </div>
+          <div class="ai-astro-result" id="aiAstroResult"></div>
+        </div>
+      </div>
+
+      <!-- 재시작 -->
+      <button class="astro-reset-btn" onclick="resetAstrology()">
+        <i class="fas fa-redo"></i> 다시 계산하기
+      </button>
+    </div><!-- /result section -->
+
+  </div><!-- /modeBirth -->
+
+  <!-- =================== 모드: 별자리 궁합 =================== -->
+  <div id="modeCompat" style="display:none">
+    <div class="section-card">
+      <div class="section-title">
+        💕 별자리 궁합 분석
+        <span class="title-badge">12×12 매트릭스</span>
+      </div>
+      <p class="section-subtitle">두 별자리를 선택하면 원소 궁합, 양식 분석, 강점과 도전 과제를 알려드립니다.</p>
+
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:20px">
+        <div style="flex:1;min-width:120px">
+          <label class="birth-form-label" style="display:block;margin-bottom:6px">나의 별자리</label>
+          <select class="birth-form-input" id="compatSign1">
+            <option value="">선택하세요</option>
+          </select>
+        </div>
+        <div style="font-size:1.8rem;color:var(--astro-pink,#ff6b9d);font-weight:900;padding-top:20px">💕</div>
+        <div style="flex:1;min-width:120px">
+          <label class="birth-form-label" style="display:block;margin-bottom:6px">상대 별자리</label>
+          <select class="birth-form-input" id="compatSign2">
+            <option value="">선택하세요</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="astro-submit-btn" onclick="calcCompat()">
+        💕 궁합 분석하기
+      </button>
+    </div>
+
+    <!-- 궁합 결과 -->
+    <div class="compat-result" id="compatResult"></div>
+  </div>
+
+  <!-- =================== 모드: 월별 운세 =================== -->
+  <div id="modeMonthly" style="display:none">
+    <div class="section-card">
+      <div class="section-title">
+        📅 2026년 월별 운세
+        <span class="title-badge">별자리별 12개월</span>
+      </div>
+      <p class="section-subtitle">별자리를 선택하면 2026년 1월~12월 운세를 확인할 수 있습니다.</p>
+      <div class="birth-form-row" style="margin-bottom:16px">
+        <div class="birth-form-group">
+          <label class="birth-form-label">별자리 선택</label>
+          <select class="birth-form-input" id="monthlySignSelect">
+            <option value="">별자리를 선택하세요</option>
+          </select>
+        </div>
+      </div>
+      <button class="astro-submit-btn" onclick="showMonthlyForecast()">
+        📅 월별 운세 보기
+      </button>
+    </div>
+    <div id="monthlyContent"></div>
+  </div>
+
+  <!-- =================== 모드: 별자리 사전 =================== -->
+  <div id="modeZodiac" style="display:none">
+    <div class="section-card" style="padding:20px">
+      <div class="section-title">
+        ♈ 황도 12궁 사전
+        <span class="title-badge">완전 정보</span>
+      </div>
+      <p class="section-subtitle">각 별자리를 클릭하면 상세 정보를 확인할 수 있습니다.</p>
+      <div class="zodiac-grid-12" id="zodiacGallery"></div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+</main>
+
+<!-- ===== 별자리 상세 모달 ===== -->
+<div class="astro-modal-overlay" id="zodiacModal" onclick="closeZodiacModal(event)">
+  <div class="astro-modal" id="zodiacModalInner">
+    <div class="astro-modal-handle"></div>
+    <div class="astro-modal-header">
+      <div id="modalTitle" style="font-size:1.1rem;font-weight:800;color:#fff"></div>
+      <button class="astro-modal-close" onclick="closeZodiacModalDirect()">✕</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer">
+  <div class="container">
+    <div style="text-align:center;padding:28px 0;font-size:0.72rem;color:rgba(255,255,255,0.3);line-height:1.8">
+      <p>운세ON | 큐브박스 | 대표: 김미화 | 사업자등록번호: 537-08-03349</p>
+      <p>이메일: sajuon@gmail.com | 전화: 0502-1909-7788</p>
+      <p style="margin-top:6px">
+        <a href="terms.html"   style="color:rgba(255,255,255,0.4);margin:0 8px">이용약관</a>
+        <a href="privacy.html" style="color:rgba(255,255,255,0.4);margin:0 8px">개인정보처리방침</a>
+        <a href="refund.html"  style="color:rgba(255,255,255,0.4);margin:0 8px">환불정책</a>
+      </p>
+      <p style="margin-top:8px;color:rgba(255,255,255,0.2)">본 서비스는 오락 목적으로 제공되며 실제 결정의 근거로 사용하지 마세요.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="js/auth.js?v=20260502"></script>
+<script src="js/main.js?v=20260502"></script>
+<script src="js/astrology.js?v=20260502"></script>
+<script src="js/gemini.js?v=20260502"></script>
+
+<script>
+/* ============================================================
+   운세ON — astrology.html  메인 로직  v1.0
+   ============================================================ */
+
+/* ---------- 전역 상태 ---------- */
+let currentChart  = null;   // 계산된 출생 차트
+let currentMode   = 'birth';
+let currentAstroTab = 'overview';
+
+const CITY_COORDS = {
+  seoul:    [37.5665, 126.9780],
+  busan:    [35.1796, 129.0756],
+  daegu:    [35.8714, 128.6014],
+  incheon:  [37.4563, 126.7052],
+  gwangju:  [35.1595, 126.8526],
+  daejeon:  [36.3504, 127.3845],
+  ulsan:    [35.5384, 129.3114],
+  suwon:    [37.2636, 127.0286],
+  jeju:     [33.4996, 126.5312],
+};
+
+/* ---------- 초기화 ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  // 헤더 초기화 (main.js)
+  if (typeof initHeader === 'function') initHeader();
+  if (typeof updateUserHeader === 'function') updateUserHeader();
+
+  // 별 파티클 생성
+  createStars();
+
+  // 오늘 날짜
+  document.getElementById('todayDateLabel').textContent =
+    new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+
+  // 별자리 선택 그리드 렌더
+  renderZodiacPickGrid();
+
+  // 셀렉트 박스 채우기
+  fillZodiacSelects();
+
+  // 일 드롭다운 업데이트
+  document.getElementById('birthMonth').addEventListener('change', updateDayOptions);
+  document.getElementById('birthYear').addEventListener('change', updateDayOptions);
+
+  // 해외 좌표 토글
+  document.getElementById('birthCity').addEventListener('change', e => {
+    document.getElementById('overseasRow').style.display = e.target.value === 'overseas' ? 'flex' : 'none';
+  });
+
+  // 포인트 표시
+  updatePointDisplay();
+  renderZodiacGallery();
+});
+
+/* ---------- 별 파티클 ---------- */
+function createStars() {
+  const wrap = document.getElementById('astroStars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'astro-star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `
+      width:${size}px;height:${size}px;
+      top:${Math.random()*100}%;left:${Math.random()*100}%;
+      --d:${(Math.random()*4+2).toFixed(1)}s;
+      --delay:${(Math.random()*5).toFixed(1)}s;
+      --op:${(Math.random()*0.7+0.3).toFixed(2)};
+    `;
+    wrap.appendChild(s);
+  }
+}
+
+/* ---------- 별자리 선택 그리드 ---------- */
+function renderZodiacPickGrid() {
+  const signs = window.ZODIAC_SIGNS || [];
+  const grid  = document.getElementById('zodiacPickGrid');
+  grid.innerHTML = signs.map((s,i) => `
+    <div class="zodiac-pick-btn" data-id="${i}" onclick="showTodayHoroscope('${s.name}',this)">
+      <span class="zodiac-pick-symbol">${s.symbol}</span>
+      <span class="zodiac-pick-name">${s.name}</span>
+    </div>
+  `).join('');
+}
+
+/* ---------- 오늘의 운세 표시 ---------- */
+function showTodayHoroscope(signName, btn) {
+  // active 토글
+  document.querySelectorAll('.zodiac-pick-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const horoscope = window.getTodayHoroscope ? window.getTodayHoroscope(signName) : null;
+  if (!horoscope) return;
+
+  const s     = horoscope.sign;
+  const theme = window.ZODIAC_THEMES ? window.ZODIAC_THEMES[s.id] : { bg:'#667eea', accent:'#764ba2' };
+
+  const card = document.getElementById('todayAstroCard');
+  card.innerHTML = `
+    <div class="today-sign-header">
+      <div class="today-sign-big"
+           style="background:linear-gradient(135deg,${theme.bg},${theme.accent})">
+        ${s.symbol}
+      </div>
+      <div class="today-sign-name-wrap">
+        <div class="sign-kr">${s.emoji} ${s.name}</div>
+        <div class="sign-en">${s.en}</div>
+        <div class="sign-dates">${s.dates.start.m}/${s.dates.start.d} ~ ${s.dates.end.m}/${s.dates.end.d}</div>
+      </div>
+    </div>
+
+    <div class="today-stars-row">
+      <div class="today-star-item">
+        <div class="today-star-label">종합</div>
+        <div class="today-star-val">${horoscope.overall}</div>
+      </div>
+      <div class="today-star-item">
+        <div class="today-star-label">연애</div>
+        <div class="today-star-val">${horoscope.love}</div>
+      </div>
+      <div class="today-star-item">
+        <div class="today-star-label">직업</div>
+        <div class="today-star-val">${horoscope.career}</div>
+      </div>
+      <div class="today-star-item">
+        <div class="today-star-label">재물</div>
+        <div class="today-star-val">${horoscope.money}</div>
+      </div>
+      <div class="today-star-item">
+        <div class="today-star-label">건강</div>
+        <div class="today-star-val">${horoscope.health}</div>
+      </div>
+    </div>
+
+    <div class="today-msg-list">
+      ${horoscope.messages.map(m => `
+        <div class="today-msg-item">
+          <span class="today-msg-emoji">${m.emoji}</span>
+          <div>
+            <div class="today-msg-area">${m.area}</div>
+            <div class="today-msg-text">${m.msg}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="today-lucky-row">
+      <span class="today-lucky-chip">🎨 ${horoscope.luckyColor}</span>
+      <span class="today-lucky-chip">🔢 ${horoscope.luckyNumber}</span>
+      <span class="today-lucky-chip">📅 ${horoscope.luckyDay}</span>
+      <span class="today-lucky-chip">💎 ${horoscope.luckyStone}</span>
+    </div>
+  `;
+  card.classList.add('show');
+}
+
+/* ---------- 일 드롭다운 ---------- */
+function updateDayOptions() {
+  const y = parseInt(document.getElementById('birthYear').value) || 2000;
+  const m = parseInt(document.getElementById('birthMonth').value) || 1;
+  const days = new Date(y, m, 0).getDate();
+  const sel  = document.getElementById('birthDay');
+  const cur  = parseInt(sel.value);
+  sel.innerHTML = '<option value="">일</option>' +
+    Array.from({length: days}, (_,i) => `<option value="${i+1}"${cur===i+1?' selected':''}>${i+1}일</option>`).join('');
+}
+
+/* ---------- 퀵 예시 ---------- */
+function quickFill(y, m, d, h, min) {
+  document.getElementById('birthYear').value  = y;
+  document.getElementById('birthMonth').value = m;
+  updateDayOptions();
+  document.getElementById('birthDay').value   = d;
+  if (h !== undefined) document.getElementById('birthHour').value   = h;
+  if (min !== undefined) document.getElementById('birthMinute').value = min;
+}
+
+/* ---------- 모드 전환 ---------- */
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.astro-mode-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.mode === mode));
+  document.getElementById('modeBirth').style.display   = mode === 'birth'   ? 'block' : 'none';
+  document.getElementById('modeCompat').style.display  = mode === 'compat'  ? 'block' : 'none';
+  document.getElementById('modeMonthly').style.display = mode === 'monthly' ? 'block' : 'none';
+  document.getElementById('modeZodiac').style.display  = mode === 'zodiac'  ? 'block' : 'none';
+}
+
+/* ---------- 탭 전환 ---------- */
+function switchTab(tab) {
+  currentAstroTab = tab;
+  document.querySelectorAll('.astro-tab').forEach(t =>
+    t.classList.toggle('active', t.textContent.toLowerCase().includes(tab) ||
+      (tab === 'overview' && t.textContent.includes('종합')) ||
+      (tab === 'planets'  && t.textContent.includes('행성')) ||
+      (tab === 'houses'   && t.textContent.includes('하우스')) ||
+      (tab === 'aspects'  && t.textContent.includes('어스펙트')) ||
+      (tab === 'year2026' && t.textContent.includes('2026')) ||
+      (tab === 'ai'       && t.textContent.includes('AI'))
+    )
+  );
+  document.querySelectorAll('.astro-tab-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('panel-' + tab);
+  if (panel) panel.classList.add('active');
+}
+
+/* ---------- 출생 차트 계산 ---------- */
+function startAstrologyCalc() {
+  const year   = parseInt(document.getElementById('birthYear').value);
+  const month  = parseInt(document.getElementById('birthMonth').value);
+  const day    = parseInt(document.getElementById('birthDay').value);
+  const hourV  = document.getElementById('birthHour').value;
+  const minute = parseInt(document.getElementById('birthMinute').value) || 0;
+  const city   = document.getElementById('birthCity').value;
+
+  if (!year || year < 1900 || year > 2024) {
+    alert('올바른 생년을 입력해 주세요 (1900~2024)'); return;
+  }
+  if (!month || !day) {
+    alert('생년월일을 모두 입력해 주세요'); return;
+  }
+
+  // 포인트 확인
+  const points = getPoints();
+  if (points < 100) {
+    if (!confirm('포인트가 부족합니다. 포인트 충전 페이지로 이동하시겠습니까?')) return;
+    location.href = 'pricing.html'; return;
+  }
+
+  const hour = hourV !== '' ? parseInt(hourV) : null;
+  let lat = 37.5665, lon = 127.0;
+  if (city === 'overseas') {
+    lat = parseFloat(document.getElementById('customLat').value) || 37.5;
+    lon = parseFloat(document.getElementById('customLon').value) || 127.0;
+  } else if (CITY_COORDS[city]) {
+    [lat, lon] = CITY_COORDS[city];
+  }
+
+  // 로딩
+  document.getElementById('astroLoading').classList.add('show');
+  document.getElementById('calcBtn').disabled = true;
+
+  setTimeout(() => {
+    try {
+      const chart = window.calcAstrologyChart({ year, month, day, hour, minute, lat, lonObs: lon });
+      currentChart = chart;
+
+      // 포인트 차감
+      deductPoints(100, `${year}년 ${month}월 ${day}일 출생 차트`);
+      updatePointDisplay();
+
+      renderAstrologyResult(chart);
+    } catch(e) {
+      alert('계산 중 오류가 발생했습니다: ' + e.message);
+    } finally {
+      document.getElementById('astroLoading').classList.remove('show');
+      document.getElementById('calcBtn').disabled = false;
+    }
+  }, 1200);
+}
+
+/* ---------- 결과 렌더링 ---------- */
+function renderAstrologyResult(chart) {
+  const sun   = chart.sunSign;
+  const moon  = chart.moonSign;
+  const asc   = chart.ascendant;
+  const mc    = chart.midheaven;
+  const theme = window.ZODIAC_THEMES ? window.ZODIAC_THEMES[sun.id] : { bg:'#667eea', accent:'#764ba2', glow:'rgba(102,126,234,0.4)' };
+
+  /* ── 배너 ── */
+  document.getElementById('resultBanner').innerHTML = `
+    <div class="result-banner-sign">${sun.symbol}</div>
+    <div class="result-banner-name">${sun.emoji} ${sun.name} (${sun.en})</div>
+    <div class="result-banner-info">
+      ${chart.year}년 ${chart.month}월 ${chart.day}일${chart.hour !== null ? ` ${chart.hour}시` : ''}
+      · ${sun.element} · ${sun.quality} · ${sun.ruler} 지배
+    </div>
+    <div class="result-banner-stats">
+      <span class="result-stat-chip">🌙 달: ${moon.name}</span>
+      ${asc ? `<span class="result-stat-chip">⬆️ 상승궁: ${asc.signName}</span>` : ''}
+      ${mc  ? `<span class="result-stat-chip">🏆 MC: ${mc.signName}</span>` : ''}
+    </div>
+  `;
+
+  /* ── 종합 탭 ── */
+  document.getElementById('overviewContent').innerHTML = renderOverview(chart, theme);
+
+  /* ── 행성 탭 ── */
+  document.getElementById('planetsContent').innerHTML = renderPlanets(chart);
+  document.getElementById('elementChart').innerHTML   = renderElementChart(chart);
+  document.getElementById('ascMcContent').innerHTML   = renderAscMc(chart);
+
+  /* ── 하우스 탭 ── */
+  document.getElementById('housesContent').innerHTML = renderHouses();
+
+  /* ── 어스펙트 탭 ── */
+  document.getElementById('aspectsContent').innerHTML = renderAspects(chart);
+
+  /* ── 2026 운세 탭 ── */
+  document.getElementById('year2026Content').innerHTML = renderYear2026(chart);
+
+  /* ── AI 탭 초기화 ── */
+  document.getElementById('aiAstroResult').innerHTML  = '';
+  document.getElementById('aiAstroResult').classList.remove('show');
+
+  // 결과 섹션 표시
+  document.getElementById('birthFormCard').style.display = 'none';
+  document.getElementById('astroResultSection').classList.add('show');
+  document.getElementById('astroResultSection').scrollIntoView({ behavior:'smooth' });
+}
+
+/* ---- 종합 탭 콘텐츠 ---- */
+function renderOverview(chart, theme) {
+  const sun  = chart.sunSign;
+  const moon = chart.moonSign;
+  const asc  = chart.ascendant;
+  return `
+    <!-- 3대 요소 -->
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+      ${renderBigSignCard(sun, '☀️ 태양궁 — 의식적 자아, 삶의 목적', theme)}
+      ${renderBigSignCard(moon, '🌙 달 별자리 — 감정, 본능, 무의식', window.ZODIAC_THEMES?.[moon.id])}
+      ${asc ? renderBigSignCard(asc.sign, '⬆️ 어센던트 — 외면적 인상, 사회적 페르소나', window.ZODIAC_THEMES?.[asc.sign.id]) : ''}
+    </div>
+    <!-- 성격 요약 -->
+    <div class="section-card" style="padding:16px">
+      <div class="section-title" style="font-size:0.85rem;margin-bottom:10px">🌟 종합 성격 분석</div>
+      <div style="font-size:0.82rem;color:rgba(255,255,255,0.8);line-height:1.7">
+        ${sun.traits ? `<p><strong style="color:#fff">태양궁 ${sun.name}:</strong> ${sun.traits}</p>` : ''}
+        <p><strong style="color:#fff">강점:</strong> ${sun.strength || sun.traits}</p>
+        <p><strong style="color:#fff">약점:</strong> ${sun.weakness || ''}</p>
+        <p style="margin-top:8px;font-style:italic;color:rgba(255,255,255,0.55)">${sun.spirit || ''}</p>
+      </div>
+    </div>
+    <!-- 영역별 요약 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0">
+      ${[
+        ['❤️ 연애',    sun.love],
+        ['💼 직업',    sun.career],
+        ['💰 재물',    sun.money],
+        ['🌿 건강',    sun.health],
+      ].map(([label, text]) => `
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:12px">
+          <div style="font-size:0.72rem;font-weight:700;color:var(--astro-teal);margin-bottom:6px">${label}</div>
+          <div style="font-size:0.75rem;color:rgba(255,255,255,0.75);line-height:1.5">${text || '—'}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderBigSignCard(sign, label, theme) {
+  if (!sign) return '';
+  const t = theme || { bg:'#667eea', accent:'#764ba2', glow:'rgba(102,126,234,0.3)' };
+  return `
+    <div style="background:linear-gradient(135deg,${t.bg}33,${t.accent}22);
+      border:1px solid ${t.accent}44;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px">
+      <div style="width:52px;height:52px;background:linear-gradient(135deg,${t.bg},${t.accent});
+        border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0">
+        ${sign.symbol}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:0.65rem;color:rgba(255,255,255,0.45);margin-bottom:2px">${label}</div>
+        <div style="font-size:1rem;font-weight:800;color:#fff">${sign.emoji || ''} ${sign.name}</div>
+        <div style="font-size:0.72rem;color:rgba(255,255,255,0.55)">
+          ${sign.element} · ${sign.quality} · ${sign.ruler} 지배
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ---- 행성 탭 콘텐츠 ---- */
+function renderPlanets(chart) {
+  const planetMeanings = {
+    '태양':'자아·생명력·창조',
+    '달':'감정·본능·기억',
+    '수성':'사고·소통·분석',
+    '금성':'사랑·아름다움·매력',
+    '화성':'행동·욕망·에너지',
+    '목성':'행운·확장·지혜',
+    '토성':'규율·제한·성숙',
+    '천왕성':'혁명·자유·혁신',
+    '해왕성':'영성·꿈·직관',
+  };
+  return chart.planets.map(p => `
+    <div class="planet-item">
+      <span class="planet-emoji">${p.emoji}</span>
+      <span class="planet-name">${p.planet}</span>
+      <span class="planet-sign">
+        ${p.signEmoji || ''} ${p.sign}
+        <span class="planet-meaning">${planetMeanings[p.planet] || ''}</span>
+      </span>
+      <span class="planet-deg">${(+p.longitude).toFixed(1)}°</span>
+    </div>
+  `).join('');
+}
+
+/* ---- 원소 차트 ---- */
+function renderElementChart(chart) {
+  const ec = chart.elementCount;
+  const total = Math.max(Object.values(ec).reduce((s,v) => s+v, 0), 1);
+  const elemMap = {
+    '불':   { class:'fire',  emoji:'🔥', color:'#e74c3c' },
+    '흙':   { class:'earth', emoji:'🌍', color:'#27ae60' },
+    '공기': { class:'air',   emoji:'💨', color:'#f39c12' },
+    '물':   { class:'water', emoji:'🌊', color:'#2980b9' },
+  };
+  return `
+    <div class="element-chart-title">🔥 원소 분포 (지배 원소: ${chart.dominantElement})</div>
+    <div class="element-bars">
+      ${Object.entries(ec).map(([el, cnt]) => {
+        const info = elemMap[el] || {};
+        const pct = Math.round(cnt / total * 100);
+        return `
+          <div class="element-bar-row">
+            <span class="element-bar-label">${info.emoji || ''} ${el}</span>
+            <div class="element-bar-track">
+              <div class="element-bar-fill ${info.class}" style="width:${pct}%"></div>
+            </div>
+            <span class="element-bar-count">${cnt}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <div style="margin-top:12px;font-size:0.72rem;color:rgba(255,255,255,0.45)">
+      지배 양식: <strong style="color:rgba(255,255,255,0.75)">${chart.dominantQuality}</strong>
+    </div>
+  `;
+}
+
+/* ---- 어센던트/미드헤븐 ---- */
+function renderAscMc(chart) {
+  if (!chart.ascendant) {
+    return `<div style="font-size:0.78rem;color:rgba(255,255,255,0.4);padding:8px">
+      출생 시간을 입력하면 어센던트(상승궁)와 미드헤븐을 계산할 수 있습니다.
+    </div>`;
+  }
+  const asc = chart.ascendant;
+  const mc  = chart.midheaven;
+  return `
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:10px;align-items:center;padding:12px;
+        background:rgba(255,255,255,0.04);border-radius:10px">
+        <span style="font-size:1.6rem">⬆️</span>
+        <div>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.5)">어센던트 (상승궁) — 외면적 성격, 첫인상</div>
+          <div style="font-size:0.95rem;font-weight:700;color:#fff">${asc.signName} (${asc.longitude.toFixed(1)}°)</div>
+        </div>
+      </div>
+      ${mc ? `
+      <div style="display:flex;gap:10px;align-items:center;padding:12px;
+        background:rgba(255,255,255,0.04);border-radius:10px">
+        <span style="font-size:1.6rem">🏆</span>
+        <div>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.5)">미드헤븐 (MC) — 커리어, 사회적 지위</div>
+          <div style="font-size:0.95rem;font-weight:700;color:#fff">${mc.signName} (${mc.longitude.toFixed(1)}°)</div>
+        </div>
+      </div>` : ''}
+    </div>
+  `;
+}
+
+/* ---- 하우스 탭 ---- */
+function renderHouses() {
+  const houses = window.HOUSES || [];
+  return houses.map(h => `
+    <div class="house-item">
+      <div class="house-num-row">
+        <div class="house-num">${h.num}</div>
+        <span class="house-emoji">${h.emoji}</span>
+        <span class="house-name">${h.name}</span>
+      </div>
+      <div class="house-title">${h.title}</div>
+      <div class="house-desc">${h.desc}</div>
+    </div>
+  `).join('');
+}
+
+/* ---- 어스펙트 탭 ---- */
+function renderAspects(chart) {
+  if (!chart.aspects || chart.aspects.length === 0) {
+    return '<div style="color:rgba(255,255,255,0.4);font-size:0.8rem;padding:8px">어스펙트 데이터가 없습니다. 행성 계산 범위를 확인하세요.</div>';
+  }
+  return chart.aspects.slice(0, 10).map(asp => `
+    <div class="aspect-item ${asp.energy === '조화' ? 'aspect-harmony' : asp.energy === '긴장' ? 'aspect-tension' : ''}">
+      <span class="aspect-emoji">${asp.aspectEmoji}</span>
+      <div class="aspect-planets">
+        ${asp.emoji1}${asp.planet1} ${asp.aspectName} ${asp.planet2}${asp.emoji2}
+        <div style="font-size:0.65rem;color:rgba(255,255,255,0.35);margin-top:1px">${asp.desc}</div>
+      </div>
+      <div>
+        <span class="aspect-energy">${asp.energy}</span>
+        <div style="font-size:0.62rem;color:rgba(255,255,255,0.3);text-align:right;margin-top:2px">${asp.angle}°</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ---- 2026 연간 운세 탭 ---- */
+function renderYear2026(chart) {
+  const f = chart.yearForecast2026 || {};
+  const sun = chart.sunSign;
+  const monthly = chart.monthlyForecast || [];
+  const curMonth = new Date().getMonth(); // 0-based
+
+  return `
+    <!-- 연간 종합 -->
+    <div class="year-overall-box">
+      <div class="year-overall-label">☀️ 2026년 ${sun.name} 종합 운세</div>
+      <div class="year-overall-text">${f.overall || '데이터를 불러오는 중...'}</div>
+      <div class="year-lucky-box">
+        <span class="year-lucky-item">✨ 행운 시기: ${f.lucky || '—'}</span>
+        <span class="year-lucky-item">🌟 최고의 달: ${f.bestMonth || '—'}</span>
+        <span class="year-lucky-item">⚠️ 주의할 달: ${f.worstMonth || '—'}</span>
+      </div>
+    </div>
+
+    <!-- 영역별 그리드 -->
+    <div class="year-forecast-grid">
+      ${[
+        ['💕', '연애', f.love],
+        ['💼', '직업', f.career],
+        ['💰', '재물', f.money],
+        ['🌿', '건강', f.health],
+      ].map(([icon,label,text]) => `
+        <div class="year-forecast-item">
+          <div class="year-forecast-icon">${icon}</div>
+          <div class="year-forecast-label">${label}</div>
+          <div class="year-forecast-text">${text || '—'}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- 행성 트랜짓 -->
+    <div class="transit-box">
+      <div class="transit-planet-badge" style="background:rgba(243,156,18,0.2)">♃</div>
+      <div>
+        <div class="transit-info-name">목성 (행운·확장)</div>
+        <div class="transit-info-pos">${chart.currentJupiter}</div>
+        <div class="transit-info-desc">확장과 기회의 행성. 목성이 지나가는 영역에서 성장과 행운이 찾아옵니다.</div>
+      </div>
+    </div>
+    <div class="transit-box">
+      <div class="transit-planet-badge" style="background:rgba(189,195,199,0.2)">♄</div>
+      <div>
+        <div class="transit-info-name">토성 (시련·성숙)</div>
+        <div class="transit-info-pos">${chart.currentSaturn}</div>
+        <div class="transit-info-desc">토성의 시련은 성숙을 위한 것입니다. 인내하면 더 강해집니다.</div>
+      </div>
+    </div>
+    <div class="transit-box">
+      <div class="transit-planet-badge" style="background:rgba(52,152,219,0.2)">⛢</div>
+      <div>
+        <div class="transit-info-name">천왕성 (혁신·변화)</div>
+        <div class="transit-info-pos">${chart.currentUranus}</div>
+        <div class="transit-info-desc">예상치 못한 변화와 혁신의 에너지가 흐릅니다.</div>
+      </div>
+    </div>
+
+    <!-- 월별 운세 -->
+    ${monthly.length > 0 ? `
+    <div style="margin-top:16px">
+      <div class="section-title" style="font-size:0.85rem;margin-bottom:12px">📅 월별 운세</div>
+      <div class="monthly-forecast">
+        ${monthly.map((text, i) => `
+          <div class="month-item ${i === curMonth ? 'current' : ''}">
+            <div class="month-num">${i+1}월</div>
+            <div class="month-text">${text}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+  `;
+}
+
+/* ---------- 별자리 셀렉트 채우기 ---------- */
+function fillZodiacSelects() {
+  const signs = window.ZODIAC_SIGNS || [];
+  const opts  = signs.map(s => `<option value="${s.name}">${s.symbol} ${s.name}</option>`).join('');
+  ['compatSign1','compatSign2','monthlySignSelect'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = (id==='monthlySignSelect'?'<option value="">별자리를 선택하세요</option>':'<option value="">선택하세요</option>') + opts;
+  });
+}
+
+/* ---------- 궁합 계산 ---------- */
+function calcCompat() {
+  const s1 = document.getElementById('compatSign1').value;
+  const s2 = document.getElementById('compatSign2').value;
+  if (!s1 || !s2) { alert('두 별자리를 모두 선택해 주세요'); return; }
+
+  const result = window.getCompatibility ? window.getCompatibility(s1, s2) : null;
+  if (!result) { alert('궁합 계산에 실패했습니다'); return; }
+
+  const score = result.score;
+  const scoreColor = score >= 88 ? '#e74c3c' : score >= 75 ? '#e67e22' : score >= 60 ? '#f39c12' : score >= 45 ? '#95a5a6' : '#7f8c8d';
+
+  document.getElementById('compatResult').innerHTML = `
+    <div class="compat-signs-row">
+      <div class="compat-sign-box">
+        <div class="compat-sign-symbol">${result.sign1.symbol}</div>
+        <div class="compat-sign-name">${result.sign1.name}</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,0.45)">${result.sign1.element} · ${result.sign1.quality}</div>
+      </div>
+      <div style="text-align:center">
+        <div class="compat-score-circle"
+             style="background:conic-gradient(${scoreColor} 0% ${score}%, rgba(255,255,255,0.07) ${score}% 100%);border-radius:50%">
+          <div style="width:60px;height:60px;background:var(--astro-navy,#0d0b2e);border-radius:50%;
+            display:flex;flex-direction:column;align-items:center;justify-content:center;position:absolute">
+            <div class="compat-score-num" style="color:${scoreColor}">${score}</div>
+            <div class="compat-score-label">/ 100</div>
+          </div>
+        </div>
+        <div class="compat-vs">💕</div>
+      </div>
+      <div class="compat-sign-box">
+        <div class="compat-sign-symbol">${result.sign2.symbol}</div>
+        <div class="compat-sign-name">${result.sign2.name}</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,0.45)">${result.sign2.element} · ${result.sign2.quality}</div>
+      </div>
+    </div>
+
+    <div class="compat-level-badge">${result.emoji} ${result.level}</div>
+
+    <!-- 원소 궁합 -->
+    <div class="compat-elem-row">
+      <div class="compat-elem-label">🔥 원소 궁합 — ${result.sign1.element} + ${result.sign2.element}</div>
+      ${result.elementCompat?.desc || ''}
+    </div>
+
+    <!-- 양식 궁합 -->
+    ${result.qualityCompat ? `
+    <div class="compat-elem-row">
+      <div class="compat-elem-label">⚙️ 양식 조합</div>
+      ${result.qualityCompat}
+    </div>` : ''}
+
+    <!-- 강점 -->
+    <div style="margin-bottom:10px">
+      <div style="font-size:0.72rem;font-weight:700;color:var(--astro-teal);margin-bottom:6px">✅ 관계의 강점</div>
+      <div class="compat-list">
+        ${(result.strengths||[]).map(s => `<div class="compat-list-item strength">${s}</div>`).join('')}
+      </div>
+    </div>
+
+    <!-- 도전 과제 -->
+    <div style="margin-bottom:10px">
+      <div style="font-size:0.72rem;font-weight:700;color:var(--astro-pink);margin-bottom:6px">⚡ 도전 과제</div>
+      <div class="compat-list">
+        ${(result.challenges||[]).map(c => `<div class="compat-list-item challenge">${c}</div>`).join('')}
+      </div>
+    </div>
+
+    <!-- 조언 -->
+    <div class="compat-advice">${result.advice}</div>
+  `;
+  document.getElementById('compatResult').classList.add('show');
+  document.getElementById('compatResult').scrollIntoView({ behavior:'smooth' });
+}
+
+/* ---------- 월별 운세 ---------- */
+function showMonthlyForecast() {
+  const signName = document.getElementById('monthlySignSelect').value;
+  if (!signName) { alert('별자리를 선택해 주세요'); return; }
+
+  const monthly = window.MONTHLY_FORECAST_2026 ? window.MONTHLY_FORECAST_2026[signName] : null;
+  if (!monthly) { alert('해당 별자리 데이터를 찾을 수 없습니다'); return; }
+
+  const curMonth = new Date().getMonth();
+  const sign = (window.ZODIAC_SIGNS||[]).find(s => s.name === signName);
+  const theme = sign ? window.ZODIAC_THEMES?.[sign.id] : null;
+
+  document.getElementById('monthlyContent').innerHTML = `
+    <div class="section-card" style="padding:20px">
+      <div class="section-title" style="font-size:0.9rem;margin-bottom:16px">
+        ${sign ? sign.symbol+' '+sign.emoji+' ' : ''}${signName} · 2026년 월별 운세
+      </div>
+      <div class="monthly-forecast">
+        ${monthly.map((text, i) => `
+          <div class="month-item ${i === curMonth ? 'current' : ''}">
+            <div class="month-num" style="${i === curMonth && theme ? `background:linear-gradient(135deg,${theme.bg},${theme.accent});color:#fff` : ''}">${i+1}월</div>
+            <div class="month-text">${text}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ---------- 별자리 갤러리 ---------- */
+function renderZodiacGallery() {
+  const signs  = window.ZODIAC_SIGNS || [];
+  const themes = window.ZODIAC_THEMES || {};
+  document.getElementById('zodiacGallery').innerHTML = signs.map(s => {
+    const t = themes[s.id] || { bg:'#667eea', accent:'#764ba2' };
+    return `
+      <div class="zodiac-card zodiac-card-sm"
+           style="background:linear-gradient(135deg,${t.bg},${t.accent});cursor:pointer"
+           onclick="openZodiacModal(${s.id})">
+        <div class="zodiac-card-symbol">${s.symbol}</div>
+        <div class="zodiac-card-emoji">${s.emoji}</div>
+        <div class="zodiac-card-name">${s.name}</div>
+        <div class="zodiac-card-en">${s.en}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ---------- 별자리 모달 ---------- */
+function openZodiacModal(id) {
+  const s     = (window.ZODIAC_SIGNS||[]).find(sg => sg.id === id);
+  if (!s) return;
+  const theme = window.ZODIAC_THEMES?.[id] || { bg:'#667eea', accent:'#764ba2' };
+
+  document.getElementById('modalTitle').innerHTML = `
+    <span style="background:linear-gradient(135deg,${theme.bg},${theme.accent});
+      border-radius:10px;padding:4px 12px;margin-right:8px">${s.symbol}</span>
+    ${s.emoji} ${s.name} <span style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-left:4px">${s.en}</span>
+  `;
+
+  document.getElementById('modalBody').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <span style="background:rgba(255,255,255,0.1);border-radius:20px;padding:4px 12px;font-size:0.72rem">${s.element} 원소</span>
+      <span style="background:rgba(255,255,255,0.1);border-radius:20px;padding:4px 12px;font-size:0.72rem">${s.quality}</span>
+      <span style="background:rgba(255,255,255,0.1);border-radius:20px;padding:4px 12px;font-size:0.72rem">${s.rulerEmoji} ${s.ruler} 지배</span>
+      <span style="background:rgba(255,255,255,0.1);border-radius:20px;padding:4px 12px;font-size:0.72rem">
+        ${s.dates.start.m}/${s.dates.start.d} ~ ${s.dates.end.m}/${s.dates.end.d}
+      </span>
+    </div>
+
+    ${[
+      ['🌟 성격 특성', s.traits],
+      ['💪 강점', s.strength],
+      ['⚠️ 약점', s.weakness],
+      ['❤️ 연애', s.love],
+      ['💼 직업', s.career],
+      ['💰 재물', s.money],
+      ['🌿 건강', s.health],
+      ['✨ 영적 성장', s.spirit],
+    ].map(([title, body]) => body ? `
+      <div class="astro-modal-section">
+        <div class="astro-modal-section-title">${title}</div>
+        <div class="astro-modal-section-body">${body}</div>
+      </div>
+    ` : '').join('')}
+
+    <div class="astro-modal-section">
+      <div class="astro-modal-section-title">🍀 행운 정보</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${Object.entries(s.lucky||{}).map(([k,v]) => `
+          <span style="background:rgba(245,200,66,0.12);border:1px solid rgba(245,200,66,0.25);
+            color:#f5c842;font-size:0.72rem;padding:4px 12px;border-radius:20px">${k}: ${v}</span>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="astro-modal-section">
+      <div class="astro-modal-section-title">💕 궁합 최고 / 도전</div>
+      <div class="astro-modal-section-body">
+        <strong style="color:var(--astro-teal)">최고:</strong> ${(s.compatibility?.best||[]).join(', ')}<br>
+        <strong style="color:var(--astro-pink)">도전:</strong> ${(s.compatibility?.challenging||[]).join(', ')}
+      </div>
+    </div>
+
+    ${s.famous ? `
+    <div class="astro-modal-section">
+      <div class="astro-modal-section-title">⭐ 유명인</div>
+      <div class="astro-modal-section-body">${s.famous.join(', ')}</div>
+    </div>` : ''}
+
+    <button class="astro-submit-btn" style="margin-top:8px" onclick="goToCompatWithSign('${s.name}')">
+      💕 이 별자리로 궁합 보기
+    </button>
+  `;
+
+  document.getElementById('zodiacModal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeZodiacModal(e) {
+  if (e.target === document.getElementById('zodiacModal')) closeZodiacModalDirect();
+}
+function closeZodiacModalDirect() {
+  document.getElementById('zodiacModal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+function goToCompatWithSign(signName) {
+  closeZodiacModalDirect();
+  switchMode('compat');
+  document.getElementById('compatSign1').value = signName;
+  document.querySelector('[data-mode="compat"]')?.click();
+}
+
+/* ---------- AI 점성술 해석 ---------- */
+async function requestAIAstrology() {
+  if (!currentChart) { alert('먼저 출생 차트를 계산해 주세요'); return; }
+
+  let apiKey = localStorage.getItem('gemini_api_key') || '';
+  if (!apiKey) {
+    apiKey = prompt('🤖 Gemini AI API 키를 입력해 주세요 (gemini.google.com에서 발급):\n\n처음이시면 gemini.google.com/app → API → API 키 받기');
+    if (!apiKey) return;
+    localStorage.setItem('gemini_api_key', apiKey.trim());
+    apiKey = apiKey.trim();
+  }
+
+  const btn  = document.getElementById('aiAstroBtn');
+  const load = document.getElementById('aiAstroLoading');
+  const res  = document.getElementById('aiAstroResult');
+  btn.disabled = true;
+  load.classList.add('show');
+  res.classList.remove('show');
+
+  try {
+    const promptText = window.astrologyToPromptText ? window.astrologyToPromptText(currentChart) : '';
+    const systemPrompt = `당신은 20년 이상의 경력을 가진 최고의 서양 점성술 마스터입니다. 
+출생 차트 데이터를 바탕으로 심층적이고 따뜻한 점성술 해석을 제공해 주세요.
+태양궁, 달 별자리, 어센던트의 3대 요소를 중심으로 분석하고,
+행성 위치와 어스펙트, 2026년 트랜짓을 종합하여 실용적인 조언을 드리세요.
+마크다운(**굵게**, ## 헤딩, ### 소헤딩)을 사용하여 가독성 있게 작성하세요.`;
+
+    const body = {
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: 'user', parts: [{ text: `다음 출생 차트를 분석해 주세요:${promptText}\n\n연애, 직업, 재물, 건강, 2026년 주요 흐름에 대한 심층 해석을 부탁드립니다.` }] }],
+      generationConfig: { maxOutputTokens: 2500, temperature: 0.8 }
+    };
+
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!r.ok) throw new Error(`API 오류: ${r.status}`);
+    const data = await r.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error('응답 데이터가 없습니다');
+
+    res.innerHTML = markdownToHTML(text);
+    res.classList.add('show');
+  } catch(e) {
+    res.innerHTML = `<div style="color:#e74c3c;font-size:0.8rem">❌ 오류: ${e.message}</div>`;
+    res.classList.add('show');
+    if (e.message.includes('400') || e.message.includes('401') || e.message.includes('403')) {
+      localStorage.removeItem('gemini_api_key');
+    }
+  } finally {
+    btn.disabled = false;
+    load.classList.remove('show');
+  }
+}
+
+function markdownToHTML(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/\n/g, '<br>');
+}
+
+/* ---------- 재시작 ---------- */
+function resetAstrology() {
+  currentChart = null;
+  document.getElementById('astroResultSection').classList.remove('show');
+  document.getElementById('birthFormCard').style.display = 'block';
+  document.getElementById('aiAstroResult').classList.remove('show');
+  document.getElementById('aiAstroResult').innerHTML = '';
+
+  // 탭 초기화
+  document.querySelectorAll('.astro-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+  document.querySelectorAll('.astro-tab-panel').forEach((p,i) => p.classList.toggle('active', i===0));
+
+  document.getElementById('birthFormCard').scrollIntoView({ behavior:'smooth' });
+}
+
+/* ---------- 포인트 관련 ---------- */
+function getPoints() {
+  try {
+    const user = JSON.parse(localStorage.getItem('sajuon_user') || '{}');
+    return user.points || 0;
+  } catch { return 0; }
+}
+function deductPoints(amount, memo) {
+  try {
+    const user = JSON.parse(localStorage.getItem('sajuon_user') || '{}');
+    user.points = Math.max(0, (user.points || 0) - amount);
+    localStorage.setItem('sajuon_user', JSON.stringify(user));
+    // 사용 내역 저장
+    const history = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
+    history.unshift({
+      date: new Date().toLocaleDateString('ko-KR'),
+      type: '사용', point: `-${amount}P`,
+      memo: (memo || '점성술').substring(0, 20), orderId: ''
+    });
+    localStorage.setItem('sajuon_history', JSON.stringify(history.slice(0, 100)));
+  } catch(e) { console.error(e); }
+}
+function updatePointDisplay() {
+  const p = getPoints();
+  const el = document.getElementById('headerPoints');
+  const v  = document.getElementById('headerPointVal');
+  if (el && v) { v.textContent = p.toLocaleString(); el.style.display = p > 0 ? 'flex' : 'none'; }
+}
+</script>
+</body>
+</html>

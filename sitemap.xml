@@ -106,6 +106,22 @@
     <priority>0.88</priority>
   </url>
 
+  <!-- ===== 타로카드 ===== -->
+  <url>
+    <loc>https://unseon.co.kr/tarot.html</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.92</priority>
+  </url>
+
+  <!-- ===== 점성술 ===== -->
+  <url>
+    <loc>https://unseon.co.kr/astrology.html</loc>
+    <lastmod>2026-04-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.92</priority>
+  </url>
+
   <!-- ===== 요금 충전 ===== -->
   <url>
     <loc>https://unseon.co.kr/pricing.html</loc>

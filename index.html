@@ -172,6 +172,8 @@
     <nav class="main-nav" id="mainNav">
       <a href="index.html" class="nav-link active">홈</a>
       <a href="chat.html" class="nav-link">AI 상담</a>
+      <a href="tarot.html" class="nav-link">🃏 타로카드</a>
+      <a href="astrology.html" class="nav-link">🌙 점성술</a>
       <a href="pricing.html" class="nav-link">요금 충전</a>
       <a href="admin.html" class="nav-link nav-admin" id="navAdminLink"><i class="fas fa-cog"></i> 관리자</a>
     </nav>
@@ -369,6 +371,81 @@
   </div>
 </section>
 
+<!-- ===== 타로카드 · 점성술 전용 배너 ===== -->
+<section class="special-tools-section" style="background:linear-gradient(135deg,#0a0818 0%,#1a1650 50%,#0a0818 100%);padding:60px 0;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge" style="background:linear-gradient(135deg,rgba(108,60,225,0.3),rgba(78,205,196,0.2));border:1px solid rgba(108,60,225,0.4);color:#a8edea">✨ 전문 점술 서비스</span>
+      <h2 class="section-title" style="color:#fff">타로카드 &amp; 서양 점성술</h2>
+      <p class="section-sub" style="color:rgba(255,255,255,0.5)">AI와 결합된 고품질 타로 &amp; 별자리 운세 — 지금 바로 체험해보세요</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+      <!-- 타로카드 -->  
+      <div onclick="location.href='tarot.html'" style="
+        background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+        border:1px solid rgba(255,232,18,0.2);
+        border-radius:20px;padding:28px;cursor:pointer;
+        transition:transform .3s,box-shadow .3s;
+        position:relative;overflow:hidden;"
+        onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 20px 60px rgba(255,232,18,0.15)'"
+        onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;
+          background:radial-gradient(circle,rgba(255,232,18,0.1),transparent 70%);pointer-events:none"></div>
+        <div style="font-size:2.5rem;margin-bottom:12px">🃏</div>
+        <div style="font-size:0.65rem;font-weight:700;letter-spacing:.1em;color:rgba(255,232,18,0.7);margin-bottom:8px">AI TAROT · 78장 완전판</div>
+        <h3 style="font-size:1.2rem;font-weight:900;color:#fff;margin-bottom:8px">AI 타로카드</h3>
+        <p style="font-size:0.8rem;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:16px">
+          78장 완전 타로 · 5가지 스프레드<br/>
+          원카드 / 쓰리카드 / 켈틱크로스<br/>
+          Gemini AI 심층 해석
+        </p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+          <span style="background:rgba(255,232,18,0.12);border:1px solid rgba(255,232,18,0.25);color:#FFE812;font-size:0.65rem;padding:3px 10px;border-radius:12px">연애</span>
+          <span style="background:rgba(255,232,18,0.12);border:1px solid rgba(255,232,18,0.25);color:#FFE812;font-size:0.65rem;padding:3px 10px;border-radius:12px">직업</span>
+          <span style="background:rgba(255,232,18,0.12);border:1px solid rgba(255,232,18,0.25);color:#FFE812;font-size:0.65rem;padding:3px 10px;border-radius:12px">재물</span>
+          <span style="background:rgba(255,232,18,0.12);border:1px solid rgba(255,232,18,0.25);color:#FFE812;font-size:0.65rem;padding:3px 10px;border-radius:12px">100P~</span>
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#667eea,#764ba2);
+          color:#fff;font-size:0.82rem;font-weight:700;padding:9px 18px;border-radius:10px">
+          카드 뽑기 시작 →
+        </div>
+      </div>
+
+      <!-- 점성술 -->
+      <div onclick="location.href='astrology.html'" style="
+        background:linear-gradient(135deg,#06041a,#1a1650,#06041a);
+        border:1px solid rgba(108,60,225,0.3);
+        border-radius:20px;padding:28px;cursor:pointer;
+        transition:transform .3s,box-shadow .3s;
+        position:relative;overflow:hidden;"
+        onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 20px 60px rgba(108,60,225,0.2)'"
+        onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;
+          background:radial-gradient(circle,rgba(108,60,225,0.15),transparent 70%);pointer-events:none"></div>
+        <div style="font-size:2.5rem;margin-bottom:12px">🌟</div>
+        <div style="font-size:0.65rem;font-weight:700;letter-spacing:.1em;color:rgba(78,205,196,0.8);margin-bottom:8px">ASTROLOGY · 서양 점성술</div>
+        <h3 style="font-size:1.2rem;font-weight:900;color:#fff;margin-bottom:8px">AI 점성술</h3>
+        <p style="font-size:0.8rem;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:16px">
+          출생 차트 · 달 별자리 · 어센던트<br/>
+          9개 행성 · 12 하우스 · 궁합 분석<br/>
+          2026년 월별 운세 + AI 해석
+        </p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+          <span style="background:rgba(78,205,196,0.12);border:1px solid rgba(78,205,196,0.25);color:#4ecdc4;font-size:0.65rem;padding:3px 10px;border-radius:12px">출생차트</span>
+          <span style="background:rgba(78,205,196,0.12);border:1px solid rgba(78,205,196,0.25);color:#4ecdc4;font-size:0.65rem;padding:3px 10px;border-radius:12px">별자리궁합</span>
+          <span style="background:rgba(78,205,196,0.12);border:1px solid rgba(78,205,196,0.25);color:#4ecdc4;font-size:0.65rem;padding:3px 10px;border-radius:12px">100P무료</span>
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#3d1e8f,#6c3ce1);
+          color:#fff;font-size:0.82rem;font-weight:700;padding:9px 18px;border-radius:10px">
+          별자리 분석 시작 →
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <!-- ===== 2열 카드 (개명/이름 + 타로 + 개업 + 궁합) ===== -->
 <section class="second-cards-section">
   <div class="container">
@@ -400,11 +477,11 @@
         <span class="second-point">300P~</span>
       </div>
 
-      <div class="second-card" onclick="goChatCategory('타로상담')">
-        <div class="second-card-icon" style="background: linear-gradient(135deg,#f3e5f5,#e1bee7)">🃏</div>
-        <h4>타로 상담</h4>
-        <p class="second-hook">"지금 이 선택, 카드가 뭐라고 하나요?"</p>
-        <span class="second-point">100P~</span>
+      <div class="second-card" onclick="location.href='tarot.html'">
+        <div class="second-card-icon" style="background: linear-gradient(135deg,#302b63,#667eea)">🃏</div>
+        <h4>AI 타로카드</h4>
+        <p class="second-hook">"78장 완전판 — 5가지 스프레드, AI 심층 해석"</p>
+        <span class="second-point" style="color:#764ba2">100P~ · 전용페이지 ↗</span>
       </div>
 
       <div class="second-card" onclick="goChatCategory('개업상담')">
@@ -414,11 +491,11 @@
         <span class="second-point">300P~</span>
       </div>
 
-      <div class="second-card" onclick="goChatCategory('점성술상담')">
-        <div class="second-card-icon" style="background: linear-gradient(135deg,#e8eaf6,#c5cae9)">🌙</div>
-        <h4>점성술 상담</h4>
-        <p class="second-hook">"별자리가 말하는 내 인연은?"</p>
-        <span class="second-point">200P~</span>
+      <div class="second-card" onclick="location.href='astrology.html'">
+        <div class="second-card-icon" style="background: linear-gradient(135deg,#1a1650,#3d1e8f)">🌟</div>
+        <h4>AI 점성술</h4>
+        <p class="second-hook">"출생 차트·궁합·월별 운세 완전 분석"</p>
+        <span class="second-point" style="color:#6c3ce1">무료+100P · 전용페이지 ↗</span>
       </div>
 
       <div class="second-card" onclick="goChatCategory('업종추천')">
@@ -460,6 +537,8 @@
       <button class="cat-tab" data-tab="biz">사업·재물</button>
       <button class="cat-tab" data-tab="name">이름·작명</button>
       <button class="cat-tab" data-tab="life">라이프 이벤트</button>
+      <button class="cat-tab" data-tab="tarot">🃏 타로카드</button>
+      <button class="cat-tab" data-tab="astro">🌙 점성술</button>
     </div>
     <div class="cat-grid" id="catGrid">
       <!-- JS로 렌더링 -->
@@ -586,6 +665,8 @@
       <div class="footer-col">
         <h5>서비스</h5>
         <a href="chat.html">AI 상담 시작</a>
+        <a href="tarot.html">🃏 타로카드</a>
+        <a href="astrology.html">🌟 점성술</a>
         <a href="pricing.html">포인트 충전</a>
         <a href="pricing.html#history">이용 내역</a>
       </div>

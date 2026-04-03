@@ -19,6 +19,8 @@ User-agent: Googlebot
 Allow: /
 Allow: /index.html
 Allow: /chat.html
+Allow: /tarot.html
+Allow: /astrology.html
 Allow: /pricing.html
 Allow: /terms.html
 Allow: /privacy.html
@@ -37,6 +39,8 @@ User-agent: Yeti
 Allow: /
 Allow: /index.html
 Allow: /chat.html
+Allow: /tarot.html
+Allow: /astrology.html
 Allow: /pricing.html
 Disallow: /admin.html
 Disallow: /auth.html
