@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
   <!-- ===== 기본 SEO ===== -->
+  <!-- 카카오페이 JS SDK (실서비스 전환 시 아래 주석 해제 + YOUR_APP_KEY 교체) -->
+  <!-- <script src="https://t1.kakaocdn.net/kakaojs/sdk/2.7.4/kakao.min.js"></script> -->
   <title>포인트 충전 — 운세ON | 운세 상담 포인트 충전</title>
   <meta name="description" content="운세ON AI 운세 상담 포인트 충전. 10,000원 = 10,000P. 최대 30% 보너스. 구가 시 500P 무료 지급. 연애운·사업운·사주상담 등 38가지 AI 상담 운세 서비스 이용." />
   <meta name="keywords" content="운세포인트충전,AI운세충전,운세ON충전,사주상담충전" />
@@ -40,11 +42,33 @@
       <a href="chat.html" class="nav-link">AI 상담</a>
       <a href="pricing.html" class="nav-link active">요금 충전</a>
     </nav>
-    <div class="header-actions">
-      <div class="point-display">
+    <div class="header-actions" id="headerActions">
+      <div class="point-display" id="headerPoints" style="display:none">
         <i class="fas fa-coins"></i> <span id="headerPointVal">0</span>P
       </div>
-      <a href="pricing.html" class="btn btn-charge">충전하기</a>
+      <a href="auth.html" class="btn btn-login" id="btnLogin"><i class="fas fa-sign-in-alt"></i> 로그인</a>
+      <a href="auth.html?tab=register" class="btn btn-signup" id="btnSignup"><i class="fas fa-user-plus"></i> 회원가입</a>
+      <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
+        <button class="user-menu-btn" onclick="toggleUserMenu()">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <span class="user-name-label" id="userNameLabel">사용자</span>
+          <i class="fas fa-chevron-down" style="font-size:0.7rem"></i>
+        </button>
+        <div class="user-dropdown" id="userDropdown" style="display:none">
+          <div class="user-dropdown-header">
+            <div class="user-dropdown-name" id="dropdownName"></div>
+            <div class="user-dropdown-email" id="dropdownEmail"></div>
+            <div class="user-dropdown-pt"><i class="fas fa-coins"></i> <span id="dropdownPt">0</span>P</div>
+          </div>
+          <div class="user-dropdown-links">
+            <a href="pricing.html"><i class="fas fa-coins"></i> 포인트 충전</a>
+            <a href="pricing.html#history"><i class="fas fa-history"></i> 이용 내역</a>
+            <a href="mypage.html"><i class="fas fa-user-cog"></i> 내 정보</a>
+          </div>
+          <button class="user-logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
+        </div>
+      </div>
+      <a href="pricing.html" class="btn btn-charge" id="btnCharge">충전하기</a>
       <button class="hamburger" id="hamburger" aria-label="메뉴">
         <span></span><span></span><span></span>
       </button>
@@ -386,6 +410,9 @@
   </div>
 </div>
 
+<!-- ====== 개발자 전환 가이드 (실서비스 전환 전까지 표시) ====== -->
+<div id="devGuideSection" style="display:none"><!-- JS로 IS_TEST 시에만 표시 --></div>
+
 <!-- 사업자 정보 바 -->
 <div class="biz-info-bar">
   <div class="container">
@@ -403,83 +430,68 @@
   </div>
 </div>
 
-<script src="js/auth.js?v=20260501"></script>
-<script src="js/main.js?v=20260501"></script>
-<script src="js/kakaopay.js?v=20260430"></script>
+<script src="js/auth.js?v=20260502"></script>
+<script src="js/main.js?v=20260502"></script>
+<script src="js/kakaopay.js?v=20260502"></script>
 <script>
-// pricing.html 전용 초기화 — 단 1회 실행 보장
-(function() {
-  if (window.__pricingInitialized) return;
-  window.__pricingInitialized = true;
+/* pricing.html 초기화 */
+document.addEventListener('DOMContentLoaded', function() {
 
-  function runPricingInit() {
-  // ★ 헤더 인증 초기화 (로그인/회원가입 버튼 또는 유저메뉴)
-  if (typeof initAuthHeader === 'function') initAuthHeader();
-  if (typeof initHeader === 'function') initHeader();
-  if (typeof initHamburger === 'function') initHamburger();
+  /* ── 1. 헤더 로그인 상태 ── */
+  var user = null;
+  try { user = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); } catch(e) {}
 
-  // ★ 로그인 상태 체크
-  const currentUser = (function() {
-    try { return JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); } catch { return null; }
-  })();
+  var btnLogin     = document.getElementById('btnLogin');
+  var btnSignup    = document.getElementById('btnSignup');
+  var userMenuWrap = document.getElementById('userMenuWrap');
+  var headerPoints = document.getElementById('headerPoints');
+  var headerPointVal = document.getElementById('headerPointVal');
 
-  if (!currentUser || !currentUser.id) {
-    // ── 비로그인: 페이지 상단에 로그인 안내 배너 삽입 ──
-    const pricingMain = document.querySelector('.pricing-page .container');
-    if (pricingMain) {
-      const banner = document.createElement('div');
+  if (user && user.id) {
+    var pts = parseInt(user.points || localStorage.getItem('sajuon_points') || '0', 10);
+    localStorage.setItem('sajuon_points', String(pts));
+    if (btnLogin)  btnLogin.style.display  = 'none';
+    if (btnSignup) btnSignup.style.display = 'none';
+    if (userMenuWrap) {
+      userMenuWrap.style.display = 'flex';
+      document.getElementById('userAvatar').textContent    = user.name ? user.name[0] : 'U';
+      document.getElementById('userNameLabel').textContent = user.name || '사용자';
+      document.getElementById('dropdownName').textContent  = user.name || '';
+      document.getElementById('dropdownEmail').textContent = user.email || '';
+      document.getElementById('dropdownPt').textContent    = pts.toLocaleString();
+    }
+    if (headerPoints)   headerPoints.style.display   = 'flex';
+    if (headerPointVal) headerPointVal.textContent   = pts.toLocaleString();
+
+    /* 포인트 카드 표시 */
+    var myPointVal = document.getElementById('myPointVal');
+    if (myPointVal) myPointVal.textContent = pts.toLocaleString() + 'P';
+
+  } else {
+    if (btnLogin)     btnLogin.style.display     = 'inline-flex';
+    if (btnSignup)    btnSignup.style.display    = 'inline-flex';
+    if (userMenuWrap) userMenuWrap.style.display = 'none';
+    if (headerPoints) headerPoints.style.display = 'none';
+
+    /* 비로그인 안내 배너 */
+    var pricingMain = document.querySelector('.pricing-page .container');
+    if (pricingMain && !document.getElementById('loginNudgeBanner')) {
+      var banner = document.createElement('div');
       banner.id = 'loginNudgeBanner';
-      banner.style.cssText = `
-        background: linear-gradient(135deg, #1b5e20, #2e7d32);
-        color: #fff; border-radius: 16px; padding: 24px 28px;
-        margin-bottom: 28px; display: flex; align-items: center;
-        justify-content: space-between; gap: 16px; flex-wrap: wrap;
-        box-shadow: 0 4px 20px rgba(27,94,32,0.25);
-      `;
-      banner.innerHTML = `
-        <div style="display:flex;align-items:center;gap:14px">
-          <span style="font-size:2rem">🔐</span>
-          <div>
-            <div style="font-weight:700;font-size:1.05rem;margin-bottom:4px">로그인 후 충전하세요</div>
-            <div style="font-size:0.85rem;opacity:0.85">충전 내역이 계정에 저장됩니다 · 가입 즉시 <strong>500P 무료</strong> 지급!</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px">
-          <a href="auth.html?tab=register" style="padding:10px 20px;background:#fff;color:#1b5e20;border-radius:10px;text-decoration:none;font-weight:700;font-size:0.88rem;white-space:nowrap">
-            <i class="fas fa-user-plus"></i> 무료 가입
-          </a>
-          <a href="auth.html" style="padding:10px 20px;background:rgba(255,255,255,0.18);color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.88rem;white-space:nowrap;border:1.5px solid rgba(255,255,255,0.4)">
-            <i class="fas fa-sign-in-alt"></i> 로그인
-          </a>
-        </div>`;
+      banner.style.cssText = 'background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border-radius:16px;padding:24px 28px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;box-shadow:0 4px 20px rgba(27,94,32,0.25)';
+      banner.innerHTML = '<div style="display:flex;align-items:center;gap:14px"><span style="font-size:2rem">🔐</span><div><div style="font-weight:700;font-size:1.05rem;margin-bottom:4px">로그인 후 충전하세요</div><div style="font-size:0.85rem;opacity:0.85">충전 내역이 계정에 저장됩니다 · 가입 즉시 <strong>500P 무료</strong> 지급!</div></div></div><div style="display:flex;gap:10px"><a href="auth.html?tab=register" style="padding:10px 20px;background:#fff;color:#1b5e20;border-radius:10px;text-decoration:none;font-weight:700;font-size:0.88rem;white-space:nowrap"><i class="fas fa-user-plus"></i> 무료 가입</a><a href="auth.html" style="padding:10px 20px;background:rgba(255,255,255,0.18);color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.88rem;white-space:nowrap;border:1.5px solid rgba(255,255,255,0.4)"><i class="fas fa-sign-in-alt"></i> 로그인</a></div>';
       pricingMain.prepend(banner);
     }
-
-    // 포인트 표시: 0P (비로그인)
-    document.getElementById('myPointVal').textContent = '0P';
-    document.getElementById('headerPointVal').textContent = '0';
-  } else {
-    // ── 로그인: 사용자 계정 기준 포인트 표시 ──
-    // localStorage와 계정 둘 다 최신값으로 동기화
-    const accountPts = currentUser.points || 0;
-    const lsPts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
-    // 더 큰 값을 신뢰 (두 값이 다른 경우 계정 기준 우선)
-    const pts = Math.max(accountPts, lsPts);
-    localStorage.setItem('sajuon_points', String(pts));
-    document.getElementById('myPointVal').textContent = pts.toLocaleString() + 'P';
-    document.getElementById('headerPointVal').textContent = pts.toLocaleString();
+    var myPointVal = document.getElementById('myPointVal');
+    if (myPointVal) myPointVal.textContent = '0P';
   }
 
-  // 이용 내역 렌더링
+  if (typeof initHeader    === 'function') initHeader();
+  if (typeof initHamburger === 'function') initHamburger();
+
+  /* ── 2. 이용 내역 렌더링 ── */
   renderHistory();
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', runPricingInit);
-  } else {
-    runPricingInit();
-  }
-})();
+});
 
 function renderHistory() {
   const hist = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
@@ -498,6 +510,61 @@ function renderHistory() {
     </tr>
   `).join('');
 }
+
+/* ── 개발자 전환 가이드 (테스트 모드에서만 표시) ── */
+function renderDevGuide() {
+  if (typeof KAKAO_CONFIG === 'undefined' || !KAKAO_CONFIG.IS_TEST) return;
+  const section = document.getElementById('devGuideSection');
+  if (!section) return;
+  section.style.display = 'block';
+  section.innerHTML = `
+    <div class="container" style="padding: 0 0 60px">
+      <details style="background:#1a1a2e;color:#e0e0e0;border-radius:16px;padding:0;overflow:hidden;margin-top:40px">
+        <summary style="padding:18px 24px;font-size:0.9rem;font-weight:700;cursor:pointer;color:#90caf9;list-style:none;display:flex;align-items:center;gap:10px">
+          <i class="fas fa-code" style="color:#64b5f6"></i>
+          개발자 전환 가이드 — 실서비스 전환 방법
+          <span style="margin-left:auto;font-size:0.75rem;background:rgba(255,100,100,0.2);color:#ef9a9a;padding:3px 10px;border-radius:20px">테스트 모드 활성</span>
+        </summary>
+        <div style="padding:4px 24px 24px;font-size:0.82rem;line-height:1.8">
+          <p style="color:#aaa;margin-bottom:16px">카카오페이 가맹 심사 완료 후 아래 3단계로 실서비스 전환하세요.</p>
+
+          <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:16px 20px;margin-bottom:14px">
+            <div style="color:#81c784;font-weight:700;margin-bottom:8px">① js/kakaopay.js 상단 KAKAO_CONFIG 수정</div>
+            <pre style="background:#0d0d1a;border-radius:8px;padding:14px;overflow-x:auto;font-size:0.78rem;color:#a5d6a7"><code>const KAKAO_CONFIG = {
+  IS_TEST: <span style="color:#ef5350">false</span>,                    // ← true → false
+  CID:     <span style="color:#ffcc02">'여기에실제CID입력'</span>,    // ← 가맹 CID
+  ORIGIN:  <span style="color:#ffcc02">'https://unseon.co.kr'</span>, // ← 이미 설정됨
+};</code></pre>
+          </div>
+
+          <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:16px 20px;margin-bottom:14px">
+            <div style="color:#81c784;font-weight:700;margin-bottom:8px">② 카카오페이 가맹점 관리자 URL 등록</div>
+            <div style="font-size:0.79rem;color:#ccc">
+              <div>✅ 결제 승인 URL: <code style="background:#0d0d1a;padding:2px 8px;border-radius:4px">https://unseon.co.kr/payment-complete.html?result=success</code></div>
+              <div style="margin-top:6px">✅ 결제 실패 URL: <code style="background:#0d0d1a;padding:2px 8px;border-radius:4px">https://unseon.co.kr/payment-complete.html?result=fail</code></div>
+              <div style="margin-top:6px">✅ 결제 취소 URL: <code style="background:#0d0d1a;padding:2px 8px;border-radius:4px">https://unseon.co.kr/payment-complete.html?result=cancel</code></div>
+            </div>
+          </div>
+
+          <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:16px 20px;margin-bottom:14px">
+            <div style="color:#81c784;font-weight:700;margin-bottom:8px">③ 결제 방식 선택 (둘 중 하나)</div>
+            <div style="color:#ccc;font-size:0.79rem">
+              <div style="margin-bottom:8px"><strong style="color:#90caf9">[방법 A — 권장] 카카오페이 JS SDK</strong> (백엔드 불필요)</div>
+              <div style="margin-left:12px;margin-bottom:12px">kakaopay.js → <code style="background:#0d0d1a;padding:2px 6px;border-radius:4px">runRealKakaoPay()</code> 내 SDK 주석 해제 + 카카오 앱키 입력</div>
+              <div style="margin-bottom:8px"><strong style="color:#90caf9">[방법 B] 백엔드 서버</strong></div>
+              <div style="margin-left:12px"><code style="background:#0d0d1a;padding:2px 6px;border-radius:4px">/api/payment/ready</code> 엔드포인트 구축 → kakaopay.js fetch 주석 코드 참고</div>
+            </div>
+          </div>
+
+          <div style="color:#888;font-size:0.75rem;margin-top:8px">
+            💡 이 섹션은 IS_TEST = false 설정 시 자동으로 사라집니다.
+          </div>
+        </div>
+      </details>
+    </div>
+  `;
+}
+renderDevGuide();
 </script>
 </body>
 </html>
