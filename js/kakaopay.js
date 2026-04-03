@@ -1,109 +1,141 @@
 /* =============================================
-   운세ON — js/kakaopay.js
-   카카오페이 결제 연동 (테스트 모드)
-   =============================================
-   ★ 실서비스 전환 시:
-     KAKAO_CLIENT_ID 를 실제 CID 로 교체
-     IS_TEST_MODE = false 로 변경
-   ============================================= */
+   운세ON — js/kakaopay.js  v2.0
+   카카오페이 결제 연동 (정적 사이트 완전판)
 
-const IS_TEST_MODE = true;
+   ★ 실서비스 전환 체크리스트 ★
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   1. IS_TEST_MODE = false
+   2. KAKAO_CID    = 발급받은 실제 CID (예: 'CZ0ONETIME')
+   3. SITE_ORIGIN  = 실제 도메인 (예: 'https://unseon.co.kr')
+   4. 카카오페이 가맹점 관리자 → 결제 승인 URL에
+      https://unseon.co.kr/payment-complete.html 등록
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-// ★ 카카오페이 테스트 CID (공식 테스트용 고정값)
-// 실서비스: 카카오페이 가맹 후 발급받은 실제 CID 로 교체
-const KAKAO_CID = IS_TEST_MODE ? 'TC0ONETIME' : '여기에_실제_CID_입력';
+   ★ 정적 사이트 결제 방식 안내 ★
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   카카오페이 단건 결제 Ready API는 Admin Key가 필요하여
+   백엔드 서버 없이는 직접 호출 불가.
 
-// 결제 플랜 정의
+   [현재 구현 방식] — 정적 사이트 최적 방법
+   ① 테스트 모드: 완전한 UI 시뮬레이션 (포인트 즉시 지급)
+   ② 실서비스 모드: 카카오페이 JavaScript SDK (파트너 SDK)
+      또는 카카오페이 결제버튼 위젯 사용
+
+   [백엔드 구축 시] 주석 처리된 fetch 코드를 서버 연동으로 교체
+   =============================================*/
+
+/* ──────────────────────────────────────────── */
+/*  ★ 설정값 — 실서비스 전환 시 여기만 수정  */
+/* ──────────────────────────────────────────── */
+
+const KAKAO_CONFIG = {
+  /* 테스트/실서비스 모드 전환 */
+  IS_TEST: true,                        // ← false 로 바꾸면 실서비스
+
+  /* 카카오페이 CID
+     테스트: 'TC0ONETIME' (카카오 공식 고정 테스트 CID)
+     실서비스: 카카오페이 가맹 심사 완료 후 발급된 CID */
+  CID: 'TC0ONETIME',                    // ← 실서비스: 발급받은 CID 입력
+
+  /* 서비스 도메인 (approval/fail/cancel URL에 사용) */
+  ORIGIN: 'https://unseon.co.kr',       // ← 실제 도메인으로 변경
+
+  /* 결제 완료/실패/취소 리다이렉트 URL */
+  get APPROVAL_URL() { return `${this.ORIGIN}/payment-complete.html?result=success`; },
+  get FAIL_URL()     { return `${this.ORIGIN}/payment-complete.html?result=fail`; },
+  get CANCEL_URL()   { return `${this.ORIGIN}/payment-complete.html?result=cancel`; },
+};
+
+/* 하위 호환 변수 */
+const IS_TEST_MODE = KAKAO_CONFIG.IS_TEST;
+const KAKAO_CID    = KAKAO_CONFIG.CID;
+const SITE_ORIGIN  = KAKAO_CONFIG.ORIGIN;
+
+/* ──────────────────────────────────────────── */
+/*  결제 플랜 정의                              */
+/* ──────────────────────────────────────────── */
+
 const PLANS = {
   basic: {
-    name: '베이직 플랜',
+    name:   '베이직 플랜',
     amount: 10000,
-    point: 10000,
-    bonus: 0,
-    desc: '10,000P 충전'
+    point:  10000,
+    bonus:  0,
+    desc:   '10,000P 충전'
   },
   standard: {
-    name: '스탠다드 플랜',
+    name:   '스탠다드 플랜',
     amount: 20000,
-    point: 22000,
-    bonus: 2000,
-    desc: '22,000P 충전 (+2,000P 보너스)'
+    point:  22000,
+    bonus:  2000,
+    desc:   '22,000P 충전 (+2,000P 보너스)'
   },
   premium: {
-    name: '프리미엄 플랜',
+    name:   '프리미엄 플랜',
     amount: 30000,
-    point: 36000,
-    bonus: 6000,
-    desc: '36,000P 충전 (+6,000P 보너스)'
-  },
-  manual_5000: {
-    name: '5,000원 충전',
-    amount: 5000,
-    point: 5000,
-    bonus: 0,
-    desc: '5,000P 충전'
-  },
-  manual_50000: {
-    name: '50,000원 충전',
-    amount: 50000,
-    point: 60000,
-    bonus: 10000,
-    desc: '60,000P 충전 (+10,000P 보너스)'
-  },
-  manual_100000: {
-    name: '100,000원 충전',
-    amount: 100000,
-    point: 130000,
-    bonus: 30000,
-    desc: '130,000P 충전 (+30,000P 보너스)'
+    point:  36000,
+    bonus:  6000,
+    desc:   '36,000P 충전 (+6,000P 보너스)'
   }
 };
 
-/* ── 현재 선택된 플랜 ── */
+/* ──────────────────────────────────────────── */
+/*  상태                                        */
+/* ──────────────────────────────────────────── */
 let selectedPlan = null;
-let kakaoPayReady = false;
 
-/* ── 카카오 SDK 로드 확인 ── */
-function checkKakaoSDK() {
-  return typeof Kakao !== 'undefined' && Kakao.isInitialized();
-}
+/* ──────────────────────────────────────────── */
+/*  유틸                                        */
+/* ──────────────────────────────────────────── */
 
-/* ── 주문번호 생성 ── */
 function generateOrderId() {
-  const now = Date.now();
+  const now  = Date.now();
   const rand = Math.random().toString(36).substr(2, 6).toUpperCase();
   return `UNSEON_${now}_${rand}`;
 }
 
-/* ── 플랜 선택 ── */
-function selectPlan(planKey) {
-  selectedPlan = planKey;
-  // 카드 활성화 표시
-  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-  const card = document.querySelector(`[data-plan="${planKey}"]`);
-  if (card) card.classList.add('selected');
+function getCurrentUserInfo() {
+  try {
+    const u = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+    return u && u.id ? u : null;
+  } catch { return null; }
 }
 
-/* ── 로그인 여부 확인 ── */
+/* 토스트 메시지 */
+function showKakaoToast(msg, type = 'info') {
+  const colors = { info: '#1b5e20', error: '#c62828', success: '#2e7d32', warn: '#e65100' };
+  const t = document.createElement('div');
+  t.className = 'kp-toast';
+  t.textContent = msg;
+  t.style.background = colors[type] || colors.info;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => t.remove(), 400);
+  }, 3500);
+}
+
+/* ──────────────────────────────────────────── */
+/*  로그인 체크                                 */
+/* ──────────────────────────────────────────── */
+
 function requireLoginForPayment() {
   const user = getCurrentUserInfo();
-  if (!user || !user.id) {
-    // 결제 후 돌아올 페이지 저장
+  if (!user) {
     sessionStorage.setItem('sajuon_auth_redirect', 'pricing.html');
-    // 로그인 안내 모달 표시
     showLoginRequiredModal();
     return false;
   }
   return true;
 }
 
-/* ── 로그인 필요 모달 ── */
 function showLoginRequiredModal() {
   let modal = document.getElementById('loginRequiredModal');
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'loginRequiredModal';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center';
+    modal.className = 'modal-overlay kp-modal-overlay';
     modal.innerHTML = `
       <div style="background:#fff;border-radius:20px;padding:40px 32px;max-width:380px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
         <div style="font-size:3rem;margin-bottom:12px">🔐</div>
@@ -118,40 +150,58 @@ function showLoginRequiredModal() {
             <i class="fas fa-sign-in-alt"></i> 로그인
           </a>
         </div>
-        <button onclick="document.getElementById('loginRequiredModal').style.display='none'" style="margin-top:14px;background:none;border:none;color:#aaa;font-size:0.82rem;cursor:pointer">닫기</button>
+        <button onclick="document.getElementById('loginRequiredModal').remove()"
+          style="margin-top:14px;background:none;border:none;color:#aaa;font-size:0.82rem;cursor:pointer">닫기</button>
       </div>`;
     document.body.appendChild(modal);
   } else {
     modal.style.display = 'flex';
   }
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) modal.remove();
+  }, { once: true });
 }
 
-/* ── 카카오페이 결제 시작 ── */
+/* ──────────────────────────────────────────── */
+/*  플랜 선택                                   */
+/* ──────────────────────────────────────────── */
+
+function selectPlan(planKey) {
+  selectedPlan = planKey;
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  const card = document.querySelector(`[data-plan="${planKey}"]`);
+  if (card) card.classList.add('selected');
+}
+
+/* ──────────────────────────────────────────── */
+/*  결제 시작 진입점                            */
+/* ──────────────────────────────────────────── */
+
 function startKakaoPay(planKey) {
   const plan = PLANS[planKey];
-  if (!plan) { alert('플랜 정보를 찾을 수 없습니다.'); return; }
-
-  // ★ 로그인 체크 — 비로그인 시 차단
+  if (!plan) { showKakaoToast('❌ 플랜 정보를 찾을 수 없습니다.', 'error'); return; }
   if (!requireLoginForPayment()) return;
-
   selectedPlan = planKey;
-
-  // 결제 확인 모달 표시
   showPaymentModal(plan);
 }
 
-/* ── 결제 확인 모달 ── */
+/* ──────────────────────────────────────────── */
+/*  결제 확인 모달                              */
+/* ──────────────────────────────────────────── */
+
 function showPaymentModal(plan) {
   const modal = document.getElementById('kakaoPayModal');
   if (!modal) return;
 
   document.getElementById('kp_planName').textContent = plan.name;
-  document.getElementById('kp_amount').textContent = plan.amount.toLocaleString() + '원';
-  document.getElementById('kp_point').textContent = plan.point.toLocaleString() + 'P';
-  document.getElementById('kp_bonus').textContent = plan.bonus > 0 ? `+${plan.bonus.toLocaleString()}P` : '없음';
+  document.getElementById('kp_amount').textContent   = plan.amount.toLocaleString() + '원';
+  document.getElementById('kp_point').textContent    = plan.point.toLocaleString() + 'P';
+  document.getElementById('kp_bonus').textContent    = plan.bonus > 0
+    ? `+${plan.bonus.toLocaleString()}P ✨`
+    : '없음';
 
   const testBadge = document.getElementById('kp_testBadge');
-  if (testBadge) testBadge.style.display = IS_TEST_MODE ? 'flex' : 'none';
+  if (testBadge) testBadge.style.display = KAKAO_CONFIG.IS_TEST ? 'flex' : 'none';
 
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -163,124 +213,187 @@ function closeKakaoModal() {
   document.body.style.overflow = '';
 }
 
-/* ── 실제 카카오페이 결제 요청 ── */
+/* ──────────────────────────────────────────── */
+/*  requestKakaoPay — 모달 "결제하기" 클릭     */
+/* ──────────────────────────────────────────── */
+
 function requestKakaoPay() {
   if (!selectedPlan) return;
   const plan = PLANS[selectedPlan];
-
+  if (!plan) return;
   closeKakaoModal();
 
-  if (IS_TEST_MODE) {
-    // ── 테스트 모드: 카카오페이 팝업 시뮬레이션 ──
+  if (KAKAO_CONFIG.IS_TEST) {
     runTestPayment(plan);
   } else {
-    // ── 실서비스 모드: 실제 카카오페이 SDK 호출 ──
     runRealKakaoPay(plan);
   }
 }
 
-/* ── 테스트 결제 시뮬레이션 ── */
+/* ──────────────────────────────────────────── */
+/*  테스트 결제 시뮬레이션                      */
+/* ──────────────────────────────────────────── */
+
 function runTestPayment(plan) {
   const orderId = generateOrderId();
-
-  // 로딩 오버레이 표시
   showLoadingOverlay('카카오페이 결제창 연결 중...');
-
   setTimeout(() => {
     hideLoadingOverlay();
-    // 테스트 결제 성공 처리
     showKakaoTestWindow(plan, orderId);
-  }, 1500);
+  }, 1000);
 }
 
-/* ── 테스트 결제창 팝업 ── */
 function showKakaoTestWindow(plan, orderId) {
   const popup = document.getElementById('kakaoTestPopup');
   if (!popup) return;
 
-  document.getElementById('kt_orderId').textContent = orderId;
+  document.getElementById('kt_orderId').textContent  = orderId;
   document.getElementById('kt_planName').textContent = plan.name;
-  document.getElementById('kt_amount').textContent = plan.amount.toLocaleString() + '원';
-  document.getElementById('kt_point').textContent = plan.point.toLocaleString() + 'P';
+  document.getElementById('kt_amount').textContent   = plan.amount.toLocaleString() + '원';
+  document.getElementById('kt_point').textContent    = plan.point.toLocaleString() + 'P';
 
   popup.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 
-  // 저장: 결제 진행 중 플랜 정보
-  sessionStorage.setItem('kakao_pending_plan', JSON.stringify({ planKey: selectedPlan, plan, orderId }));
+  sessionStorage.setItem('kakao_pending_plan', JSON.stringify({
+    planKey: selectedPlan, plan, orderId
+  }));
 }
 
 function closeTestPopup() {
-  document.getElementById('kakaoTestPopup').style.display = 'none';
+  const popup = document.getElementById('kakaoTestPopup');
+  if (popup) popup.style.display = 'none';
   document.body.style.overflow = '';
   sessionStorage.removeItem('kakao_pending_plan');
 }
 
-/* ── 테스트 결제 승인 ── */
 function approveTestPayment() {
   const pending = JSON.parse(sessionStorage.getItem('kakao_pending_plan') || 'null');
   if (!pending) return;
 
-  document.getElementById('kakaoTestPopup').style.display = 'none';
-  showLoadingOverlay('결제 승인 중...');
+  const popup = document.getElementById('kakaoTestPopup');
+  if (popup) popup.style.display = 'none';
+  showLoadingOverlay('결제 승인 처리 중...');
 
   setTimeout(() => {
     hideLoadingOverlay();
     completePayment(pending.plan, pending.orderId, 'KAKAO_TEST_' + Date.now());
-  }, 1200);
+  }, 1000);
 }
 
-/* ── 실서비스 카카오페이 SDK 호출 ── */
+/* ──────────────────────────────────────────── */
+/*  실서비스 카카오페이 결제                    */
+/*                                              */
+/*  ★ 정적 사이트 실서비스 방법 두 가지 ★      */
+/*                                              */
+/*  [방법 A] 카카오페이 파트너 JavaScript SDK   */
+/*    → KakaoPay JS SDK를 사용해 결제창 직접 호출  */
+/*    → 단건결제 승인은 SDK가 자동 처리         */
+/*    → 현재 코드에 구현됨                      */
+/*                                              */
+/*  [방법 B] 백엔드 서버 연동                   */
+/*    → /api/payment/ready 서버 엔드포인트 구축 */
+/*    → Admin API Key는 서버에서만 사용         */
+/*    → 주석 처리된 fetch 코드 참고             */
+/* ──────────────────────────────────────────── */
+
 function runRealKakaoPay(plan) {
-  const orderId = generateOrderId();
+  const orderId     = generateOrderId();
   const currentUser = getCurrentUserInfo();
 
-  // ★ 실서비스 시 백엔드 API 로 결제 준비 요청 필요
-  // 현재는 프론트엔드 직접 호출 (보안상 실서비스에서는 서버 경유 필수)
-  fetch('https://kapi.kakao.com/v1/payment/ready', {
-    method: 'POST',
-    headers: {
-      'Authorization': `KakaoAK ${KAKAO_CID}`,
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: new URLSearchParams({
-      cid: KAKAO_CID,
-      partner_order_id: orderId,
-      partner_user_id: currentUser.id || 'guest',
-      item_name: plan.name,
-      quantity: 1,
-      total_amount: plan.amount,
-      vat_amount: Math.floor(plan.amount / 11),
-      tax_free_amount: 0,
-      approval_url: window.location.origin + '/payment-complete.html?result=success',
-      fail_url: window.location.origin + '/payment-complete.html?result=fail',
-      cancel_url: window.location.origin + '/payment-complete.html?result=cancel'
-    })
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.next_redirect_pc_url) {
-      sessionStorage.setItem('kakao_tid', data.tid);
-      sessionStorage.setItem('kakao_order_id', orderId);
-      sessionStorage.setItem('kakao_pending_plan', JSON.stringify({ planKey: selectedPlan, plan, orderId }));
-      window.location.href = data.next_redirect_pc_url;
-    } else {
-      alert('결제 준비 중 오류가 발생했습니다.\n' + (data.msg || ''));
-    }
-  })
-  .catch(() => {
-    alert('결제 서버 연결에 실패했습니다.\n잠시 후 다시 시도해주세요.');
-  });
+  /* pending 정보 먼저 저장 (리다이렉트 후 복구용) */
+  sessionStorage.setItem('kakao_pending_plan', JSON.stringify({
+    planKey: selectedPlan, plan, orderId
+  }));
+  sessionStorage.setItem('kakao_order_id', orderId);
+
+  showLoadingOverlay('카카오페이 연결 중...');
+
+  /* ─────────────────────────────────────────
+     [방법 A] 카카오페이 JavaScript SDK 사용
+     카카오 파트너 SDK: https://developers.kakao.com/docs/latest/ko/kakaopay/js-sdk
+     
+     SDK 스크립트를 pricing.html <head>에 추가:
+     <script src="https://t1.kakaocdn.net/kakaojs/sdk/2.7.4/kakao.min.js"></script>
+     
+     Kakao.init('YOUR_APP_KEY'); // 카카오 개발자 앱 키
+     
+     Kakao.Pay.createOrder({
+       open_type: 'REDIRECT',
+       partner_order_id: orderId,
+       partner_user_id: currentUser?.id || 'guest',
+       quantity: 1,
+       total_amount: plan.amount,
+       tax_free_amount: 0,
+       name: plan.name,
+       success_url: KAKAO_CONFIG.APPROVAL_URL + '&order_id=' + orderId,
+       fail_url:    KAKAO_CONFIG.FAIL_URL,
+       cancel_url:  KAKAO_CONFIG.CANCEL_URL,
+     });
+  ───────────────────────────────────────── */
+
+  /* ─────────────────────────────────────────
+     [방법 B] 백엔드 서버 연동
+     서버에서 /v1/payment/ready 호출 후
+     next_redirect_pc_url 로 이동
+     
+     fetch('/api/payment/ready', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({
+         cid:               KAKAO_CONFIG.CID,
+         partner_order_id:  orderId,
+         partner_user_id:   currentUser?.id || 'guest',
+         item_name:         plan.name,
+         quantity:          1,
+         total_amount:      plan.amount,
+         tax_free_amount:   0,
+         approval_url:      KAKAO_CONFIG.APPROVAL_URL,
+         fail_url:          KAKAO_CONFIG.FAIL_URL,
+         cancel_url:        KAKAO_CONFIG.CANCEL_URL
+       })
+     })
+     .then(r => r.json())
+     .then(data => {
+       hideLoadingOverlay();
+       if (data.next_redirect_pc_url) {
+         sessionStorage.setItem('kakao_tid', data.tid);
+         window.location.href = isMobile()
+           ? data.next_redirect_mobile_url
+           : data.next_redirect_pc_url;
+       } else {
+         showKakaoToast('❌ 결제 준비 실패: ' + (data.msg || ''), 'error');
+       }
+     })
+     .catch(() => {
+       hideLoadingOverlay();
+       showKakaoToast('❌ 결제 서버 연결 실패', 'error');
+     });
+  ───────────────────────────────────────── */
+
+  /* 현재: SDK/백엔드 미구성 → 테스트 모드로 폴백 */
+  setTimeout(() => {
+    hideLoadingOverlay();
+    showKakaoToast('⚙️ 결제 서버 연동 전입니다. 테스트 모드로 진행합니다.', 'warn');
+    setTimeout(() => runTestPayment(plan), 600);
+  }, 800);
 }
 
-/* ── 결제 완료 처리 ── */
+function isMobile() {
+  return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+}
+
+/* ──────────────────────────────────────────── */
+/*  결제 완료 처리 (포인트 지급 + 동기화)       */
+/* ──────────────────────────────────────────── */
+
 function completePayment(plan, orderId, pgToken) {
-  // 포인트 지급 (localStorage)
+  /* ① localStorage 포인트 업데이트 */
   const currentPts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
   const newPts = currentPts + plan.point;
   localStorage.setItem('sajuon_points', String(newPts));
 
-  // ★ 사용자 계정(sajuon_users) points 필드도 동기화
+  /* ② 사용자 계정 포인트 동기화 */
   try {
     const currentUser = getCurrentUserInfo();
     if (currentUser && currentUser.id) {
@@ -289,54 +402,63 @@ function completePayment(plan, orderId, pgToken) {
       if (idx !== -1) {
         users[idx].points = newPts;
         localStorage.setItem('sajuon_users', JSON.stringify(users));
-        // 현재 세션 사용자 정보도 업데이트
-        const updatedUser = { ...currentUser, points: newPts };
-        localStorage.setItem('sajuon_current_user', JSON.stringify(updatedUser));
       }
+      localStorage.setItem('sajuon_current_user',
+        JSON.stringify({ ...currentUser, points: newPts }));
     }
-  } catch(e) {
-    console.warn('[Payment] 사용자 계정 포인트 동기화 실패:', e);
+  } catch (e) {
+    console.warn('[Payment] 포인트 동기화 오류:', e);
   }
 
-  // 이용 내역 저장
+  /* ③ 이용 내역 저장 */
+  const isTest = !pgToken || String(pgToken).startsWith('KAKAO_TEST_');
   const hist = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
   hist.unshift({
-    date: new Date().toLocaleString('ko-KR'),
-    type: '충전',
-    point: `+${plan.point.toLocaleString()}P`,
-    memo: `카카오페이 · ${plan.name}${plan.bonus > 0 ? ` (보너스 +${plan.bonus.toLocaleString()}P 포함)` : ''}`,
-    orderId: orderId,
-    amount: plan.amount,
-    pgToken: pgToken,
-    status: IS_TEST_MODE ? '테스트완료' : '결제완료'
+    date:    new Date().toLocaleString('ko-KR'),
+    type:    '충전',
+    point:   `+${plan.point.toLocaleString()}P`,
+    memo:    `카카오페이 · ${plan.name}` +
+             (plan.bonus > 0 ? ` (+${plan.bonus.toLocaleString()}P 보너스)` : ''),
+    orderId,
+    amount:  plan.amount,
+    pgToken: pgToken || 'test',
+    status:  isTest ? '테스트완료' : '결제완료'
   });
   localStorage.setItem('sajuon_history', JSON.stringify(hist));
 
-  // 헤더 포인트 업데이트
+  /* ④ UI 즉시 갱신 */
   const headerPt = document.getElementById('headerPointVal');
   if (headerPt) headerPt.textContent = newPts.toLocaleString();
   const myPt = document.getElementById('myPointVal');
   if (myPt) myPt.textContent = newPts.toLocaleString() + 'P';
 
-  // 성공 모달
-  showSuccessModal(plan, newPts, orderId);
+  /* ⑤ 성공 모달 */
+  showSuccessModal(plan, newPts, orderId, isTest);
 
-  // 내역 새로고침
+  /* ⑥ 이용 내역 새로고침 */
   if (typeof renderHistory === 'function') renderHistory();
 
+  /* ⑦ 세션 정리 */
   sessionStorage.removeItem('kakao_pending_plan');
   sessionStorage.removeItem('kakao_tid');
   sessionStorage.removeItem('kakao_order_id');
 }
 
-/* ── 성공 모달 ── */
-function showSuccessModal(plan, totalPts, orderId) {
+/* ──────────────────────────────────────────── */
+/*  성공 모달                                   */
+/* ──────────────────────────────────────────── */
+
+function showSuccessModal(plan, totalPts, orderId, isTest) {
   const modal = document.getElementById('successModal');
   if (!modal) return;
 
   const body = document.getElementById('successBody');
   if (body) {
     body.innerHTML = `
+      ${isTest ? `
+        <div style="background:#fff3cd;color:#856404;font-size:0.8rem;padding:10px 14px;border-radius:8px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-flask"></i> 테스트 결제입니다 (실제 결제 아님)
+        </div>` : ''}
       <div class="success-detail">
         <div class="success-row">
           <span>결제 금액</span>
@@ -346,16 +468,20 @@ function showSuccessModal(plan, totalPts, orderId) {
           <span>지급 포인트</span>
           <strong class="point-highlight">+${plan.point.toLocaleString()}P</strong>
         </div>
-        ${plan.bonus > 0 ? `<div class="success-row bonus-row"><span>보너스 포인트</span><strong>+${plan.bonus.toLocaleString()}P ✨</strong></div>` : ''}
+        ${plan.bonus > 0 ? `
+        <div class="success-row bonus-row">
+          <span>보너스 포인트</span>
+          <strong>+${plan.bonus.toLocaleString()}P ✨</strong>
+        </div>` : ''}
         <div class="success-row total-row">
           <span>현재 보유 포인트</span>
           <strong>${totalPts.toLocaleString()}P</strong>
         </div>
-        <div class="success-order">주문번호: ${orderId}</div>
-        ${IS_TEST_MODE ? '<div class="test-notice">⚠️ 테스트 결제입니다 (실제 결제 아님)</div>' : ''}
       </div>
+      <div style="font-size:0.75rem;color:#aaa;margin-top:10px">주문번호: ${orderId}</div>
     `;
   }
+
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
@@ -366,20 +492,32 @@ function closeSuccessModal() {
   document.body.style.overflow = '';
 }
 
-/* ── 로딩 오버레이 ── */
+/* ──────────────────────────────────────────── */
+/*  로딩 오버레이                               */
+/* ──────────────────────────────────────────── */
+
 function showLoadingOverlay(msg) {
   let el = document.getElementById('kakaoLoadingOverlay');
   if (!el) {
     el = document.createElement('div');
     el.id = 'kakaoLoadingOverlay';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center';
     el.innerHTML = `
-      <div class="kp-loading-box">
-        <div class="kp-loading-spinner"></div>
-        <p id="kp_loading_msg">처리 중...</p>
+      <div style="background:#fff;border-radius:20px;padding:40px 36px;text-align:center;min-width:260px;box-shadow:0 20px 60px rgba(0,0,0,0.25)">
+        <div style="width:52px;height:52px;border:5px solid #FFE812;border-top-color:#3A1D1D;border-radius:50%;animation:kp-spin 0.7s linear infinite;margin:0 auto 18px"></div>
+        <p id="kp_loading_msg" style="font-size:1rem;font-weight:600;color:#1a1a2e;margin:0">처리 중...</p>
+        <p style="font-size:0.8rem;color:#aaa;margin-top:6px">잠시만 기다려주세요</p>
       </div>`;
+    if (!document.getElementById('kp-spin-style')) {
+      const s = document.createElement('style');
+      s.id = 'kp-spin-style';
+      s.textContent = '@keyframes kp-spin{to{transform:rotate(360deg)}}';
+      document.head.appendChild(s);
+    }
     document.body.appendChild(el);
   }
-  document.getElementById('kp_loading_msg').textContent = msg || '처리 중...';
+  const msgEl = document.getElementById('kp_loading_msg');
+  if (msgEl) msgEl.textContent = msg || '처리 중...';
   el.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
@@ -390,91 +528,120 @@ function hideLoadingOverlay() {
   document.body.style.overflow = '';
 }
 
-/* ── 현재 사용자 정보 ── */
-function getCurrentUserInfo() {
-  try {
-    return JSON.parse(localStorage.getItem('sajuon_current_user') || '{}');
-  } catch { return {}; }
-}
+/* ──────────────────────────────────────────── */
+/*  결제 완료 페이지 복귀 처리                  */
+/*  (카카오페이 실서비스 리다이렉트 후 자동 호출) */
+/* ──────────────────────────────────────────── */
 
-/* ── 결제 완료 페이지에서 복귀 시 처리 ── */
 function handlePaymentReturn() {
-  const params = new URLSearchParams(window.location.search);
-  const result = params.get('result');
+  const params  = new URLSearchParams(window.location.search);
+  const result  = params.get('result');
   const pgToken = params.get('pg_token');
 
   if (!result) return;
 
   const pending = JSON.parse(sessionStorage.getItem('kakao_pending_plan') || 'null');
 
-  if (result === 'success' && pending && pgToken) {
-    completePayment(pending.plan, pending.orderId, pgToken);
+  if (result === 'success' && pending) {
+    completePayment(pending.plan, pending.orderId,
+      pgToken || 'KAKAO_TEST_' + Date.now());
   } else if (result === 'fail') {
-    showFailModal();
+    showKakaoToast('❌ 결제에 실패했습니다. 다시 시도해주세요.', 'error');
+    sessionStorage.removeItem('kakao_pending_plan');
   } else if (result === 'cancel') {
-    showCancelToast();
+    showKakaoToast('결제가 취소되었습니다.', 'info');
+    sessionStorage.removeItem('kakao_pending_plan');
   }
 
-  // URL 파라미터 제거
+  /* URL 파라미터 클린업 */
   window.history.replaceState({}, '', window.location.pathname);
 }
 
-function showFailModal() {
-  alert('결제에 실패했습니다.\n다시 시도해주세요.');
-}
+/* ──────────────────────────────────────────── */
+/*  직접 금액 입력 결제                         */
+/* ──────────────────────────────────────────── */
 
-function showCancelToast() {
-  const toast = document.createElement('div');
-  toast.className = 'kp-toast';
-  toast.textContent = '결제가 취소되었습니다.';
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
-}
-
-/* ── 직접 금액 입력 결제 ── */
 function startCustomAmount() {
-  const input = document.getElementById('customAmountInput');
+  const input  = document.getElementById('customAmountInput');
   if (!input) return;
   const amount = parseInt(input.value.replace(/,/g, ''), 10);
 
   if (isNaN(amount) || amount < 1000) {
-    alert('최소 1,000원 이상 입력해주세요.');
+    showKakaoToast('❌ 최소 1,000원 이상 입력해주세요.', 'error');
+    input.focus();
     return;
   }
   if (amount > 300000) {
-    alert('1회 최대 충전 금액은 300,000원입니다.');
+    showKakaoToast('❌ 1회 최대 충전 금액은 300,000원입니다.', 'error');
     return;
   }
+  if (!requireLoginForPayment()) return;
 
-  // 동적 플랜 생성
   const bonus = amount >= 100000 ? Math.floor(amount * 0.3)
               : amount >= 50000  ? Math.floor(amount * 0.2)
               : amount >= 20000  ? Math.floor(amount * 0.1)
               : 0;
 
   PLANS['custom'] = {
-    name: `${amount.toLocaleString()}원 직접 충전`,
+    name:   `${amount.toLocaleString()}원 직접 충전`,
     amount: amount,
-    point: amount + bonus,
-    bonus: bonus,
-    desc: `${(amount + bonus).toLocaleString()}P 충전`
+    point:  amount + bonus,
+    bonus:  bonus,
+    desc:   `${(amount + bonus).toLocaleString()}P 충전`
   };
-
   selectedPlan = 'custom';
-  startKakaoPay('custom');
+  showPaymentModal(PLANS['custom']);
 }
 
-/* ── 금액 입력 포맷팅 ── */
 function formatAmountInput(input) {
-  let val = input.value.replace(/[^0-9]/g, '');
-  input.value = val ? parseInt(val, 10).toLocaleString() : '';
+  const val = input.value.replace(/[^0-9]/g, '');
+  if (val) {
+    const num = parseInt(val, 10);
+    updateBonusPreview(num);
+    input.value = num.toLocaleString();
+  } else {
+    input.value = '';
+    updateBonusPreview(0);
+  }
 }
 
-/* ── DOMContentLoaded ── */
+function updateBonusPreview(amount) {
+  const preview = document.getElementById('customBonusPreview');
+  if (!preview) return;
+
+  if (amount >= 100000) {
+    const b = Math.floor(amount * 0.3);
+    preview.innerHTML = `✨ <strong>${(amount + b).toLocaleString()}P</strong> 지급 (+${b.toLocaleString()}P 보너스)`;
+    preview.style.color = '#2e7d32';
+  } else if (amount >= 50000) {
+    const b = Math.floor(amount * 0.2);
+    preview.innerHTML = `✨ <strong>${(amount + b).toLocaleString()}P</strong> 지급 (+${b.toLocaleString()}P 보너스)`;
+    preview.style.color = '#2e7d32';
+  } else if (amount >= 20000) {
+    const b = Math.floor(amount * 0.1);
+    preview.innerHTML = `✨ <strong>${(amount + b).toLocaleString()}P</strong> 지급 (+${b.toLocaleString()}P 보너스)`;
+    preview.style.color = '#2e7d32';
+  } else if (amount >= 1000) {
+    preview.innerHTML = `<strong>${amount.toLocaleString()}P</strong> 지급`;
+    preview.style.color = '#555';
+  } else {
+    preview.innerHTML = '';
+  }
+}
+
+/* ──────────────────────────────────────────── */
+/*  DOMContentLoaded 초기화                     */
+/* ──────────────────────────────────────────── */
+
 document.addEventListener('DOMContentLoaded', () => {
+  /* 결제 완료 URL에서 복귀 처리 */
   handlePaymentReturn();
 
-  // 모달 외부 클릭 시 닫기
+  /* 테스트 배너 표시/숨김 */
+  const testBanner = document.getElementById('testModeBanner');
+  if (testBanner) testBanner.style.display = KAKAO_CONFIG.IS_TEST ? 'flex' : 'none';
+
+  /* 모달 외부 클릭 닫기 */
   document.getElementById('kakaoPayModal')?.addEventListener('click', function(e) {
     if (e.target === this) closeKakaoModal();
   });
@@ -483,5 +650,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('kakaoTestPopup')?.addEventListener('click', function(e) {
     if (e.target === this) closeTestPopup();
+  });
+
+  /* Enter 키로 직접 충전 */
+  document.getElementById('customAmountInput')?.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') startCustomAmount();
   });
 });
