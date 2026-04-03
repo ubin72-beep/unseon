@@ -547,6 +547,9 @@ const SPREAD_INFO = {
 
 /* ── 초기화 ── */
 document.addEventListener('DOMContentLoaded', () => {
+  // 포인트 초기화 (비로그인 500P 무료 지급 포함)
+  if (typeof initPoints === 'function') initPoints();
+
   if (typeof initHeader === 'function') initHeader();
   if (typeof initHamburger === 'function') initHamburger();
 
@@ -580,11 +583,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (headerPointVal) headerPointVal.textContent   = pts.toLocaleString();
       if (btnCharge)      btnCharge.style.display      = 'inline-flex';
     } else {
+      // 비로그인: 포인트 표시 + 로그인 버튼
+      var pts2 = parseInt(localStorage.getItem('sajuon_points') || '500', 10);
       if (btnLogin)    btnLogin.style.display    = 'inline-flex';
       if (btnSignup)   btnSignup.style.display   = 'inline-flex';
       if (userMenuWrap) userMenuWrap.style.display = 'none';
-      if (headerPoints) headerPoints.style.display = 'none';
-      if (btnCharge)   btnCharge.style.display    = 'none';
+      if (headerPoints)   headerPoints.style.display   = 'flex';
+      if (headerPointVal) headerPointVal.textContent   = pts2.toLocaleString();
+      if (btnCharge)   btnCharge.style.display    = 'inline-flex';
     }
   })();
 
@@ -1135,7 +1141,7 @@ async function requestAIInterpretation(reading, question) {
   }, 900);
 
   try {
-    const apiKey = localStorage.getItem('gemini_api_key') || '';
+    const apiKey = localStorage.getItem('sajuon_gemini_key') || localStorage.getItem('gemini_api_key') || '';
     if (!apiKey) {
       clearInterval(stepInterval);
       analyzing.classList.remove('show');
@@ -1248,12 +1254,23 @@ function saveHistoryEntry(type, point, memo) {
   const hist = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
   hist.unshift({
     date:   new Date().toLocaleString('ko-KR'),
-    type:   '사용',
-    point:  `${point}P`,
-    memo:   `타로 상담 — ${memo.slice(0, 20)}`,
-    orderId: ''
+    type:   'AI 상담 · 타로카드',
+    amount: point,   // 숫자형 (음수 = 차감)
+    note:   (memo || '타로 상담').slice(0, 30)
   });
-  localStorage.setItem('sajuon_history', JSON.stringify(hist.slice(0, 100)));
+  localStorage.setItem('sajuon_history', JSON.stringify(hist.slice(0, 200)));
+  // 로그인 유저라면 sajuon_current_user 포인트도 동기화
+  try {
+    const user = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+    if (user && user.id) {
+      const newPts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+      user.points = Math.max(0, newPts);
+      localStorage.setItem('sajuon_current_user', JSON.stringify(user));
+      const users = JSON.parse(localStorage.getItem('sajuon_users') || '[]');
+      const idx = users.findIndex(u => u.id === user.id);
+      if (idx !== -1) { users[idx].points = user.points; localStorage.setItem('sajuon_users', JSON.stringify(users)); }
+    }
+  } catch(e2) {}
 }
 
 /* ── 카드 갤러리 ── */
