@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI 타로 상담 — 운세ON | 78장 완전판 타로카드</title>
+  <meta name="description" content="운세ON AI 타로 상담. 메이저·마이너 아르카나 78장 완전판. 5가지 스프레드(원카드·쓰리카드·관계·직업재물·켈틱크로스). 카드 직접 선택 인터랙션. 연애·직업·재물 맞춤 해석."/>
+  <meta name="keywords" content="타로카드,AI타로,타로상담,무료타로,켈틱크로스,쓰리카드,연애타로,직업타로,마이너아르카나"/>
+  <link rel="canonical" href="https://unseon.co.kr/tarot.html"/>
+  <meta property="og:title" content="AI 타로 상담 — 운세ON"/>
+  <meta property="og:description" content="78장 타로카드로 AI가 깊이 있는 해석을 제공합니다."/>
+  <meta property="og:url" content="https://unseon.co.kr/tarot.html"/>
+  <meta name="theme-color" content="#0a0818"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/tarot.css"/>
+
+  <style>
+    body { background: #f0eff8; }
+
+    /* 헤더 스크롤 시 배경 */
+    .site-header.scrolled { background: rgba(10,8,24,0.95) !important; }
+
+    /* 포인트 안내 박스 추가 스타일 */
+    .point-notice a { color: #667eea; font-weight: 700; margin-left: 8px; }
+
+    /* 결과 공유 버튼 */
+    .share-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1.5px solid #e0d8f5;
+      background: #f8f5ff;
+      color: #5a4b8a;
+      transition: all 0.2s;
+    }
+    .share-btn:hover { background: #eeeaff; border-color: #667eea; color: #667eea; }
+
+    /* 포인트 부족 배너 */
+    .low-point-notice {
+      background: linear-gradient(135deg, #ff6b6b, #ee0979);
+      color: #fff;
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+    .low-point-notice i { font-size: 1.3rem; flex-shrink: 0; }
+    .low-point-notice a { color: #fff; text-decoration: underline; font-weight: 800; }
+
+    /* 78장 갤러리 섹션 */
+    .gallery-section {
+      background: linear-gradient(135deg, #0f0c29, #1a1042);
+      border-radius: 24px;
+      padding: 28px 24px;
+      margin-top: 40px;
+    }
+    .gallery-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--tarot-gold, #FFE812);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .gallery-sub {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 18px;
+    }
+    .gallery-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .gallery-tab {
+      padding: 6px 16px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border-radius: 20px;
+      cursor: pointer;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.5);
+      background: transparent;
+      transition: all 0.2s;
+    }
+    .gallery-tab.active {
+      background: rgba(255,232,18,0.2);
+      border-color: rgba(255,232,18,0.5);
+      color: var(--tarot-gold, #FFE812);
+    }
+    .gallery-toggle-btn {
+      margin-left: auto;
+      background: rgba(255,255,255,0.08);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 6px 16px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: rgba(255,255,255,0.6);
+      transition: all 0.2s;
+    }
+    .gallery-toggle-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+    /* 카드 입수 이펙트 */
+    @keyframes cardDraw {
+      0%   { transform: translate(-50%,-50%) scale(0.3) rotateY(-90deg); opacity: 0; }
+      60%  { transform: translate(-50%,-50%) scale(1.1) rotateY(5deg); opacity: 1; }
+      100% { transform: translate(-50%,-50%) scale(1) rotateY(0deg); opacity: 1; }
+    }
+    .card-draw-effect {
+      animation: cardDraw 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+    }
+
+    /* 결과 카드 강조 */
+    .result-card-highlight {
+      border: 2px solid rgba(255,232,18,0.6) !important;
+      box-shadow: 0 0 0 4px rgba(255,232,18,0.15), 0 8px 32px rgba(0,0,0,0.4) !important;
+    }
+
+    /* 상태 바 */
+    .tarot-status-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px 20px;
+      margin-bottom: 24px;
+      font-size: 0.82rem;
+      color: #555;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+      flex-wrap: wrap;
+    }
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-item i { color: #667eea; }
+    .status-pt { font-weight: 800; color: #1a1a2e; }
+
+    /* 스프레드 설명 패널 */
+    .spread-info-panel {
+      background: linear-gradient(135deg, #f0eeff, #fff);
+      border: 1.5px solid rgba(102,126,234,0.2);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      font-size: 0.83rem;
+      color: #555;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s;
+    }
+    .spread-info-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .spread-info-name { font-weight: 800; color: #1a1a2e; font-size: 0.92rem; }
+    .spread-info-desc { font-size: 0.78rem; color: #666; margin-top: 3px; }
+
+    /* 뽑기 방법 선택 */
+    .draw-method-wrap {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .draw-method-btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 14px 16px;
+      border: 2px solid #e0d8f5;
+      border-radius: 14px;
+      background: #fff;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .draw-method-btn:hover { border-color: #667eea; }
+    .draw-method-btn.active {
+      border-color: #667eea;
+      background: linear-gradient(135deg, #f0eeff, #fff);
+      box-shadow: 0 4px 16px rgba(102,126,234,0.2);
+    }
+    .draw-method-icon { font-size: 1.6rem; margin-bottom: 6px; }
+    .draw-method-name { font-size: 0.82rem; font-weight: 800; color: #1a1a2e; }
+    .draw-method-desc { font-size: 0.7rem; color: #888; margin-top: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header" id="siteHeader">
+  <div class="container header-inner">
+    <a href="index.html" class="logo">운세<span class="logo-on">ON</span></a>
+    <nav class="main-nav" id="mainNav">
+      <a href="index.html" class="nav-link">홈</a>
+      <a href="chat.html" class="nav-link">AI 상담</a>
+      <a href="tarot.html" class="nav-link active">타로</a>
+      <a href="pricing.html" class="nav-link">충전</a>
+    </nav>
+    <div class="header-actions" id="headerActions">
+      <div class="point-display" id="headerPoints" style="display:none">
+        <i class="fas fa-coins"></i> <span id="headerPointVal">0</span>P
+      </div>
+      <a href="auth.html" class="btn btn-login" id="btnLogin"><i class="fas fa-sign-in-alt"></i> 로그인</a>
+      <a href="auth.html?tab=register" class="btn btn-signup" id="btnSignup"><i class="fas fa-user-plus"></i> 회원가입</a>
+      <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
+        <button class="user-menu-btn" onclick="toggleUserMenu()">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <span class="user-name-label" id="userNameLabel">사용자</span>
+          <i class="fas fa-chevron-down" style="font-size:0.7rem"></i>
+        </button>
+        <div class="user-dropdown" id="userDropdown" style="display:none">
+          <div class="user-dropdown-header">
+            <div class="user-dropdown-name" id="dropdownName"></div>
+            <div class="user-dropdown-email" id="dropdownEmail"></div>
+            <div class="user-dropdown-pt"><i class="fas fa-coins"></i> <span id="dropdownPt">0</span>P</div>
+          </div>
+          <div class="user-dropdown-links">
+            <a href="pricing.html"><i class="fas fa-coins"></i> 포인트 충전</a>
+            <a href="chat.html"><i class="fas fa-comments"></i> AI 상담</a>
+          </div>
+          <button class="user-logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
+        </div>
+      </div>
+      <a href="pricing.html" class="btn btn-charge" id="btnCharge">충전하기</a>
+    </div>
+  </div>
+</header>
+
+<div class="tarot-page">
+
+  <!-- ── 히어로 배너 ── -->
+  <div class="tarot-hero">
+    <div class="tarot-stars" id="tarotStars"></div>
+    <div class="tarot-hero-badge"><i class="fas fa-magic"></i> 78장 타로카드 완전판 AI 상담</div>
+    <h1>🃏 AI 타로 상담</h1>
+    <p class="tarot-hero-sub">
+      메이저·마이너 아르카나 78장 · 5가지 스프레드 · 카드 직접 선택<br/>
+      AI가 당신의 질문에 맞는 깊이 있는 타로 해석을 제공합니다
+    </p>
+    <!-- 플로팅 카드 데코 -->
+    <div class="tarot-hero-cards" id="heroCards"></div>
+  </div>
+
+  <!-- ── 오늘의 타로 ── -->
+  <div class="section-title"><i class="fas fa-star" style="color:#FFE812"></i> 오늘의 타로</div>
+  <div class="today-tarot-section" id="todayTarotSection" onclick="scrollToInput()">
+    <div style="text-align:center;color:rgba(255,255,255,0.4);padding:20px">
+      <div class="tarot-shuffle-anim">🃏</div>
+      <div style="margin-top:12px;font-size:0.85rem">카드를 뽑는 중...</div>
+    </div>
+  </div>
+
+  <!-- ── 상태 바 ── -->
+  <div class="tarot-status-bar" id="statusBar">
+    <div class="status-item">
+      <i class="fas fa-coins"></i>
+      보유 포인트: <span class="status-pt" id="myPointShow">0P</span>
+    </div>
+    <div class="status-item" style="margin-left:auto;font-size:0.78rem;color:#888">
+      타로 상담 1회: <strong style="color:#1a1a2e">100P</strong>
+      <a href="pricing.html" style="color:#667eea;font-weight:700;margin-left:8px">충전 →</a>
+    </div>
+  </div>
+
+  <!-- ── 스프레드 선택 ── -->
+  <div class="section-title"><i class="fas fa-layer-group" style="color:#667eea"></i> 스프레드 선택</div>
+  <div class="spread-selector" id="spreadSelector">
+    <div class="spread-card active" data-spread="auto" onclick="selectSpreadType(this,'auto')">
+      <div class="spread-badge">추천</div>
+      <div class="spread-icon">🤖</div>
+      <div class="spread-name">자동 선택</div>
+      <div class="spread-count">질문 분석</div>
+      <div class="spread-desc-sm">AI가 최적 스프레드 선택</div>
+    </div>
+    <div class="spread-card" data-spread="one" onclick="selectSpreadType(this,'one')">
+      <div class="spread-icon">🎴</div>
+      <div class="spread-name">원 카드</div>
+      <div class="spread-count">1장</div>
+      <div class="spread-desc-sm">오늘의 핵심 메시지</div>
+    </div>
+    <div class="spread-card" data-spread="three" onclick="selectSpreadType(this,'three')">
+      <div class="spread-icon">🃏</div>
+      <div class="spread-name">쓰리 카드</div>
+      <div class="spread-count">3장</div>
+      <div class="spread-desc-sm">과거 · 현재 · 미래</div>
+    </div>
+    <div class="spread-card" data-spread="relation" onclick="selectSpreadType(this,'relation')">
+      <div class="spread-icon">💕</div>
+      <div class="spread-name">관계 스프레드</div>
+      <div class="spread-count">5장</div>
+      <div class="spread-desc-sm">연애·인간관계 분석</div>
+    </div>
+    <div class="spread-card" data-spread="career" onclick="selectSpreadType(this,'career')">
+      <div class="spread-icon">💼</div>
+      <div class="spread-name">직업·재물</div>
+      <div class="spread-count">5장</div>
+      <div class="spread-desc-sm">직업·재정 목표 분석</div>
+    </div>
+    <div class="spread-card" data-spread="celtic" onclick="selectSpreadType(this,'celtic')">
+      <div class="spread-icon">✝️</div>
+      <div class="spread-name">켈틱 크로스</div>
+      <div class="spread-count">10장</div>
+      <div class="spread-desc-sm">인생 전반 심층 분석</div>
+    </div>
+  </div>
+
+  <!-- 스프레드 설명 -->
+  <div class="spread-info-panel" id="spreadInfoPanel">
+    <div class="spread-info-icon">🤖</div>
+    <div>
+      <div class="spread-info-name">자동 선택 — AI 질문 분석</div>
+      <div class="spread-info-desc">질문 내용을 분석하여 가장 적합한 스프레드를 자동으로 선택합니다</div>
+    </div>
+  </div>
+
+  <!-- ── 뽑기 방법 선택 ── -->
+  <div class="section-title"><i class="fas fa-hand-sparkles" style="color:#f093fb"></i> 뽑기 방법</div>
+  <div class="draw-method-wrap" id="drawMethodWrap">
+    <div class="draw-method-btn active" data-method="random" onclick="selectDrawMethod(this,'random')">
+      <div class="draw-method-icon">🔀</div>
+      <div class="draw-method-name">자동 셔플</div>
+      <div class="draw-method-desc">카드를 자동으로 섞어 뽑기</div>
+    </div>
+    <div class="draw-method-btn" data-method="pick" onclick="selectDrawMethod(this,'pick')">
+      <div class="draw-method-icon">👆</div>
+      <div class="draw-method-name">카드 직접 선택</div>
+      <div class="draw-method-desc">78장 중 직접 카드 선택</div>
+    </div>
+  </div>
+
+  <!-- ── 질문 입력 ── -->
+  <div class="tarot-question-wrap" id="questionWrap">
+    <h3><i class="fas fa-feather-alt" style="color:#667eea"></i> 질문을 입력하세요</h3>
+    <div class="tarot-input-area">
+      <textarea class="tarot-input" id="tarotQuestion" rows="2"
+        placeholder="예) 현재 연애운은 어떤가요? / 이번 이직이 잘 될까요? / 오늘 나에게 필요한 메시지는?"></textarea>
+      <button class="tarot-submit-btn" id="tarotSubmitBtn" onclick="startTarotReading()">
+        <i class="fas fa-magic"></i> 카드 뽑기
+      </button>
+    </div>
+    <div class="quick-tags" id="quickTags">
+      <span class="quick-tag" onclick="setQuestion(this)">💕 오늘 연애운</span>
+      <span class="quick-tag" onclick="setQuestion(this)">💼 이직이 잘 될까?</span>
+      <span class="quick-tag" onclick="setQuestion(this)">💰 재물운 알려줘</span>
+      <span class="quick-tag" onclick="setQuestion(this)">🌟 오늘 나에게 필요한 메시지</span>
+      <span class="quick-tag" onclick="setQuestion(this)">❤️ 썸남/썸녀 마음이 궁금해</span>
+      <span class="quick-tag" onclick="setQuestion(this)">🔮 인생 전반 심층 분석</span>
+      <span class="quick-tag" onclick="setQuestion(this)">🏢 직장 내 갈등 해결법</span>
+      <span class="quick-tag" onclick="setQuestion(this)">🌱 새로운 시작을 앞두고</span>
+    </div>
+  </div>
+
+  <!-- ── 셔플 로딩 ── -->
+  <div class="tarot-loading" id="tarotLoading">
+    <div class="tarot-shuffle-anim">🃏</div>
+    <div class="tarot-loading-text" id="loadingText">카드를 셔플하는 중입니다...</div>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:center">
+      <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,232,18,0.4);display:inline-block;animation:pulse 1.2s ease infinite 0s"></span>
+      <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,232,18,0.4);display:inline-block;animation:pulse 1.2s ease infinite 0.2s"></span>
+      <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,232,18,0.4);display:inline-block;animation:pulse 1.2s ease infinite 0.4s"></span>
+    </div>
+  </div>
+
+  <!-- ── 결과 섹션 ── -->
+  <div class="tarot-result-section" id="tarotResultSection">
+
+    <!-- 헤더 -->
+    <div class="result-header">
+      <div class="result-spread-badge" id="resultSpreadBadge">
+        <i class="fas fa-magic"></i> <span id="resultSpreadName">—</span>
+      </div>
+      <div class="result-q" id="resultQuestion"></div>
+    </div>
+
+    <!-- 카드 비주얼 -->
+    <div id="cardVisualArea"></div>
+
+    <!-- 상세 해석 탭 -->
+    <div class="interp-tabs" id="interpTabs">
+      <button class="interp-tab active" onclick="switchTab(this,'overall')">📖 종합 해석</button>
+      <button class="interp-tab" onclick="switchTab(this,'cards')">🃏 카드별 의미</button>
+      <button class="interp-tab" onclick="switchTab(this,'love')">❤️ 연애</button>
+      <button class="interp-tab" onclick="switchTab(this,'work')">💼 직업</button>
+      <button class="interp-tab" onclick="switchTab(this,'money')">💰 재물</button>
+    </div>
+
+    <!-- AI 분석 중 -->
+    <div class="ai-analyzing" id="aiAnalyzing">
+      <div class="ai-spin"></div>
+      <div style="font-size:0.92rem;font-weight:700;color:#FFE812">AI가 카드를 해석하고 있습니다...</div>
+      <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-top:6px">카드의 에너지와 당신의 질문을 연결 중</div>
+      <div class="ai-steps" id="aiSteps">
+        <div class="ai-step" id="step1"><div class="ai-step-dot"></div>카드 에너지 감지 중...</div>
+        <div class="ai-step" id="step2"><div class="ai-step-dot"></div>스프레드 패턴 분석 중...</div>
+        <div class="ai-step" id="step3"><div class="ai-step-dot"></div>AI 해석 생성 중...</div>
+      </div>
+    </div>
+
+    <!-- AI 해석 결과 -->
+    <div class="ai-result-box" id="aiResultBox">
+      <div class="ai-result-title"><i class="fas fa-star"></i> AI 타로 마스터 해석</div>
+      <div id="aiResultText"></div>
+    </div>
+
+    <!-- 카드별 상세 -->
+    <div id="cardInterpArea" style="display:none"></div>
+
+    <!-- 공유 & 재상담 -->
+    <div class="share-row">
+      <button class="retry-btn" onclick="resetTarot()">
+        <i class="fas fa-redo"></i> 다시 뽑기
+      </button>
+      <button class="share-btn" onclick="copyResult()">
+        <i class="fas fa-copy"></i> 결과 복사
+      </button>
+      <button class="share-btn" onclick="saveResultImage()">
+        <i class="fas fa-download"></i> 저장
+      </button>
+    </div>
+  </div>
+
+  <!-- ── 78장 카드 갤러리 ── -->
+  <div class="gallery-section" id="gallerySection">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:4px">
+      <div>
+        <div class="gallery-title"><i class="fas fa-th"></i> 78장 타로카드 전체</div>
+        <div class="gallery-sub">카드를 클릭하면 상세 의미를 볼 수 있습니다</div>
+      </div>
+      <button class="gallery-toggle-btn" id="galleryToggleBtn" onclick="toggleGallery()">펼치기 ▼</button>
+    </div>
+    <div class="gallery-tabs" id="galleryTabs" style="display:none">
+      <button class="gallery-tab active" onclick="filterGallery(this,'all')">전체 78장</button>
+      <button class="gallery-tab" onclick="filterGallery(this,'major')">메이저 22장</button>
+      <button class="gallery-tab" onclick="filterGallery(this,'wands')">🔥 완드</button>
+      <button class="gallery-tab" onclick="filterGallery(this,'cups')">💧 컵</button>
+      <button class="gallery-tab" onclick="filterGallery(this,'swords')">⚔️ 검</button>
+      <button class="gallery-tab" onclick="filterGallery(this,'pentacles')">⭐ 펜타클</button>
+    </div>
+    <div id="cardGallery" style="display:none">
+      <div class="card-gallery" id="galleryInner"></div>
+    </div>
+  </div>
+
+</div><!-- /.tarot-page -->
+
+<!-- ── 카드 선택 오버레이 ── -->
+<div class="card-pick-overlay" id="cardPickOverlay">
+  <div class="card-pick-header">
+    <h2>🃏 카드를 직접 선택하세요</h2>
+    <p id="pickDesc">이끌리는 카드를 <strong id="pickCountNeeded">?</strong>장 선택하세요</p>
+    <div class="card-pick-counter">
+      선택 <span id="pickCountCurrent">0</span> / <span id="pickCountTotal">?</span>장
+    </div>
+  </div>
+  <div class="card-pick-grid" id="cardPickGrid"></div>
+  <button class="card-pick-close-btn" onclick="closeCardPicker()">취소</button>
+</div>
+
+<!-- ── 카드 상세 모달 ── -->
+<div class="card-detail-modal" id="cardDetailModal" onclick="closeCardDetail(event)">
+  <div class="card-detail-inner" id="cardDetailInner">
+    <button class="card-detail-close" onclick="closeCardDetail()">✕</button>
+    <div class="card-detail-card-wrap">
+      <div id="detailCardVisual"></div>
+      <div style="flex:1">
+        <div class="card-detail-name" id="detailCardName"></div>
+        <div class="card-detail-sub" id="detailCardSub"></div>
+      </div>
+    </div>
+    <div class="card-detail-section">
+      <div class="card-detail-section-title">⬆️ 정방향</div>
+      <div class="card-detail-text" id="detailUpright"></div>
+    </div>
+    <div class="card-detail-section">
+      <div class="card-detail-section-title">🔄 역방향</div>
+      <div class="card-detail-text" id="detailReversed"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 사업자 정보 바 ── -->
+<div class="biz-info-bar">
+  <div class="container">
+    <span><strong>운세ON</strong> (운영: 큐브박스)</span>
+    <span class="sep">|</span><span>대표 김미화</span>
+    <span class="sep">|</span><span>사업자등록번호 537-08-03349</span>
+    <span class="sep">|</span><span>📞 0502-1909-7788</span>
+    <span class="sep">|</span><span class="biz-links">
+      <a href="terms.html">이용약관</a>
+      <a href="privacy.html">개인정보처리방침</a>
+      <a href="refund.html">환불정책</a>
+    </span>
+  </div>
+</div>
+
+<script src="js/auth.js?v=20260502"></script>
+<script src="js/main.js?v=20260502"></script>
+<script src="js/tarot.js?v=20260502"></script>
+<script src="js/gemini.js?v=20260502"></script>
+<script>
+/* =====================================================
+   타로 페이지 — 메인 스크립트
+   ===================================================== */
+let currentSpreadType = 'auto';
+let currentDrawMethod = 'random';
+let currentReading    = null;
+let currentTab        = 'overall';
+let pickedCards       = [];   // 직접 선택한 카드 인덱스 배열
+let needCardCount     = 1;
+let galleryOpen       = false;
+let currentGalleryFilter = 'all';
+
+/* ── 스프레드 정보 ── */
+const SPREAD_INFO = {
+  auto:     { icon: '🤖', name: '자동 선택 — AI 질문 분석',      desc: '질문 내용을 분석하여 가장 적합한 스프레드를 자동으로 선택합니다',       count: '?' },
+  one:      { icon: '🎴', name: '원 카드 — 오늘의 핵심 메시지',   desc: '지금 이 순간 당신에게 가장 필요한 하나의 메시지를 전달합니다',           count: 1   },
+  three:    { icon: '🃏', name: '쓰리 카드 — 과거·현재·미래',     desc: '현재 상황을 만든 과거, 지금 상황, 앞으로의 결과를 한눈에 보여줍니다',   count: 3   },
+  relation: { icon: '💕', name: '관계 스프레드 — 연애·인간관계',  desc: '두 사람의 에너지, 감정, 연결, 장애물, 방향을 5장으로 분석합니다',       count: 5   },
+  career:   { icon: '💼', name: '직업·재물 스프레드',             desc: '현재 상황, 강점, 장애물, 행동 지침, 최종 결과를 5장으로 분석합니다',     count: 5   },
+  celtic:   { icon: '✝️', name: '켈틱 크로스 — 인생 심층 분석',  desc: '10장으로 현재 상황, 과거·미래, 내면, 외부 환경, 최종 결과를 통합 분석', count: 10  }
+};
+
+/* ── 초기화 ── */
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof initHeader === 'function') initHeader();
+  if (typeof initHamburger === 'function') initHamburger();
+  renderHeroStars();
+  renderHeroCards();
+  renderTodayTarot();
+  updatePointDisplay();
+  renderGallery('all');
+
+  /* 스크롤 시 헤더 처리 */
+  window.addEventListener('scroll', () => {
+    const h = document.getElementById('siteHeader');
+    if (h) h.classList.toggle('scrolled', window.scrollY > 40);
+  });
+});
+
+/* ── 별빛 파티클 ── */
+function renderHeroStars() {
+  const container = document.getElementById('tarotStars');
+  if (!container) return;
+  const sizes = [2,2,2,3,3,2,2,3,2,2,4,2,2,3,2,2,2,3,2,2];
+  sizes.forEach((s, i) => {
+    const star = document.createElement('div');
+    star.className = 'tarot-star';
+    star.style.cssText = `
+      width:${s}px;height:${s}px;
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      --dur:${2+Math.random()*3}s;
+      --delay:${Math.random()*3}s;
+    `;
+    container.appendChild(star);
+  });
+}
+
+/* ── 히어로 플로팅 카드 ── */
+function renderHeroCards() {
+  const container = document.getElementById('heroCards');
+  if (!container || typeof MAJOR_ARCANA === 'undefined') return;
+  const picks = [0, 19, 2, 17, 6]; // 바보, 태양, 여사제, 별, 연인
+  const rotations = [[-5,5],[-3,3],[0,4],[-4,2],[-2,6]];
+  const delays = ['0s','0.5s','1s','1.5s','0.8s'];
+  const durations = ['3s','3.5s','2.8s','3.2s','3s'];
+
+  picks.forEach((cardIdx, i) => {
+    const card = MAJOR_ARCANA[cardIdx];
+    const theme = CARD_THEMES.major[cardIdx] || {};
+    const [r1, r2] = rotations[i];
+    const el = document.createElement('div');
+    el.className = 'hero-float-card';
+    el.style.cssText = `
+      background:linear-gradient(135deg,${theme.bg||'#667eea'},${theme.accent||'#764ba2'});
+      --r:${r1}deg; --r2:${r2}deg; --dur:${durations[i]}; --d:${delays[i]};
+    `;
+    el.innerHTML = `<span style="font-size:1.4rem">${theme.symbol||'🃏'}</span><div class="hero-float-name">${card.kr}</div>`;
+    container.appendChild(el);
+  });
+}
+
+/* ── 포인트 업데이트 ── */
+function updatePointDisplay() {
+  const pts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+  const el = document.getElementById('myPointShow');
+  if (el) el.textContent = pts.toLocaleString() + 'P';
+  const headerPt = document.getElementById('headerPointVal');
+  if (headerPt) headerPt.textContent = pts.toLocaleString();
+}
+
+/* ── 오늘의 타로 렌더링 ── */
+function renderTodayTarot() {
+  if (typeof getTodayTarot === 'undefined') return;
+  const card = getTodayTarot();
+  const sec = document.getElementById('todayTarotSection');
+  if (!sec) return;
+
+  sec.innerHTML = `
+    <div class="today-badge">날짜 고정 카드</div>
+    <div class="today-header">
+      <div>
+        <div class="today-title"><i class="fas fa-moon"></i> 오늘의 타로</div>
+        <div class="today-date">${card.date}</div>
+      </div>
+      <div style="font-size:0.75rem;color:rgba(255,255,255,0.35)">클릭하면 상담 시작</div>
+    </div>
+    <div class="today-card-wrap">
+      <div class="today-card-big">
+        <div class="tarot-card-front" style="width:108px;height:174px;background:linear-gradient(135deg,${card.bg||'#667eea'},${card.accent||'#764ba2'})">
+          <div class="tarot-card-num">${card.num||''}</div>
+          <div class="tarot-card-symbol" style="font-size:2.8rem">${card.emoji}</div>
+          <div class="tarot-card-name" style="font-size:0.72rem">${card.kr||card.name}</div>
+          ${card.isReversed ? '<div class="tarot-reversed-mark">🔄 역방향</div>' : '<div class="tarot-upright-mark">↑ 정방향</div>'}
+        </div>
+      </div>
+      <div class="today-card-info">
+        <div class="today-card-title">${card.kr||card.name}</div>
+        <div class="today-card-dir">
+          ${card.isReversed ? '🔄 역방향' : '↑ 정방향'}
+          ${card.type === 'major' ? `<span style="background:rgba(255,232,18,0.15);color:#FFE812;font-size:0.68rem;padding:2px 8px;border-radius:10px;margin-left:8px">메이저 아르카나</span>` : `<span style="background:rgba(168,237,234,0.15);color:#a8edea;font-size:0.68rem;padding:2px 8px;border-radius:10px;margin-left:8px">마이너 아르카나</span>`}
+        </div>
+        <div class="today-card-keywords">
+          ${(card.keyword||[]).map(k=>`<span class="today-keyword-tag">${k}</span>`).join('')}
+        </div>
+        <div class="today-card-theme">${card.theme}</div>
+        <div class="today-card-message">💫 ${card.dailyMessage}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── 스프레드 선택 ── */
+function selectSpreadType(el, type) {
+  document.querySelectorAll('.spread-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  currentSpreadType = type;
+
+  const info = SPREAD_INFO[type] || SPREAD_INFO.auto;
+  const panel = document.getElementById('spreadInfoPanel');
+  if (panel) {
+    panel.innerHTML = `
+      <div class="spread-info-icon">${info.icon}</div>
+      <div>
+        <div class="spread-info-name">${info.name}</div>
+        <div class="spread-info-desc">${info.desc}</div>
+      </div>
+    `;
+  }
+}
+
+/* ── 뽑기 방법 선택 ── */
+function selectDrawMethod(el, method) {
+  document.querySelectorAll('.draw-method-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentDrawMethod = method;
+}
+
+/* ── 빠른 질문 태그 ── */
+function setQuestion(el) {
+  const text = el.textContent.replace(/^[^\w가-힣]+/, '').trim();
+  document.getElementById('tarotQuestion').value = text;
+  document.getElementById('tarotQuestion').focus();
+  document.getElementById('questionWrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/* ── 스크롤 to 입력창 ── */
+function scrollToInput() {
+  const el = document.getElementById('questionWrap');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => document.getElementById('tarotQuestion').focus(), 600);
+}
+
+/* ── 타로 리딩 시작 ── */
+function startTarotReading() {
+  const question = document.getElementById('tarotQuestion').value.trim();
+
+  /* 포인트 체크 */
+  const pts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+  if (pts < 100) {
+    alert('포인트가 부족합니다.\n타로 상담은 100P가 필요합니다.\n충전 페이지로 이동합니다.');
+    window.location.href = 'pricing.html';
+    return;
+  }
+
+  /* 직접 선택 모드 */
+  if (currentDrawMethod === 'pick') {
+    openCardPicker(question);
+    return;
+  }
+
+  /* 자동 셔플 모드 */
+  runReading(question, null);
+}
+
+/* ── 카드 선택 오버레이 오픈 ── */
+function openCardPicker(question) {
+  const spreadType = currentSpreadType;
+  let count = 1;
+  if (spreadType === 'three' || spreadType === 'relation' || spreadType === 'career') count = (spreadType === 'three') ? 3 : 5;
+  else if (spreadType === 'celtic') count = 10;
+  else if (spreadType === 'one') count = 1;
+  else {
+    // auto — 질문 분석해서 예상 수 결정
+    if (/심층|종합|전반|켈틱/.test(question)) count = 10;
+    else if (/연애|사랑|관계|이별|썸/.test(question)) count = 5;
+    else if (/취업|직장|이직|사업|재물|돈/.test(question)) count = 5;
+    else if (/앞으로|미래|결과|선택/.test(question)) count = 3;
+    else count = 1;
+  }
+
+  needCardCount = count;
+  pickedCards = [];
+
+  document.getElementById('pickCountNeeded').textContent = count;
+  document.getElementById('pickCountCurrent').textContent = '0';
+  document.getElementById('pickCountTotal').textContent = count;
+
+  /* 78장 카드 그리드 렌더 */
+  renderPickerGrid();
+
+  const overlay = document.getElementById('cardPickOverlay');
+  overlay.classList.add('active');
+  overlay.dataset.question = question;
+}
+
+function renderPickerGrid() {
+  const grid = document.getElementById('cardPickGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  for (let i = 0; i < 78; i++) {
+    let emoji, name, num;
+    if (i < 22) {
+      const card = MAJOR_ARCANA[i];
+      const theme = CARD_THEMES.major[i] || {};
+      emoji = theme.symbol || '🃏';
+      name = card.kr;
+      num = card.num;
+    } else {
+      const suitIdx = Math.floor((i - 22) / 14);
+      const numIdx  = ((i - 22) % 14) + 1;
+      const suitKeys = ['wands', 'cups', 'swords', 'pentacles'];
+      const suitKey = suitKeys[suitIdx];
+      const suit = MINOR_SUITS[suitKey];
+      const numM = MINOR_NUMBER_MEANING[numIdx];
+      const theme = CARD_THEMES[suitKey] || {};
+      emoji = theme.symbol || '🃏';
+      name = suit.kr + ' ' + numM.name;
+      num = suitKey.slice(0,1).toUpperCase();
+    }
+
+    const el = document.createElement('div');
+    el.className = 'pick-card-item';
+    el.dataset.idx = i;
+    el.innerHTML = `
+      <div class="pick-card-num">${num||''}</div>
+      <div class="pick-card-symbol">${emoji}</div>
+      <div class="pick-card-name">${name}</div>
+    `;
+    el.onclick = () => togglePickCard(el, i);
+    grid.appendChild(el);
+  }
+}
+
+function togglePickCard(el, idx) {
+  const alreadyIdx = pickedCards.indexOf(idx);
+  if (alreadyIdx >= 0) {
+    pickedCards.splice(alreadyIdx, 1);
+    el.classList.remove('selected');
+  } else {
+    if (pickedCards.length >= needCardCount) {
+      // 이미 꽉 찼으면 첫번째 제선택
+      const firstSelected = document.querySelector('.pick-card-item.selected');
+      if (firstSelected) {
+        const firstIdx = parseInt(firstSelected.dataset.idx);
+        pickedCards = pickedCards.filter(i => i !== firstIdx);
+        firstSelected.classList.remove('selected');
+      }
+    }
+    pickedCards.push(idx);
+    el.classList.add('selected');
+  }
+  document.getElementById('pickCountCurrent').textContent = pickedCards.length;
+
+  if (pickedCards.length === needCardCount) {
+    /* 자동 진행 */
+    setTimeout(() => {
+      const question = document.getElementById('cardPickOverlay').dataset.question || '';
+      closeCardPicker();
+      runReading(question, pickedCards);
+    }, 400);
+  }
+}
+
+function closeCardPicker() {
+  document.getElementById('cardPickOverlay').classList.remove('active');
+}
+
+/* ── 실제 리딩 실행 ── */
+function runReading(question, selectedCardIds) {
+  /* 포인트 차감 */
+  const pts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+  const newPts = pts - 100;
+  localStorage.setItem('sajuon_points', String(newPts));
+  saveHistoryEntry('타로 상담', -100, question || '오늘의 타로');
+  updatePointDisplay();
+
+  /* 로딩 UI */
+  document.getElementById('tarotLoading').classList.add('show');
+  document.getElementById('tarotResultSection').classList.remove('show');
+  document.getElementById('tarotSubmitBtn').disabled = true;
+
+  const loadingMessages = [
+    '카드를 셔플하는 중입니다...',
+    '우주의 에너지를 읽는 중...',
+    '카드와 당신의 에너지를 연결 중...',
+    '타로 마스터가 준비 중입니다...',
+  ];
+  let msgIdx = 0;
+  const msgEl = document.getElementById('loadingText');
+  const msgInterval = setInterval(() => {
+    msgIdx = (msgIdx + 1) % loadingMessages.length;
+    if (msgEl) msgEl.textContent = loadingMessages[msgIdx];
+  }, 600);
+
+  setTimeout(() => {
+    clearInterval(msgInterval);
+
+    /* 스프레드 실행 */
+    let reading;
+    if (selectedCardIds && selectedCardIds.length > 0) {
+      reading = buildReadingFromSelected(question, selectedCardIds);
+    } else {
+      switch (currentSpreadType) {
+        case 'one':      reading = drawOneCard(question); break;
+        case 'three':    reading = drawThreeCards(question); break;
+        case 'relation': reading = drawRelationshipCards(question); break;
+        case 'career':   reading = drawCareerCards(question); break;
+        case 'celtic':   reading = drawCelticCross(question); break;
+        default:         reading = selectSpread(question); break;
+      }
+    }
+    currentReading = reading;
+
+    document.getElementById('tarotLoading').classList.remove('show');
+    renderReadingResult(reading, question);
+    document.getElementById('tarotSubmitBtn').disabled = false;
+  }, 1800);
+}
+
+/* ── 직접 선택한 카드로 리딩 구성 ── */
+function buildReadingFromSelected(question, cardIds) {
+  /* 스프레드 타입에 맞게 포지션 설정 */
+  let spreadData;
+  const count = cardIds.length;
+
+  if (count === 1) {
+    spreadData = { spread: '원 카드', spreadIcon: '🎴', desc: '당신이 직접 선택한 카드의 메시지',
+      positions: [{ pos: '✨ 선택한 카드', posDesc: '당신이 이끌린 카드의 메시지' }] };
+  } else if (count === 3) {
+    spreadData = { spread: '쓰리 카드', spreadIcon: '🃏', desc: '당신이 직접 선택한 3장의 흐름',
+      positions: [
+        { pos: '⏪ 과거 (원인)', posDesc: '현재 상황을 만든 과거의 에너지' },
+        { pos: '⚡ 현재 (상황)', posDesc: '지금 이 순간의 핵심 에너지' },
+        { pos: '🔮 미래 (결과)', posDesc: '현재 흐름이 이어질 결과' }
+      ]};
+  } else if (count === 5) {
+    if (/연애|사랑|관계|이별|썸|남친|여친/.test(question)) {
+      spreadData = { spread: '관계 스프레드', spreadIcon: '💕', desc: '당신이 직접 선택한 5장의 관계 에너지',
+        positions: [
+          { pos: '💭 나의 감정', posDesc: '현재 내가 느끼는 감정과 에너지' },
+          { pos: '💫 상대의 마음', posDesc: '상대방의 내면과 숨겨진 감정' },
+          { pos: '🔗 우리의 연결', posDesc: '두 사람 사이의 실제 에너지' },
+          { pos: '🚧 장애물', posDesc: '관계를 가로막는 요소' },
+          { pos: '🌟 앞으로의 방향', posDesc: '이 관계가 향하는 방향' }
+        ]};
+    } else {
+      spreadData = { spread: '직업·재물 스프레드', spreadIcon: '💼', desc: '당신이 직접 선택한 5장의 현실 에너지',
+        positions: [
+          { pos: '📍 현재 상황', posDesc: '지금 직업/재정 상황의 핵심' },
+          { pos: '💪 강점/기회', posDesc: '활용할 수 있는 강점' },
+          { pos: '⚠️ 장애물', posDesc: '극복해야 할 도전' },
+          { pos: '🎯 행동 지침', posDesc: '지금 당장 취해야 할 행동' },
+          { pos: '🏆 최종 결과', posDesc: '올바른 행동을 했을 때의 결과' }
+        ]};
+    }
+  } else {
+    spreadData = { spread: '켈틱 크로스', spreadIcon: '✝️', desc: '당신이 직접 선택한 10장의 심층 분석',
+      positions: [
+        { pos: '⚡ 현재 상황', posDesc: '지금 이 순간의 핵심' },
+        { pos: '🔀 장애물/도움', posDesc: '현재를 가로막거나 돕는 힘' },
+        { pos: '🌱 먼 과거', posDesc: '이 상황의 근본적 원인' },
+        { pos: '⏮️ 가까운 과거', posDesc: '최근 일어난 영향' },
+        { pos: '🔮 가능한 결과', posDesc: '현재 흐름의 잠재적 결과' },
+        { pos: '⏭️ 가까운 미래', posDesc: '곧 다가올 에너지' },
+        { pos: '🧠 내면의 자아', posDesc: '자신에 대한 내면 인식' },
+        { pos: '🌍 외부 환경', posDesc: '주변 환경과 타인의 영향' },
+        { pos: '🌗 희망과 두려움', posDesc: '원하면서도 두려워하는 것' },
+        { pos: '🏁 최종 결과', posDesc: '모든 것이 통합된 최종 방향' }
+      ]};
+  }
+
+  const seed = (question || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0) + Date.now();
+  let s = seed;
+  function rand() { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; }
+
+  const cards = cardIds.map((idx, i) => {
+    const isReversed = rand() > 0.5;
+    const info = getCardInfo({ idx, reversed: isReversed });
+    const pos = spreadData.positions[i] || { pos: `카드 ${i+1}`, posDesc: '' };
+    return { position: pos.pos, positionDesc: pos.posDesc, ...info };
+  });
+
+  return { spread: spreadData.spread, spreadIcon: spreadData.spreadIcon, desc: spreadData.desc, cards };
+}
+
+/* ── 결과 렌더링 ── */
+function renderReadingResult(reading, question) {
+  document.getElementById('resultSpreadName').textContent = reading.spread;
+  document.getElementById('resultQuestion').textContent   = question ? `"${question}"` : '오늘의 타로';
+
+  /* 카드 비주얼 */
+  const visualArea = document.getElementById('cardVisualArea');
+  if (reading.cards.length === 10) {
+    visualArea.innerHTML = renderCelticLayout(reading);
+  } else {
+    visualArea.innerHTML = renderTarotReadingHTML(reading);
+  }
+
+  document.getElementById('tarotResultSection').classList.add('show');
+  document.getElementById('tarotResultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  /* 카드 순차 등장 애니메이션 */
+  document.querySelectorAll('.tarot-card-visual').forEach((el, i) => {
+    el.style.animationDelay = (i * 0.12) + 's';
+  });
+
+  /* 카드별 해석 준비 */
+  renderCardInterpretations(reading);
+
+  /* AI 해석 요청 */
+  requestAIInterpretation(reading, question);
+}
+
+/* ── 켈틱 크로스 레이아웃 ── */
+function renderCelticLayout(reading) {
+  const c = reading.cards;
+  const cellCards = c.map((card, i) => renderTarotCardHTML(card, i));
+
+  return `
+    <div class="tarot-reading-wrap" style="overflow:auto">
+      <div class="tarot-spread-title">
+        <span>${reading.spreadIcon||'✝️'}</span>
+        <span>${reading.spread}</span>
+        <span class="tarot-spread-desc">${reading.desc||''}</span>
+      </div>
+      <div class="celtic-layout">
+        <div class="celtic-pos-1">${cellCards[0]}</div>
+        <div class="celtic-pos-2">${cellCards[1]}</div>
+        <div class="celtic-pos-3">${cellCards[2]}</div>
+        <div class="celtic-pos-4">${cellCards[3]}</div>
+        <div class="celtic-pos-5">${cellCards[4]}</div>
+        <div class="celtic-pos-6">${cellCards[5]}</div>
+        <div class="celtic-pos-7">${cellCards[6]}</div>
+        <div class="celtic-pos-8">${cellCards[7]}</div>
+        <div class="celtic-pos-9">${cellCards[8]}</div>
+        <div class="celtic-pos-10">${cellCards[9]}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── 카드별 해석 렌더링 ── */
+function renderCardInterpretations(reading) {
+  const area = document.getElementById('cardInterpArea');
+  area.innerHTML = reading.cards.map((card, i) => `
+    <div class="card-interpretation" style="animation-delay:${i*0.08}s">
+      <div class="card-interp-header">
+        <span class="card-interp-pos">${card.position}</span>
+        <span class="card-interp-name">${card.emoji} ${card.kr||card.name}</span>
+        <span class="card-interp-dir">${card.direction}</span>
+      </div>
+      <div class="card-interp-theme">${card.theme}</div>
+      <div class="card-interp-advice">💡 ${card.advice}</div>
+      ${card.keyword && card.keyword.length > 0 ? `
+        <div class="card-interp-keywords">
+          ${card.keyword.map(k=>`<span class="card-keyword">${k}</span>`).join('')}
+        </div>` : ''}
+      ${card.love  ? `<div class="card-love">❤️ 연애: ${card.love}</div>` : ''}
+      ${card.work  ? `<div class="card-work">💼 직업: ${card.work}</div>` : ''}
+      ${card.money ? `<div class="card-money">💰 재물: ${card.money}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+/* ── 탭 전환 ── */
+function switchTab(el, tab) {
+  document.querySelectorAll('.interp-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentTab = tab;
+
+  const aiBox    = document.getElementById('aiResultBox');
+  const cardArea = document.getElementById('cardInterpArea');
+
+  if (tab === 'cards') {
+    aiBox.style.display    = 'none';
+    cardArea.style.display = 'block';
+    return;
+  }
+
+  cardArea.style.display = 'none';
+
+  if (tab === 'overall') {
+    aiBox.style.display = aiBox.classList.contains('show') ? 'block' : 'none';
+    return;
+  }
+
+  const fieldMap = { love: '❤️ 연애', work: '💼 직업', money: '💰 재물' };
+  const fieldKey  = tab;
+  const label     = fieldMap[tab] || tab;
+
+  if (!currentReading) return;
+  const cards = currentReading.cards.filter(c => c[fieldKey]);
+
+  if (cards.length === 0) {
+    aiBox.innerHTML = `<div class="ai-result-title"><i class="fas fa-info-circle"></i> ${label} 정보</div>
+      <div style="color:rgba(255,255,255,0.5);font-size:0.85rem">선택된 카드에 ${label} 정보가 없습니다. (마이너 아르카나 카드에는 없을 수 있습니다)</div>`;
+    aiBox.classList.add('show');
+    aiBox.style.display = 'block';
+    return;
+  }
+
+  const html = cards.map(c => `
+    <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.08)">
+      <div style="font-size:0.78rem;color:#FFE812;font-weight:700;margin-bottom:6px">${c.emoji} ${c.kr||c.name} [${c.position}]</div>
+      <div style="font-size:0.86rem;color:#e0e0e0;line-height:1.7">${c[fieldKey]}</div>
+    </div>
+  `).join('');
+
+  aiBox.innerHTML = `<div class="ai-result-title"><i class="fas fa-star"></i> ${label} 분석</div>${html}`;
+  aiBox.classList.add('show');
+  aiBox.style.display = 'block';
+}
+
+/* ── AI 해석 요청 ── */
+async function requestAIInterpretation(reading, question) {
+  const analyzing = document.getElementById('aiAnalyzing');
+  const resultBox = document.getElementById('aiResultBox');
+  const resultTxt = document.getElementById('aiResultText');
+  const steps = ['step1', 'step2', 'step3'];
+
+  analyzing.classList.add('show');
+  resultBox.classList.remove('show');
+  resultBox.style.display = 'none';
+
+  /* 진행 단계 애니메이션 */
+  let stepIdx = 0;
+  const stepInterval = setInterval(() => {
+    if (stepIdx > 0) {
+      const prev = document.getElementById(steps[stepIdx - 1]);
+      if (prev) prev.className = 'ai-step done';
+    }
+    if (stepIdx < steps.length) {
+      const cur = document.getElementById(steps[stepIdx]);
+      if (cur) cur.className = 'ai-step active';
+      stepIdx++;
+    } else {
+      clearInterval(stepInterval);
+    }
+  }, 900);
+
+  try {
+    const apiKey = localStorage.getItem('gemini_api_key') || '';
+    if (!apiKey) {
+      clearInterval(stepInterval);
+      analyzing.classList.remove('show');
+      resultBox.innerHTML = `
+        <div class="ai-result-title"><i class="fas fa-key"></i> AI 해석 안내</div>
+        <div style="font-size:0.86rem;color:rgba(255,255,255,0.65);line-height:1.8">
+          🔑 AI 심층 해석을 받으려면 Gemini API 키가 필요합니다.<br/>
+          📋 <strong style="color:#FFE812">[카드별 의미]</strong> 탭에서 각 카드의 상세 해석을 확인하세요.<br/>
+          또는 <a href="admin.html" style="color:#FFE812;font-weight:700">관리자 페이지</a>에서 API 키를 설정하면 AI 자동 해석을 받을 수 있습니다.
+        </div>`;
+      resultBox.classList.add('show');
+      resultBox.style.display = 'block';
+      return;
+    }
+
+    const promptText = tarotToPromptText(reading);
+    const systemMsg  = `당신은 20년 경력의 전문 타로 마스터입니다. 78장 타로카드의 모든 의미를 깊이 이해하고 있으며, 사용자의 질문에 맞는 통찰력 있는 해석을 한국어로 제공합니다.
+
+해석 원칙:
+- 뽑힌 카드들을 반드시 활용하여 질문에 맞는 스토리텔링을 하세요
+- 각 카드의 위치적 의미와 에너지를 연결하여 흐름을 만드세요
+- 구체적이고 실용적인 행동 지침을 포함하세요
+- 역방향 카드도 성장의 기회로 따뜻하게 재해석하세요
+- 마크다운(**, ##, ###)을 활용해 가독성 좋게 작성하세요
+- 해석 마지막에는 핵심 메시지를 한 문장으로 요약하세요`;
+
+    const userMsg = `${question ? `질문: "${question}"` : '오늘의 타로 리딩을 해주세요.'}\n${promptText}`;
+
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: systemMsg + '\n\n' + userMsg }] }],
+          generationConfig: { maxOutputTokens: 2400, temperature: 0.85 }
+        })
+      }
+    );
+
+    clearInterval(stepInterval);
+    steps.forEach(s => { const el = document.getElementById(s); if (el) el.className = 'ai-step done'; });
+
+    if (!resp.ok) throw new Error('API 오류 ' + resp.status);
+    const data = await resp.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '해석을 가져오지 못했습니다.';
+
+    analyzing.classList.remove('show');
+    resultTxt.innerHTML = markdownToHTML(text);
+    resultBox.classList.add('show');
+    resultBox.style.display = 'block';
+
+  } catch (e) {
+    clearInterval(stepInterval);
+    analyzing.classList.remove('show');
+    resultBox.innerHTML = `
+      <div class="ai-result-title"><i class="fas fa-exclamation-circle"></i> AI 해석 오류</div>
+      <div style="font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.7">
+        ${e.message}<br/>
+        📋 <strong style="color:#FFE812">[카드별 의미]</strong> 탭에서 상세 해석을 확인하세요.
+      </div>`;
+    resultBox.classList.add('show');
+    resultBox.style.display = 'block';
+  }
+}
+
+/* ── 간단 Markdown → HTML ── */
+function markdownToHTML(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#FFE812">$1</strong>')
+    .replace(/^## (.+)$/gm, '<div style="font-size:1rem;font-weight:900;color:#a8edea;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.1)">$1</div>')
+    .replace(/^### (.+)$/gm, '<div style="font-size:0.88rem;font-weight:800;color:#FFE812;margin:14px 0 6px">$1</div>')
+    .replace(/^- (.+)$/gm, '<div style="padding-left:16px;margin:4px 0;color:rgba(255,255,255,0.8)">• $1</div>')
+    .replace(/\n/g, '<br/>');
+}
+
+/* ── 결과 복사 ── */
+function copyResult() {
+  if (!currentReading) return;
+  let text = `🃏 타로 리딩 결과 — ${currentReading.spread}\n\n`;
+  currentReading.cards.forEach((card, i) => {
+    text += `${i+1}. ${card.position}\n   카드: ${card.emoji} ${card.kr||card.name} [${card.direction}]\n   ${card.theme}\n\n`;
+  });
+  text += '\n— 운세ON (unseon.co.kr)';
+  navigator.clipboard.writeText(text).then(() => {
+    alert('결과가 클립보드에 복사되었습니다!');
+  }).catch(() => {
+    alert('복사에 실패했습니다. 직접 선택하여 복사해 주세요.');
+  });
+}
+
+/* ── 결과 저장 (간단) ── */
+function saveResultImage() {
+  alert('📱 스크린샷을 사용하시거나, [결과 복사] 버튼으로 텍스트를 저장하세요.');
+}
+
+/* ── 리셋 ── */
+function resetTarot() {
+  document.getElementById('tarotResultSection').classList.remove('show');
+  document.getElementById('tarotQuestion').value = '';
+  currentReading = null;
+  /* 스프레드 탭 초기화 */
+  document.querySelectorAll('.interp-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
+  document.getElementById('questionWrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => document.getElementById('tarotQuestion').focus(), 600);
+}
+
+/* ── 이용 내역 저장 ── */
+function saveHistoryEntry(type, point, memo) {
+  const hist = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
+  hist.unshift({
+    date:   new Date().toLocaleString('ko-KR'),
+    type:   '사용',
+    point:  `${point}P`,
+    memo:   `타로 상담 — ${memo.slice(0, 20)}`,
+    orderId: ''
+  });
+  localStorage.setItem('sajuon_history', JSON.stringify(hist.slice(0, 100)));
+}
+
+/* ── 카드 갤러리 ── */
+let galleryRendered = false;
+function renderGallery(filter) {
+  const inner = document.getElementById('galleryInner');
+  if (!inner) return;
+  galleryRendered = true;
+  const frag = [];
+
+  if (filter === 'all' || filter === 'major') {
+    MAJOR_ARCANA.forEach(card => {
+      const theme = CARD_THEMES.major[card.id] || {};
+      frag.push(`
+        <div class="card-mini" title="${card.kr} (${card.name})"
+             style="background:linear-gradient(135deg,${theme.bg||'#555'},${theme.accent||'#888'})"
+             data-filter="major"
+             onclick="showCardDetail(${card.id},'major')">
+          <span style="font-size:1.3rem">${theme.symbol||'🃏'}</span>
+          <span>${card.num}</span>
+          <span>${card.kr}</span>
+        </div>
+      `);
+    });
+  }
+
+  if (filter === 'all' || ['wands','cups','swords','pentacles'].includes(filter)) {
+    const suitKeys = filter === 'all' ? ['wands','cups','swords','pentacles'] : [filter];
+    suitKeys.forEach(suitKey => {
+      const suit = MINOR_SUITS[suitKey];
+      const theme = CARD_THEMES[suitKey] || {};
+      for (let n = 1; n <= 14; n++) {
+        const num = MINOR_NUMBER_MEANING[n];
+        frag.push(`
+          <div class="card-mini" title="${suit.kr} ${num.name}"
+               style="background:linear-gradient(135deg,${theme.bg||'#555'},${theme.accent||'#888'})"
+               data-filter="${suitKey}"
+               onclick="showCardDetail(${22 + (['wands','cups','swords','pentacles'].indexOf(suitKey)) * 14 + n - 1},'minor')">
+            <span style="font-size:1.3rem">${theme.symbol||'🃏'}</span>
+            <span>${num.name}</span>
+            <span>${suit.kr}</span>
+          </div>
+        `);
+      }
+    });
+  }
+
+  inner.innerHTML = frag.join('');
+}
+
+function toggleGallery() {
+  galleryOpen = !galleryOpen;
+  const g = document.getElementById('cardGallery');
+  const tabs = document.getElementById('galleryTabs');
+  const btn = document.getElementById('galleryToggleBtn');
+  g.style.display    = galleryOpen ? 'block' : 'none';
+  tabs.style.display = galleryOpen ? 'flex' : 'none';
+  btn.textContent    = galleryOpen ? '접기 ▲' : '펼치기 ▼';
+  if (galleryOpen && !galleryRendered) renderGallery('all');
+}
+
+function filterGallery(el, filter) {
+  document.querySelectorAll('.gallery-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentGalleryFilter = filter;
+  renderGallery(filter);
+}
+
+/* ── 카드 상세 모달 ── */
+function showCardDetail(idx, type) {
+  let cardData, upright, reversed, subText;
+
+  if (type === 'major' && idx < 22) {
+    const card  = MAJOR_ARCANA[idx];
+    const theme = CARD_THEMES.major[idx] || {};
+    cardData = {
+      name: `${card.kr} (${card.name})`,
+      num: card.num,
+      emoji: theme.symbol || '🃏',
+      bg: theme.bg || '#667eea',
+      accent: theme.accent || '#764ba2',
+    };
+    subText = `메이저 아르카나 · ${card.num}번`;
+    upright  = card.upright.theme + '\n\n💡 ' + card.upright.advice;
+    reversed = card.reversed.theme + '\n\n💡 ' + card.reversed.advice;
+  } else {
+    const suitIdx = Math.floor((idx - 22) / 14);
+    const numIdx  = ((idx - 22) % 14) + 1;
+    const suitKeys = ['wands', 'cups', 'swords', 'pentacles'];
+    const suitKey  = suitKeys[suitIdx];
+    const suit  = MINOR_SUITS[suitKey];
+    const num   = MINOR_NUMBER_MEANING[numIdx];
+    const theme = CARD_THEMES[suitKey] || {};
+    cardData = {
+      name: `${suit.kr} ${num.name}`,
+      num: num.name,
+      emoji: theme.symbol || '🃏',
+      bg: theme.bg || '#888',
+      accent: theme.accent || '#aaa',
+    };
+    subText = `마이너 아르카나 · ${suit.kr} · ${suit.element}`;
+    upright  = suit.theme + ' — ' + num.upright;
+    reversed = num.reversed;
+  }
+
+  document.getElementById('detailCardName').textContent = cardData.name;
+  document.getElementById('detailCardSub').textContent  = subText;
+  document.getElementById('detailUpright').innerText    = upright;
+  document.getElementById('detailReversed').innerText   = reversed;
+
+  document.getElementById('detailCardVisual').innerHTML = `
+    <div class="tarot-card-front" style="width:80px;height:130px;background:linear-gradient(135deg,${cardData.bg},${cardData.accent})">
+      <div class="tarot-card-num">${cardData.num}</div>
+      <div class="tarot-card-symbol" style="font-size:1.8rem">${cardData.emoji}</div>
+      <div class="tarot-card-name" style="font-size:0.55rem">${cardData.name}</div>
+    </div>
+  `;
+
+  document.getElementById('cardDetailModal').classList.add('active');
+}
+
+function closeCardDetail(e) {
+  if (!e || e.target === document.getElementById('cardDetailModal')) {
+    document.getElementById('cardDetailModal').classList.remove('active');
+  }
+}
+</script>
+</body>
+</html>
