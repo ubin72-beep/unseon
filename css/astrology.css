@@ -1,0 +1,1270 @@
+/* =========================================================
+   운세ON — css/astrology.css  v1.0
+   서양 점성술 전용 완전 강화판
+
+   [포함 기능]
+   - 별자리 카드 비주얼 (12개 테마 색상)
+   - 행성 위치 디스플레이
+   - 출생 차트 그래픽
+   - 궁합 분석 UI
+   - 월별 운세 캘린더
+   - AI 해석 결과 박스
+   - 파티클 & 애니메이션 효과
+   - 완전 반응형 모바일 최적화
+   ========================================================= */
+
+/* =====================================================
+   0. CSS 변수
+   ===================================================== */
+:root {
+  --astro-dark:   #06041a;
+  --astro-navy:   #0d0b2e;
+  --astro-deep:   #1a1650;
+  --astro-purple: #3d1e8f;
+  --astro-violet: #6c3ce1;
+  --astro-gold:   #f5c842;
+  --astro-teal:   #4ecdc4;
+  --astro-pink:   #ff6b9d;
+  --astro-card-w: 90px;
+  --astro-card-h: 120px;
+}
+
+/* =====================================================
+   1. 페이지 기본 / 배경
+   ===================================================== */
+.astro-page-bg {
+  background: radial-gradient(ellipse at top, #1a1650 0%, #06041a 60%);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 별 파티클 */
+.astro-stars {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.astro-star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  animation: astroTwinkle var(--d, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+  opacity: 0;
+}
+@keyframes astroTwinkle {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50%       { opacity: var(--op, 0.8); transform: scale(1); }
+}
+
+/* =====================================================
+   2. 히어로 섹션
+   ===================================================== */
+.astro-hero {
+  position: relative;
+  padding: 60px 20px 40px;
+  text-align: center;
+  z-index: 1;
+}
+.astro-hero-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, rgba(108,60,225,0.3), rgba(78,205,196,0.3));
+  border: 1px solid rgba(108,60,225,0.5);
+  color: var(--astro-teal);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 5px 16px;
+  border-radius: 30px;
+  margin-bottom: 16px;
+}
+.astro-hero-title {
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 12px;
+  line-height: 1.2;
+  text-shadow: 0 0 40px rgba(108,60,225,0.6);
+}
+.astro-hero-title span {
+  background: linear-gradient(135deg, var(--astro-gold), var(--astro-teal));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.astro-hero-sub {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.6);
+  max-width: 500px;
+  margin: 0 auto 20px;
+  line-height: 1.6;
+}
+
+/* 히어로 행성 궤도 애니메이션 */
+.astro-orbit-wrap {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 20px auto;
+}
+.astro-orbit {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(108,60,225,0.25);
+  border-radius: 50%;
+}
+.astro-orbit-1 { width: 80px;  height: 80px;  }
+.astro-orbit-2 { width: 130px; height: 130px; }
+.astro-orbit-3 { width: 180px; height: 180px; }
+.astro-sun-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 38px; height: 38px;
+  background: radial-gradient(circle, #fff8d4, #f5c842);
+  border-radius: 50%;
+  box-shadow: 0 0 20px #f5c84280, 0 0 40px #f5c84240;
+  font-size: 1.3rem;
+  display: flex; align-items: center; justify-content: center;
+  animation: astroSunPulse 2s ease-in-out infinite;
+}
+@keyframes astroSunPulse {
+  0%,100% { box-shadow: 0 0 20px #f5c84280, 0 0 40px #f5c84240; }
+  50%      { box-shadow: 0 0 30px #f5c842b0, 0 0 60px #f5c84260; }
+}
+.astro-planet-orbit {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform-origin: 0 0;
+  animation: astroOrbitSpin linear infinite;
+}
+.astro-planet-orbit:nth-child(2)  { animation-duration: 6s; }
+.astro-planet-orbit:nth-child(3)  { animation-duration: 10s; }
+.astro-planet-orbit:nth-child(4)  { animation-duration: 15s; }
+@keyframes astroOrbitSpin {
+  from { transform: rotate(0deg) translateX(var(--r, 40px)) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(var(--r, 40px)) rotate(-360deg); }
+}
+.astro-planet-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem;
+  transform: translate(-50%, -50%);
+}
+
+/* =====================================================
+   3. 오늘의 별자리 섹션
+   ===================================================== */
+.today-astro-section {
+  background: linear-gradient(135deg, #0d0b2e 0%, #1a1650 50%, #0d0b2e 100%);
+  border-radius: 20px;
+  padding: 32px 28px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(108,60,225,0.2);
+  box-shadow: 0 8px 40px rgba(6,4,26,0.6);
+}
+.today-astro-section::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(108,60,225,0.15), transparent 70%);
+  pointer-events: none;
+}
+.today-astro-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.today-astro-icon {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, var(--astro-violet), var(--astro-teal));
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.today-astro-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+}
+.today-astro-date {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.45);
+  margin-top: 2px;
+}
+
+/* 별자리 선택 그리드 */
+.zodiac-pick-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.zodiac-pick-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+  color: #fff;
+}
+.zodiac-pick-btn:hover {
+  background: rgba(108,60,225,0.3);
+  border-color: rgba(108,60,225,0.6);
+  transform: translateY(-2px);
+}
+.zodiac-pick-btn.active {
+  background: linear-gradient(135deg, rgba(108,60,225,0.5), rgba(78,205,196,0.3));
+  border-color: var(--astro-violet);
+  box-shadow: 0 4px 16px rgba(108,60,225,0.3);
+}
+.zodiac-pick-symbol {
+  font-size: 1.1rem;
+  display: block;
+  margin-bottom: 3px;
+}
+.zodiac-pick-name {
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.7);
+}
+
+/* 오늘 운세 카드 */
+.today-astro-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 20px;
+  display: none;
+  animation: astroFadeIn 0.4s ease;
+}
+.today-astro-card.show { display: block; }
+
+@keyframes astroFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.today-sign-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.today-sign-big {
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+.today-sign-name-wrap .sign-kr { font-size: 1.2rem; font-weight: 800; color: #fff; }
+.today-sign-name-wrap .sign-en { font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 2px; }
+.today-sign-name-wrap .sign-dates { font-size: 0.7rem; color: rgba(255,255,255,0.35); }
+
+.today-stars-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.today-star-item {
+  flex: 1;
+  min-width: 80px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 8px 10px;
+  text-align: center;
+}
+.today-star-label { font-size: 0.65rem; color: rgba(255,255,255,0.5); margin-bottom: 3px; }
+.today-star-val   { font-size: 0.75rem; color: var(--astro-gold); }
+
+.today-msg-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.today-msg-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.today-msg-emoji { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+.today-msg-area  { font-size: 0.7rem; font-weight: 700; color: var(--astro-teal); margin-bottom: 2px; }
+.today-msg-text  { font-size: 0.78rem; color: rgba(255,255,255,0.75); line-height: 1.5; }
+
+.today-lucky-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.today-lucky-chip {
+  background: rgba(245,200,66,0.12);
+  border: 1px solid rgba(245,200,66,0.25);
+  color: var(--astro-gold);
+  font-size: 0.7rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* =====================================================
+   4. 별자리 선택 / 모드 탭
+   ===================================================== */
+.astro-mode-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  padding: 6px;
+}
+.astro-mode-tab {
+  flex: 1;
+  padding: 10px 8px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s;
+  text-align: center;
+  font-family: inherit;
+}
+.astro-mode-tab:hover { color: #fff; background: rgba(255,255,255,0.07); }
+.astro-mode-tab.active {
+  background: linear-gradient(135deg, var(--astro-violet), #4a2fd4);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(108,60,225,0.4);
+}
+
+/* =====================================================
+   5. 출생 정보 입력 폼
+   ===================================================== */
+.birth-form-card {
+  background: linear-gradient(135deg, #0d0b2e, #1a1650);
+  border: 1px solid rgba(108,60,225,0.25);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 24px;
+}
+.birth-form-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.birth-form-title .title-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--astro-violet), var(--astro-teal));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+}
+.birth-form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.birth-form-group {
+  flex: 1;
+  min-width: 120px;
+}
+.birth-form-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 6px;
+  letter-spacing: 0.03em;
+}
+.birth-form-input {
+  width: 100%;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.88rem;
+  padding: 10px 12px;
+  font-family: inherit;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+.birth-form-input:focus {
+  outline: none;
+  border-color: var(--astro-violet);
+  background: rgba(108,60,225,0.1);
+  box-shadow: 0 0 0 3px rgba(108,60,225,0.15);
+}
+.birth-form-input::placeholder { color: rgba(255,255,255,0.25); }
+.birth-form-input option       { background: #1a1650; color: #fff; }
+
+.astro-submit-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--astro-violet) 0%, #4a2fd4 100%);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 6px 24px rgba(108,60,225,0.35);
+}
+.astro-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 32px rgba(108,60,225,0.5);
+}
+.astro-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* =====================================================
+   6. 결과 섹션
+   ===================================================== */
+.astro-result-section {
+  display: none;
+  animation: astroFadeIn 0.5s ease;
+}
+.astro-result-section.show { display: block; }
+
+/* 결과 헤더 배너 */
+.astro-result-banner {
+  background: linear-gradient(135deg, var(--astro-deep), var(--astro-purple));
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  border: 1px solid rgba(108,60,225,0.3);
+}
+.astro-result-banner::before {
+  content: '';
+  position: absolute;
+  top: -40px; left: 50%;
+  transform: translateX(-50%);
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(108,60,225,0.2), transparent 70%);
+  pointer-events: none;
+}
+.result-banner-sign {
+  font-size: 2.5rem;
+  margin-bottom: 6px;
+  animation: astroSignBounce 1s ease;
+}
+@keyframes astroSignBounce {
+  0%   { transform: scale(0) rotate(-180deg); }
+  60%  { transform: scale(1.2) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+.result-banner-name  { font-size: 1.4rem; font-weight: 900; color: #fff; margin-bottom: 4px; }
+.result-banner-info  { font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-bottom: 12px; }
+.result-banner-stats {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.result-stat-chip {
+  background: rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.85);
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* 탭 네비게이션 */
+.astro-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  padding: 5px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.astro-tabs::-webkit-scrollbar { display: none; }
+.astro-tab {
+  flex: 0 0 auto;
+  padding: 9px 14px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.45);
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.astro-tab:hover { color: #fff; background: rgba(255,255,255,0.07); }
+.astro-tab.active {
+  background: linear-gradient(135deg, var(--astro-violet), #4a2fd4);
+  color: #fff;
+  box-shadow: 0 3px 12px rgba(108,60,225,0.4);
+}
+
+/* 탭 패널 */
+.astro-tab-panel { display: none; }
+.astro-tab-panel.active { display: block; animation: astroFadeIn 0.3s ease; }
+
+/* =====================================================
+   7. 별자리 카드
+   ===================================================== */
+.zodiac-card {
+  border-radius: 16px;
+  padding: 20px;
+  color: #fff;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+.zodiac-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+}
+.zodiac-card::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 100px; height: 100px;
+  background: radial-gradient(circle, rgba(255,255,255,0.15), transparent 70%);
+  pointer-events: none;
+}
+.zodiac-card-symbol { font-size: 2.2rem; margin-bottom: 4px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.zodiac-card-emoji  { font-size: 1.8rem; margin-bottom: 6px; }
+.zodiac-card-name   { font-size: 1rem; font-weight: 800; margin-bottom: 2px; }
+.zodiac-card-en     { font-size: 0.7rem; opacity: 0.7; margin-bottom: 6px; }
+.zodiac-card-dates  { font-size: 0.65rem; opacity: 0.55; margin-bottom: 6px; }
+.zodiac-card-element{ font-size: 0.7rem; background: rgba(0,0,0,0.2); border-radius: 20px; padding: 3px 10px; display: inline-block; margin-bottom: 4px; }
+.zodiac-card-ruler  { font-size: 0.72rem; opacity: 0.75; }
+
+.zodiac-card-sm {
+  border-radius: 12px;
+  padding: 12px 8px;
+}
+.zodiac-card-sm .zodiac-card-symbol { font-size: 1.5rem; }
+.zodiac-card-sm .zodiac-card-emoji  { font-size: 1.2rem; margin-bottom: 4px; }
+.zodiac-card-sm .zodiac-card-name   { font-size: 0.78rem; }
+.zodiac-card-sm .zodiac-card-en     { font-size: 0.6rem; }
+
+/* 12궁 그리드 */
+.zodiac-grid-12 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+@media (max-width: 600px) {
+  .zodiac-grid-12 { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* =====================================================
+   8. 행성 위치 디스플레이
+   ===================================================== */
+.planets-section {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.planets-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--astro-teal);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.planet-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.planet-item:last-child { border-bottom: none; }
+.planet-emoji  { font-size: 1.3rem; width: 26px; text-align: center; flex-shrink: 0; }
+.planet-name   { font-size: 0.8rem; font-weight: 700; color: #fff; width: 50px; flex-shrink: 0; }
+.planet-sign   { font-size: 0.8rem; color: rgba(255,255,255,0.75); flex: 1; }
+.planet-deg    { font-size: 0.7rem; color: rgba(255,255,255,0.35); font-family: monospace; }
+
+/* 행성 의미 툴팁 */
+.planet-meaning {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.4);
+  font-style: italic;
+  display: block;
+  margin-top: 1px;
+}
+
+/* =====================================================
+   9. 어스펙트 (각도 관계)
+   ===================================================== */
+.aspects-section {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.aspect-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  background: rgba(255,255,255,0.03);
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.75);
+}
+.aspect-item:last-child { margin-bottom: 0; }
+.aspect-emoji   { font-size: 1rem; flex-shrink: 0; }
+.aspect-planets { flex: 1; }
+.aspect-energy  {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.aspect-harmony .aspect-energy { background: rgba(78,205,196,0.2); color: var(--astro-teal); }
+.aspect-tension .aspect-energy { background: rgba(255,107,157,0.2); color: var(--astro-pink); }
+.aspect-item:not(.aspect-harmony):not(.aspect-tension) .aspect-energy { background: rgba(245,200,66,0.2); color: var(--astro-gold); }
+
+/* =====================================================
+   10. 원소 / 양식 분포
+   ===================================================== */
+.element-chart {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.element-chart-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--astro-gold);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.element-bars { display: flex; flex-direction: column; gap: 10px; }
+.element-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.element-bar-label {
+  width: 40px;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.65);
+  flex-shrink: 0;
+  font-weight: 600;
+}
+.element-bar-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.element-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s ease;
+}
+.element-bar-fill.fire   { background: linear-gradient(90deg, #e74c3c, #ff6b6b); }
+.element-bar-fill.earth  { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+.element-bar-fill.air    { background: linear-gradient(90deg, #f39c12, #f1c40f); }
+.element-bar-fill.water  { background: linear-gradient(90deg, #2980b9, #3498db); }
+.element-bar-count {
+  width: 18px;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.5);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* =====================================================
+   11. 하우스 분석
+   ===================================================== */
+.houses-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.house-item {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 12px;
+  transition: all 0.2s;
+}
+.house-item:hover {
+  background: rgba(108,60,225,0.1);
+  border-color: rgba(108,60,225,0.3);
+}
+.house-num-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.house-num {
+  width: 22px; height: 22px;
+  background: linear-gradient(135deg, var(--astro-violet), #4a2fd4);
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.house-emoji  { font-size: 0.9rem; }
+.house-name   { font-size: 0.72rem; font-weight: 700; color: #fff; }
+.house-title  { font-size: 0.65rem; color: var(--astro-teal); margin-bottom: 4px; font-weight: 600; }
+.house-desc   { font-size: 0.62rem; color: rgba(255,255,255,0.5); line-height: 1.4; }
+
+/* =====================================================
+   12. 궁합 분석
+   ===================================================== */
+.compat-result {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  display: none;
+  animation: astroFadeIn 0.4s ease;
+}
+.compat-result.show { display: block; }
+.compat-signs-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.compat-sign-box {
+  text-align: center;
+}
+.compat-sign-symbol {
+  font-size: 2.4rem;
+  margin-bottom: 4px;
+}
+.compat-sign-name { font-size: 0.85rem; font-weight: 700; color: #fff; }
+.compat-vs {
+  font-size: 1.5rem;
+  color: var(--astro-pink);
+  font-weight: 900;
+}
+.compat-score-circle {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  position: relative;
+}
+.compat-score-num   { font-size: 1.6rem; font-weight: 900; color: #fff; line-height: 1; }
+.compat-score-label { font-size: 0.6rem; color: rgba(255,255,255,0.6); }
+
+.compat-level-badge {
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.compat-emoji-row { text-align: center; font-size: 1.4rem; margin-bottom: 16px; letter-spacing: 0.1em; }
+
+.compat-elem-row {
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.5;
+}
+.compat-elem-label { font-weight: 700; color: var(--astro-teal); margin-bottom: 4px; font-size: 0.72rem; }
+
+.compat-list { display: flex; flex-direction: column; gap: 6px; }
+.compat-list-item {
+  display: flex;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.4;
+}
+.compat-list-item::before { flex-shrink: 0; margin-top: 2px; }
+.compat-list-item.strength::before { content: '✅'; }
+.compat-list-item.challenge::before { content: '⚡'; }
+
+.compat-advice {
+  background: linear-gradient(135deg, rgba(108,60,225,0.2), rgba(78,205,196,0.1));
+  border: 1px solid rgba(108,60,225,0.3);
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.6;
+  margin-top: 12px;
+  font-style: italic;
+}
+
+/* =====================================================
+   13. 월별 운세
+   ===================================================== */
+.monthly-forecast {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.month-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.month-item:hover,
+.month-item.highlight {
+  background: rgba(108,60,225,0.12);
+  border-color: rgba(108,60,225,0.3);
+}
+.month-item.current {
+  background: linear-gradient(135deg, rgba(108,60,225,0.2), rgba(78,205,196,0.1));
+  border-color: var(--astro-violet);
+}
+.month-num {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.07);
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--astro-gold);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.month-item.current .month-num {
+  background: linear-gradient(135deg, var(--astro-violet), var(--astro-teal));
+  color: #fff;
+}
+.month-text { font-size: 0.8rem; color: rgba(255,255,255,0.75); line-height: 1.5; }
+
+/* =====================================================
+   14. 2026 연간 운세
+   ===================================================== */
+.year-forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.year-forecast-item {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 14px;
+}
+.year-forecast-icon  { font-size: 1.3rem; margin-bottom: 6px; }
+.year-forecast-label { font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.5); margin-bottom: 4px; letter-spacing: 0.05em; text-transform: uppercase; }
+.year-forecast-text  { font-size: 0.78rem; color: rgba(255,255,255,0.85); line-height: 1.5; }
+
+.year-overall-box {
+  background: linear-gradient(135deg, rgba(108,60,225,0.2), rgba(78,205,196,0.1));
+  border: 1px solid rgba(108,60,225,0.3);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+.year-overall-label { font-size: 0.75rem; font-weight: 700; color: var(--astro-teal); margin-bottom: 8px; }
+.year-overall-text  { font-size: 0.88rem; color: rgba(255,255,255,0.9); line-height: 1.7; }
+
+.year-lucky-box {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.year-lucky-item {
+  background: rgba(245,200,66,0.12);
+  border: 1px solid rgba(245,200,66,0.25);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.72rem;
+  color: var(--astro-gold);
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* =====================================================
+   15. AI 분석 섹션
+   ===================================================== */
+.ai-astro-section {
+  background: linear-gradient(135deg, #0f0c29, #1a1650, #24243e);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.ai-astro-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.ai-astro-title {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--astro-gold);
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* AI 분석 버튼 */
+.ai-astro-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+  display: flex; align-items: center; gap: 6px;
+}
+.ai-astro-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(102,126,234,0.4);
+}
+.ai-astro-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* AI 분석 중 */
+.ai-astro-loading {
+  display: none;
+  text-align: center;
+  padding: 30px;
+}
+.ai-astro-loading.show { display: block; }
+.ai-astro-spin {
+  width: 44px; height: 44px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top: 3px solid var(--astro-gold);
+  border-radius: 50%;
+  animation: astroSpin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+@keyframes astroSpin {
+  to { transform: rotate(360deg); }
+}
+.ai-astro-loading-text { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
+
+/* AI 결과 */
+.ai-astro-result {
+  display: none;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.75;
+}
+.ai-astro-result.show { display: block; animation: astroFadeIn 0.5s ease; }
+.ai-astro-result h2 { font-size: 1rem; color: var(--astro-gold); margin: 14px 0 6px; }
+.ai-astro-result h3 { font-size: 0.88rem; color: var(--astro-teal); margin: 10px 0 4px; }
+.ai-astro-result strong { color: #fff; }
+.ai-astro-result p { margin: 6px 0; }
+
+/* =====================================================
+   16. 트랜짓 행성 정보
+   ===================================================== */
+.transit-box {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.transit-planet-badge {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.transit-info-name  { font-size: 0.75rem; font-weight: 700; color: #fff; margin-bottom: 2px; }
+.transit-info-pos   { font-size: 0.7rem; color: var(--astro-teal); margin-bottom: 3px; }
+.transit-info-desc  { font-size: 0.72rem; color: rgba(255,255,255,0.6); line-height: 1.4; }
+
+/* =====================================================
+   17. 로딩 오버레이
+   ===================================================== */
+.astro-loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6,4,26,0.92);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 9999;
+  backdrop-filter: blur(10px);
+}
+.astro-loading-overlay.show { display: flex; }
+.astro-loading-planets {
+  position: relative;
+  width: 100px; height: 100px;
+  margin-bottom: 20px;
+}
+.astro-load-orbit {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid rgba(108,60,225,0.4);
+  border-radius: 50%;
+  animation: astroOrbitLoad linear infinite;
+}
+.astro-load-orbit-1 { width: 40px; height: 40px; animation-duration: 1.5s; }
+.astro-load-orbit-2 { width: 70px; height: 70px; animation-duration: 2.5s; }
+.astro-load-orbit-3 { width: 96px; height: 96px; animation-duration: 4s; }
+.astro-load-orbit-1::after { content: '🌙'; position: absolute; top: -7px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; }
+.astro-load-orbit-2::after { content: '⭐'; position: absolute; top: -7px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; }
+.astro-load-orbit-3::after { content: '✨'; position: absolute; top: -7px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; }
+@keyframes astroOrbitLoad { to { transform: translate(-50%, -50%) rotate(360deg); } }
+.astro-load-sun {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.6rem;
+  animation: astroSunPulse 1.5s ease-in-out infinite;
+}
+.astro-loading-text  { color: rgba(255,255,255,0.8); font-size: 0.9rem; font-weight: 600; margin-bottom: 6px; }
+.astro-loading-sub   { color: rgba(255,255,255,0.4); font-size: 0.75rem; }
+
+/* =====================================================
+   18. 포인트 안내
+   ===================================================== */
+.astro-point-notice {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,232,18,0.2);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.65);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.astro-point-icon { font-size: 1rem; color: #FFE812; flex-shrink: 0; }
+.astro-point-link { color: #FFE812; text-decoration: none; font-weight: 700; }
+.astro-point-link:hover { text-decoration: underline; }
+
+/* =====================================================
+   19. 퀵 태그 버튼
+   ===================================================== */
+.astro-quick-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 16px;
+}
+.astro-quick-tag {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.75);
+  font-size: 0.75rem;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.astro-quick-tag:hover {
+  background: rgba(108,60,225,0.25);
+  border-color: rgba(108,60,225,0.5);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* =====================================================
+   20. 재시작 버튼
+   ===================================================== */
+.astro-reset-btn {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(255,255,255,0.65);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+}
+.astro-reset-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  border-color: rgba(255,255,255,0.3);
+}
+
+/* =====================================================
+   21. 별자리 상세 모달
+   ===================================================== */
+.astro-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6,4,26,0.88);
+  z-index: 8000;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+}
+.astro-modal-overlay.show {
+  display: flex;
+  animation: astroModalBg 0.3s ease;
+}
+@keyframes astroModalBg { from { opacity: 0; } to { opacity: 1; } }
+.astro-modal {
+  background: linear-gradient(180deg, #1a1650 0%, #0d0b2e 100%);
+  border: 1px solid rgba(108,60,225,0.3);
+  border-radius: 24px 24px 0 0;
+  width: 100%;
+  max-width: 600px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 24px;
+  animation: astroModalSlide 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes astroModalSlide {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.astro-modal-handle {
+  width: 40px; height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+.astro-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.astro-modal-close {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.astro-modal-close:hover { background: rgba(255,255,255,0.2); color: #fff; }
+.astro-modal-section {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.astro-modal-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--astro-teal);
+  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.astro-modal-section-body {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.65;
+}
+
+/* =====================================================
+   22. 반응형
+   ===================================================== */
+@media (max-width: 600px) {
+  .zodiac-pick-grid   { grid-template-columns: repeat(4, 1fr); }
+  .year-forecast-grid { grid-template-columns: 1fr; }
+  .houses-grid        { grid-template-columns: 1fr; }
+  .compat-signs-row   { gap: 10px; }
+  .compat-sign-symbol { font-size: 1.8rem; }
+  .astro-tabs         { padding: 4px; }
+  .astro-tab          { padding: 8px 10px; font-size: 0.72rem; }
+  .birth-form-row     { flex-direction: column; }
+  .birth-form-group   { min-width: unset; }
+  .today-stars-row    { gap: 6px; }
+  .today-star-item    { min-width: 60px; }
+}
+
+@media (max-width: 400px) {
+  .zodiac-pick-grid { grid-template-columns: repeat(3, 1fr); }
+  .zodiac-pick-symbol { font-size: 0.9rem; }
+}
