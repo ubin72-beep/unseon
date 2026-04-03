@@ -548,6 +548,9 @@ const CITY_COORDS = {
 
 /* ---------- 초기화 ---------- */
 document.addEventListener('DOMContentLoaded', () => {
+  // 포인트 초기화 (비로그인 500P 무료 지급 포함)
+  if (typeof initPoints === 'function') initPoints();
+
   // 헤더 초기화 (main.js)
   if (typeof initHeader === 'function') initHeader();
   if (typeof initHamburger === 'function') initHamburger();
@@ -582,11 +585,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (headerPointVal) headerPointVal.textContent   = pts.toLocaleString();
       if (btnCharge)      btnCharge.style.display      = 'inline-flex';
     } else {
+      // 비로그인: 포인트 표시는 하되 로그인 버튼 표시
+      var pts2 = parseInt(localStorage.getItem('sajuon_points') || '500', 10);
       if (btnLogin)    btnLogin.style.display    = 'inline-flex';
       if (btnSignup)   btnSignup.style.display   = 'inline-flex';
       if (userMenuWrap) userMenuWrap.style.display = 'none';
-      if (headerPoints) headerPoints.style.display = 'none';
-      if (btnCharge)   btnCharge.style.display    = 'none';
+      if (headerPoints)   headerPoints.style.display   = 'flex';
+      if (headerPointVal) headerPointVal.textContent   = pts2.toLocaleString();
+      if (btnCharge)   btnCharge.style.display    = 'inline-flex';
     }
   })();
 
@@ -784,10 +790,17 @@ function startAstrologyCalc() {
     alert('생년월일을 모두 입력해 주세요'); return;
   }
 
-  // 포인트 확인
+  // 포인트 확인 — initPoints()가 아직 안 됐을 수 있으므로 여기서도 보장
+  if (!localStorage.getItem('sajuon_initialized')) {
+    if (typeof initPoints === 'function') initPoints();
+    else {
+      localStorage.setItem('sajuon_points', '500');
+      localStorage.setItem('sajuon_initialized', 'true');
+    }
+  }
   const points = getPoints();
   if (points < 100) {
-    if (!confirm('포인트가 부족합니다. 포인트 충전 페이지로 이동하시겠습니까?')) return;
+    if (!confirm('포인트가 부족합니다.\n\n현재: ' + points + 'P / 필요: 100P\n\n포인트 충전 페이지로 이동하시겠습니까?')) return;
     location.href = 'pricing.html'; return;
   }
 
@@ -1359,11 +1372,11 @@ function goToCompatWithSign(signName) {
 async function requestAIAstrology() {
   if (!currentChart) { alert('먼저 출생 차트를 계산해 주세요'); return; }
 
-  let apiKey = localStorage.getItem('gemini_api_key') || '';
+  let apiKey = localStorage.getItem('sajuon_gemini_key') || localStorage.getItem('gemini_api_key') || '';
   if (!apiKey) {
-    apiKey = prompt('🤖 Gemini AI API 키를 입력해 주세요 (gemini.google.com에서 발급):\n\n처음이시면 gemini.google.com/app → API → API 키 받기');
+    apiKey = prompt('🤖 Gemini AI API 키를 입력해 주세요\n\n관리자 페이지 → AI 설정에서도 등록 가능합니다:');
     if (!apiKey) return;
-    localStorage.setItem('gemini_api_key', apiKey.trim());
+    localStorage.setItem('sajuon_gemini_key', apiKey.trim());
     apiKey = apiKey.trim();
   }
 
@@ -1405,6 +1418,7 @@ async function requestAIAstrology() {
     res.innerHTML = `<div style="color:#e74c3c;font-size:0.8rem">❌ 오류: ${e.message}</div>`;
     res.classList.add('show');
     if (e.message.includes('400') || e.message.includes('401') || e.message.includes('403')) {
+      localStorage.removeItem('sajuon_gemini_key');
       localStorage.removeItem('gemini_api_key');
     }
   } finally {
@@ -1438,31 +1452,52 @@ function resetAstrology() {
 
 /* ---------- 포인트 관련 ---------- */
 function getPoints() {
-  try {
-    const user = JSON.parse(localStorage.getItem('sajuon_user') || '{}');
-    return user.points || 0;
-  } catch { return 0; }
+  // auth.js / main.js 와 동일한 표준 키 사용
+  const p = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+  return isNaN(p) ? 0 : p;
 }
+
 function deductPoints(amount, memo) {
   try {
-    const user = JSON.parse(localStorage.getItem('sajuon_user') || '{}');
-    user.points = Math.max(0, (user.points || 0) - amount);
-    localStorage.setItem('sajuon_user', JSON.stringify(user));
-    // 사용 내역 저장
+    // 1. sajuon_points (공통 포인트 키) 차감
+    const cur = getPoints();
+    const next = Math.max(0, cur - amount);
+    localStorage.setItem('sajuon_points', String(next));
+
+    // 2. 로그인 유저라면 sajuon_current_user 포인트도 동기화
+    try {
+      const user = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+      if (user && user.id) {
+        user.points = next;
+        localStorage.setItem('sajuon_current_user', JSON.stringify(user));
+        // sajuon_users 배열도 업데이트
+        const users = JSON.parse(localStorage.getItem('sajuon_users') || '[]');
+        const idx = users.findIndex(u => u.id === user.id);
+        if (idx !== -1) { users[idx].points = next; localStorage.setItem('sajuon_users', JSON.stringify(users)); }
+      }
+    } catch(e2) {}
+
+    // 3. 이용 내역 저장 (관리자·이용내역 페이지에서 확인 가능)
     const history = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
     history.unshift({
-      date: new Date().toLocaleDateString('ko-KR'),
-      type: '사용', point: `-${amount}P`,
-      memo: (memo || '점성술').substring(0, 20), orderId: ''
+      date:   new Date().toLocaleString('ko-KR'),
+      type:   'AI 상담 · 점성술',
+      amount: -amount,
+      note:   (memo || '점성술').substring(0, 30)
     });
-    localStorage.setItem('sajuon_history', JSON.stringify(history.slice(0, 100)));
+    localStorage.setItem('sajuon_history', JSON.stringify(history.slice(0, 200)));
   } catch(e) { console.error(e); }
 }
 function updatePointDisplay() {
   const p = getPoints();
+  // 헤더 포인트 표시
   const el = document.getElementById('headerPoints');
   const v  = document.getElementById('headerPointVal');
-  if (el && v) { v.textContent = p.toLocaleString(); el.style.display = p > 0 ? 'flex' : 'none'; }
+  if (v) v.textContent = p.toLocaleString();
+  if (el) el.style.display = 'flex';  // 항상 표시 (포인트 0이어도)
+  // 섹션 내 포인트 표시
+  const ptEl = document.getElementById('currentPoints');
+  if (ptEl) ptEl.textContent = p.toLocaleString();
 }
 </script>
 </body>
