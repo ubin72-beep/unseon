@@ -229,7 +229,7 @@ function switchSection(key) {
 // ===== 포인트 표시 =====
 function updateAdminPt() {
   const el = document.getElementById('adminPtVal');
-  if (el) el.textContent = getPoints().toLocaleString();
+  if (el) el.textContent = (Number(getPoints()) || 0).toLocaleString();
 }
 
 // =========================================
@@ -237,18 +237,19 @@ function updateAdminPt() {
 // =========================================
 function renderDash(container) {
   const hist = getHistory();
-  const totalCharge = hist.filter(h => h.amount > 0).reduce((s, h) => s + h.amount, 0);
-  const totalDeduct = Math.abs(hist.filter(h => h.amount < 0).reduce((s, h) => s + h.amount, 0));
-  const totalConsult = hist.filter(h => h.amount < 0).length;
-  const currentPt = getPoints();
+  // amount가 undefined/NaN일 수 있으므로 Number() 변환 후 처리
+  const totalCharge  = hist.filter(h => Number(h.amount) > 0).reduce((s, h) => s + Number(h.amount || 0), 0);
+  const totalDeduct  = Math.abs(hist.filter(h => Number(h.amount) < 0).reduce((s, h) => s + Number(h.amount || 0), 0));
+  const totalConsult = hist.filter(h => Number(h.amount) < 0).length;
+  const currentPt    = Number(getPoints()) || 0;
 
   // 타로/점성술 사용 건수 (localStorage 기반)
   let tarotCount = 0, astroCount = 0;
   try {
     const tarotLog = JSON.parse(localStorage.getItem('sajuon_tarot_log') || '[]');
-    tarotCount = tarotLog.length;
+    tarotCount = Array.isArray(tarotLog) ? tarotLog.length : 0;
     const astroLog = JSON.parse(localStorage.getItem('sajuon_astro_log') || '[]');
-    astroCount = astroLog.length;
+    astroCount = Array.isArray(astroLog) ? astroLog.length : 0;
   } catch(e) {}
 
   container.innerHTML = `
@@ -830,14 +831,16 @@ function renderHistoryTable(hist) {
           <tr><th>일시</th><th>구분</th><th>포인트 변동</th><th>메모</th></tr>
         </thead>
         <tbody>
-          ${hist.map(h => `
+          ${hist.map(h => {
+            const amt = Number(h.amount || 0);
+            return `
             <tr>
-              <td>${h.date}</td>
-              <td>${h.type}</td>
-              <td class="${h.amount > 0 ? 'amount-plus' : 'amount-minus'}">${h.amount > 0 ? '+' : ''}${h.amount.toLocaleString()}P</td>
+              <td>${h.date || '-'}</td>
+              <td>${h.type || '-'}</td>
+              <td class="${amt > 0 ? 'amount-plus' : 'amount-minus'}">${amt > 0 ? '+' : ''}${amt.toLocaleString()}P</td>
               <td>${h.note || '-'}</td>
-            </tr>
-          `).join('')}
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>
     </div>
@@ -846,6 +849,12 @@ function renderHistoryTable(hist) {
 
 function getHistory() {
   try { return JSON.parse(localStorage.getItem('sajuon_history') || '[]'); } catch { return []; }
+}
+
+// admin.js 전용 getPoints (main.js와 독립 동작 보장)
+function getPoints() {
+  const p = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+  return isNaN(p) ? 0 : p;
 }
 
 function clearHistory() {
@@ -859,7 +868,7 @@ function clearHistory() {
 // 섹션 8: 포인트 조작
 // =========================================
 function renderPointsAdmin(container) {
-  const current = getPoints();
+  const current = Number(getPoints()) || 0;
   container.innerHTML = `
     <div class="admin-card">
       <div class="admin-card-header">
