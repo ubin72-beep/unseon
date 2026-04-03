@@ -39,10 +39,20 @@ const SAJU_DATA = {
     { id: 'life_4',  tab: 'life', icon: '✈️', name: '여행운',        pt: '100P~', hook: '여행 다녀와도 괜찮을까요?' },
     { id: 'life_5',  tab: 'life', icon: '⚠️', name: '조심할달',     pt: '200P~', hook: '올해 조심해야 할 달은?' },
     { id: 'life_6',  tab: 'life', icon: '🌟', name: '기회가오는달',  pt: '200P~', hook: '올해 기회가 오는 달은?' },
-    { id: 'all_1',   tab: 'all',  icon: '🃏', name: '타로 상담',     pt: '100P~', hook: '카드가 뭐라고 하나요?' },
-    { id: 'all_2',   tab: 'all',  icon: '🌙', name: '점성술 상담',   pt: '200P~', hook: '별자리가 말하는 내 운명' },
+    { id: 'all_1',   tab: 'all',  icon: '🃏', name: '타로 상담',     pt: '100P~', hook: '카드가 뭐라고 하나요?',    link: 'tarot.html' },
+    { id: 'all_2',   tab: 'all',  icon: '🌟', name: '점성술 상담',   pt: '무료~', hook: '별자리가 말하는 내 운명',   link: 'astrology.html' },
     { id: 'all_3',   tab: 'all',  icon: '🔥', name: '2026 병오년',   pt: '200P~', hook: '병오년 내 한 해 운세' },
     { id: 'all_4',   tab: 'all',  icon: '📅', name: '종합 운세',     pt: '300P~', hook: '올해 전체 운세 분석' },
+    { id: 'tarot_1', tab: 'tarot',icon: '🃏', name: '타로 원카드',   pt: '100P~', hook: '지금 이 순간 한 장의 카드',  link: 'tarot.html' },
+    { id: 'tarot_2', tab: 'tarot',icon: '🔮', name: '타로 쓰리카드', pt: '100P~', hook: '과거·현재·미래 3장 카드',   link: 'tarot.html' },
+    { id: 'tarot_3', tab: 'tarot',icon: '💕', name: '관계 스프레드', pt: '100P~', hook: '두 사람의 마음을 카드로',     link: 'tarot.html' },
+    { id: 'tarot_4', tab: 'tarot',icon: '💼', name: '직업재물 스프레드', pt: '100P~', hook: '커리어·재물 5장 카드', link: 'tarot.html' },
+    { id: 'tarot_5', tab: 'tarot',icon: '✨', name: '켈틱 크로스',   pt: '100P~', hook: '10장 풀 스프레드 심층분석', link: 'tarot.html' },
+    { id: 'astro_1', tab: 'astro',icon: '☀️', name: '출생 차트',     pt: '100P~', hook: '태양궁·달·어센던트 완전분석', link: 'astrology.html' },
+    { id: 'astro_2', tab: 'astro',icon: '💕', name: '별자리 궁합',   pt: '무료',  hook: '12×12 궁합 매트릭스',       link: 'astrology.html' },
+    { id: 'astro_3', tab: 'astro',icon: '📅', name: '월별 운세',     pt: '무료',  hook: '2026년 12개월 운세',         link: 'astrology.html' },
+    { id: 'astro_4', tab: 'astro',icon: '🔮', name: '오늘의 별자리', pt: '무료',  hook: '오늘 내 별자리 운세',         link: 'astrology.html' },
+    { id: 'astro_5', tab: 'astro',icon: '🪐', name: '행성 위치 분석', pt: '100P~', hook: '9개 행성·12하우스 분석',     link: 'astrology.html' },
   ],
 
   reviews: [
@@ -60,8 +70,17 @@ const SAJU_DATA = {
     { q: '질문당 차감되는 포인트는 얼마인가요?', a: '상담 유형에 따라 100P~300P가 차감됩니다. 타로·여행운 등 간단한 상담은 100P, 연애운·궁합·직업상담은 200P, 사업운·이름짓기·개명 등 심화 상담은 300P가 차감됩니다.' },
     { q: '신규 가입 시 무료 포인트가 있나요?', a: '네! 처음 이용하시는 분께 500P를 무료로 드립니다. 별도 결제 없이 바로 상담을 시작해보실 수 있습니다.' },
     { q: '상담 결과를 저장할 수 있나요?', a: '채팅 상담 내용은 해당 브라우저 세션 동안 유지됩니다. 중요한 상담 내용은 직접 복사·저장하시길 권장드립니다.' },
-  ]
+  ],
 };
+
+// 카테고리 클릭 시 링크 처리
+function goCatItem(name, link) {
+  if (link) {
+    window.location.href = link;
+  } else {
+    goChatCategory(name);
+  }
+}
 
 // ===== 포인트 관리 =====
 function getPoints() {
@@ -163,10 +182,10 @@ function initCatTabs() {
       '종합운세상담':'종합 운세','재물운':'재물운','취업운':'취업운','이직운':'이직운','승진운':'승진운',
     };
     grid.innerHTML = list.map(c => `
-      <div class="cat-item" onclick="goChatCategory('${c.name}')">
+      <div class="cat-item" onclick="goCatItem('${c.name}', '${c.link||''}')">
         <div class="cat-item-icon">${c.icon}</div>
         <div class="cat-item-name">${CAT_DISPLAY[c.name] || c.name}</div>
-        <div class="cat-item-pt">${c.pt}</div>
+        <div class="cat-item-pt" style="${c.link ? 'color:#764ba2;font-weight:700' : ''}">${c.pt}</div>
       </div>
     `).join('');
   }

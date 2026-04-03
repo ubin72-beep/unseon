@@ -242,6 +242,15 @@ function renderDash(container) {
   const totalConsult = hist.filter(h => h.amount < 0).length;
   const currentPt = getPoints();
 
+  // 타로/점성술 사용 건수 (localStorage 기반)
+  let tarotCount = 0, astroCount = 0;
+  try {
+    const tarotLog = JSON.parse(localStorage.getItem('sajuon_tarot_log') || '[]');
+    tarotCount = tarotLog.length;
+    const astroLog = JSON.parse(localStorage.getItem('sajuon_astro_log') || '[]');
+    astroCount = astroLog.length;
+  } catch(e) {}
+
   container.innerHTML = `
     <div class="stat-grid">
       <div class="stat-card">
@@ -266,6 +275,18 @@ function renderDash(container) {
         <div class="stat-val">${currentPt.toLocaleString()}P</div>
         <div class="stat-label">현재 보유 포인트</div>
       </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#f3e5f5">🃏</div>
+        <div class="stat-val">${tarotCount}</div>
+        <div class="stat-label">타로카드 이용</div>
+        <div class="stat-change"><a href="tarot.html" target="_blank" style="color:#9c27b0;font-size:11px">페이지 바로가기 →</a></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e8eaf6">🌙</div>
+        <div class="stat-val">${astroCount}</div>
+        <div class="stat-label">점성술 이용</div>
+        <div class="stat-change"><a href="astrology.html" target="_blank" style="color:#1a73e8;font-size:11px">페이지 바로가기 →</a></div>
+      </div>
     </div>
 
     <div class="admin-card">
@@ -286,6 +307,8 @@ function renderDash(container) {
         <a href="index.html" target="_blank" class="admin-save-btn" style="text-decoration:none"><i class="fas fa-home"></i> 메인 페이지</a>
         <a href="chat.html" target="_blank" class="admin-save-btn" style="text-decoration:none;background:linear-gradient(135deg,#1565c0,#42a5f5)"><i class="fas fa-comments"></i> 채팅 페이지</a>
         <a href="pricing.html" target="_blank" class="admin-save-btn" style="text-decoration:none;background:linear-gradient(135deg,var(--accent-dark),var(--accent))"><i class="fas fa-coins"></i> 요금 페이지</a>
+        <a href="tarot.html" target="_blank" class="admin-save-btn" style="text-decoration:none;background:linear-gradient(135deg,#4a1a6b,#9c27b0)"><i class="fas fa-magic"></i> 타로카드</a>
+        <a href="astrology.html" target="_blank" class="admin-save-btn" style="text-decoration:none;background:linear-gradient(135deg,#0d2060,#1a73e8)"><i class="fas fa-star"></i> 점성술</a>
       </div>
     </div>
   `;

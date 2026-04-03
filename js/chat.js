@@ -1247,6 +1247,11 @@ async function sendMessage() {
     try { return JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); } catch { return null; }
   })();
   if (!_chatUser || !_chatUser.id) {
+    // ★ 현재 chat.html 경로를 복귀 경로로 저장 (로그인/가입 후 되돌아오기)
+    sessionStorage.setItem('sajuon_auth_redirect', 'chat.html');
+    // 현재 카테고리도 보존
+    if (currentCat) sessionStorage.setItem('sajuon_category', currentCat);
+
     // 채팅창 내 로그인 안내 메시지 표시
     const msgs = document.getElementById('chatMessages');
     if (msgs) {
@@ -1263,10 +1268,10 @@ async function sendMessage() {
           <div style="font-weight:700;font-size:1.05rem;margin-bottom:6px">로그인 후 상담을 시작하세요</div>
           <div style="font-size:0.85rem;opacity:0.88;margin-bottom:18px">가입 즉시 <strong>500P 무료</strong> 지급 · 언제든 AI 상담 가능</div>
           <div style="display:flex;gap:10px;justify-content:center">
-            <a href="auth.html?tab=register" style="padding:10px 22px;background:#fff;color:#1b5e20;border-radius:10px;text-decoration:none;font-weight:700;font-size:0.88rem">
+            <a href="auth.html?tab=register" onclick="sessionStorage.setItem('sajuon_auth_redirect','chat.html')" style="padding:10px 22px;background:#fff;color:#1b5e20;border-radius:10px;text-decoration:none;font-weight:700;font-size:0.88rem">
               <i class="fas fa-user-plus"></i> 무료 가입
             </a>
-            <a href="auth.html" style="padding:10px 22px;background:rgba(255,255,255,0.18);color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.88rem;border:1.5px solid rgba(255,255,255,0.4)">
+            <a href="auth.html" onclick="sessionStorage.setItem('sajuon_auth_redirect','chat.html')" style="padding:10px 22px;background:rgba(255,255,255,0.18);color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.88rem;border:1.5px solid rgba(255,255,255,0.4)">
               <i class="fas fa-sign-in-alt"></i> 로그인
             </a>
           </div>`;
