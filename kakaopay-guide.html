@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>카카오페이 실서비스 탑재 가이드 — 운세ON</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <style>
+    :root {
+      --kakao: #FFE812;
+      --kakao-dark: #3A1D1D;
+      --kakao-hover: #F0D800;
+      --green: #2e7d32;
+      --green-dark: #1b5e20;
+      --green-light: #e8f5e9;
+      --red: #c62828;
+      --red-light: #ffebee;
+      --blue: #1565c0;
+      --blue-light: #e3f2fd;
+      --orange: #e65100;
+      --orange-light: #fff3e0;
+      --bg: #f4f6f8;
+      --white: #fff;
+      --border: #e0e0e0;
+      --text: #1a1a2e;
+      --text-muted: #666;
+      --radius: 16px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 48px rgba(0,0,0,0.14);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ── 헤더 ── */
+    .g-header {
+      background: var(--kakao);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+    }
+    .g-header-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .g-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--kakao-dark);
+      text-decoration: none;
+    }
+    .g-logo i { font-size: 1.4rem; }
+    .g-back {
+      font-size: 0.85rem;
+      color: var(--kakao-dark);
+      text-decoration: none;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.75;
+    }
+    .g-back:hover { opacity: 1; }
+
+    /* ── 히어로 ── */
+    .g-hero {
+      background: linear-gradient(135deg, var(--kakao-dark) 0%, #5c3317 100%);
+      color: #fff;
+      text-align: center;
+      padding: 60px 24px 56px;
+    }
+    .g-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--kakao);
+      color: var(--kakao-dark);
+      font-size: 0.8rem;
+      font-weight: 800;
+      padding: 5px 16px;
+      border-radius: 30px;
+      margin-bottom: 18px;
+    }
+    .g-hero h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+    .g-hero p {
+      font-size: 1rem;
+      opacity: 0.8;
+      max-width: 520px;
+      margin: 0 auto 28px;
+    }
+    .g-hero-steps {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .g-hero-step {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 30px;
+      padding: 7px 18px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .g-hero-step .num {
+      background: var(--kakao);
+      color: var(--kakao-dark);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+
+    /* ── 진행 바 ── */
+    .g-progress-bar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 64px;
+      z-index: 90;
+    }
+    .g-progress-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .g-progress-inner::-webkit-scrollbar { display: none; }
+    .g-tab {
+      flex-shrink: 0;
+      padding: 14px 18px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .g-tab:hover { color: var(--text); }
+    .g-tab.active { color: var(--kakao-dark); border-bottom-color: var(--kakao); }
+    .g-tab .step-num {
+      width: 18px;
+      height: 18px;
+      background: var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 800;
+    }
+    .g-tab.active .step-num { background: var(--kakao); color: var(--kakao-dark); }
+
+    /* ── 컨테이너 ── */
+    .g-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── 섹션 ── */
+    .g-section {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 36px 40px;
+      margin-bottom: 28px;
+      scroll-margin-top: 120px;
+    }
+    .g-section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .g-step-badge {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      background: var(--kakao);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--kakao-dark);
+      box-shadow: 0 4px 12px rgba(255,232,18,0.4);
+    }
+    .g-section-title h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .g-section-title p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* ── 알림 박스 ── */
+    .g-alert {
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 0.85rem;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    .g-alert i { flex-shrink: 0; margin-top: 2px; }
+    .g-alert.info  { background: var(--blue-light);   color: #0d47a1; }
+    .g-alert.warn  { background: var(--orange-light); color: #bf360c; }
+    .g-alert.ok    { background: var(--green-light);  color: var(--green-dark); }
+    .g-alert.kakao { background: #fffde7; color: #3A1D1D; border: 1px solid #FFE812; }
+    .g-alert strong { font-weight: 700; }
+
+    /* ── 단계 목록 ── */
+    .g-steps { display: flex; flex-direction: column; gap: 16px; }
+    .g-step-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .g-step-dot {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      background: var(--kakao);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--kakao-dark);
+      margin-top: 2px;
+    }
+    .g-step-dot.blue  { background: var(--blue-light); color: var(--blue); }
+    .g-step-dot.green { background: var(--green-light); color: var(--green); }
+    .g-step-dot.red   { background: var(--red-light); color: var(--red); }
+    .g-step-content strong { font-weight: 700; color: var(--text); font-size: 0.95rem; }
+    .g-step-content p { font-size: 0.84rem; color: var(--text-muted); margin-top: 3px; }
+
+    /* ── 코드 블록 ── */
+    .g-code-wrap {
+      position: relative;
+      background: #1a1a2e;
+      border-radius: 12px;
+      margin: 16px 0;
+      overflow: hidden;
+    }
+    .g-code-label {
+      background: rgba(255,255,255,0.06);
+      color: #90caf9;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .g-copy-btn {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #90caf9;
+      font-size: 0.72rem;
+      padding: 3px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .g-copy-btn:hover { background: rgba(255,255,255,0.18); }
+    .g-code-wrap pre {
+      padding: 18px 20px;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: #e0e0e0;
+    }
+    .g-code-wrap code { font-family: 'Courier New', monospace; }
+    .hl-key    { color: #90caf9; }
+    .hl-val    { color: #a5d6a7; }
+    .hl-str    { color: #ffcc02; }
+    .hl-cmt    { color: #666; font-style: italic; }
+    .hl-bool-f { color: #ef5350; }
+    .hl-bool-t { color: #66bb6a; }
+    .hl-tag    { color: #80cbc4; }
+    .hl-attr   { color: #ffb74d; }
+
+    /* ── URL 테이블 ── */
+    .g-url-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      margin: 16px 0;
+    }
+    .g-url-table th {
+      background: var(--bg);
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-bottom: 2px solid var(--border);
+    }
+    .g-url-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .g-url-table tr:last-child td { border-bottom: none; }
+    .g-url-table code {
+      background: var(--bg);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      color: #0d47a1;
+      word-break: break-all;
+    }
+    .g-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .g-badge.success { background: var(--green-light); color: var(--green); }
+    .g-badge.fail    { background: var(--red-light);   color: var(--red);   }
+    .g-badge.cancel  { background: #fff3e0;             color: var(--orange);}
+
+    /* ── 방법 카드 ── */
+    .g-method-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0;
+    }
+    .g-method-card {
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .g-method-card.recommended { border-color: var(--kakao); background: #fffde7; }
+    .g-method-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .g-method-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .g-method-card h3 { font-size: 0.95rem; font-weight: 800; color: var(--text); }
+    .g-method-rec {
+      font-size: 0.72rem;
+      background: var(--kakao);
+      color: var(--kakao-dark);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+    .g-method-card p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; }
+    .g-method-pros {
+      list-style: none;
+      margin-top: 12px;
+    }
+    .g-method-pros li {
+      font-size: 0.79rem;
+      padding: 3px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .g-method-pros li i { font-size: 0.7rem; }
+    .g-method-pros li.pro { color: var(--green); }
+    .g-method-pros li.con { color: var(--text-muted); }
+
+    /* ── 체크리스트 ── */
+    .g-checklist { display: flex; flex-direction: column; gap: 10px; }
+    .g-check-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg);
+      border-radius: 10px;
+      font-size: 0.88rem;
+    }
+    .g-check-item i.fa-check-circle { color: var(--green); }
+    .g-check-item i.fa-circle { color: var(--border); }
+    .g-check-item strong { color: var(--text); font-weight: 600; }
+    .g-check-item span { color: var(--text-muted); font-size: 0.8rem; margin-left: 4px; }
+
+    /* ── 플로우차트 ── */
+    .g-flow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      margin: 20px 0;
+    }
+    .g-flow-node {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 24px;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      min-width: 260px;
+      box-shadow: var(--shadow);
+    }
+    .g-flow-node.kakao-node {
+      background: var(--kakao);
+      border-color: #e6d000;
+      color: var(--kakao-dark);
+    }
+    .g-flow-node.green-node {
+      background: var(--green-light);
+      border-color: #a5d6a7;
+      color: var(--green-dark);
+    }
+    .g-flow-node.server-node {
+      background: #e3f2fd;
+      border-color: #90caf9;
+      color: #0d47a1;
+    }
+    .g-flow-arrow {
+      font-size: 1.4rem;
+      color: var(--text-muted);
+      margin: 4px 0;
+    }
+    .g-flow-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin: -2px 0 2px;
+      font-style: italic;
+    }
+
+    /* ── 완료 배너 ── */
+    .g-done-banner {
+      background: linear-gradient(135deg, var(--green-dark), var(--green));
+      border-radius: var(--radius);
+      padding: 36px 40px;
+      text-align: center;
+      color: #fff;
+      margin-bottom: 28px;
+    }
+    .g-done-banner i { font-size: 2.5rem; margin-bottom: 12px; }
+    .g-done-banner h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; }
+    .g-done-banner p { font-size: 0.9rem; opacity: 0.85; margin-bottom: 20px; }
+    .g-done-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      color: var(--green-dark);
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 12px 28px;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .g-done-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+
+    /* ── 링크 ── */
+    .g-link {
+      color: var(--blue);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .g-link:hover { text-decoration: underline; }
+
+    /* ── 구분선 ── */
+    hr.g-divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+    /* ── 반응형 ── */
+    @media (max-width: 640px) {
+      .g-section { padding: 24px 20px; }
+      .g-section-header { flex-direction: column; gap: 10px; }
+      .g-method-grid { grid-template-columns: 1fr; }
+      .g-hero h1 { font-size: 1.45rem; }
+      .g-hero-steps { flex-direction: column; align-items: center; }
+      .g-container { padding: 28px 16px 60px; }
+    }
+
+    /* ── 토스트 ── */
+    #copyToast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1b5e20;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      z-index: 9999;
+      opacity: 0;
+      transition: all 0.3s;
+      pointer-events: none;
+    }
+    #copyToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ── 헤더 ── -->
+<header class="g-header">
+  <div class="g-header-inner">
+    <a href="#" class="g-logo">
+      <i class="fas fa-comment"></i>
+      카카오페이 탑재 가이드
+    </a>
+    <a href="pricing.html" class="g-back">
+      <i class="fas fa-arrow-left"></i> pricing.html 로 돌아가기
+    </a>
+  </div>
+</header>
+
+<!-- ── 히어로 ── -->
+<section class="g-hero">
+  <div class="g-hero-badge">
+    <i class="fas fa-rocket"></i> 운세ON 카카오페이 실서비스 탑재
+  </div>
+  <h1>카카오페이 결제<br/>사이트에 탑재하기</h1>
+  <p>현재 테스트 모드로 완성된 결제 시스템을 실서비스로 전환하는 전체 과정을 안내합니다.</p>
+  <div class="g-hero-steps">
+    <div class="g-hero-step"><span class="num">1</span> 카카오 가맹 신청</div>
+    <div class="g-hero-step"><span class="num">2</span> 코드 설정 (3줄)</div>
+    <div class="g-hero-step"><span class="num">3</span> 관리자 URL 등록</div>
+    <div class="g-hero-step"><span class="num">4</span> 결제 방식 선택</div>
+    <div class="g-hero-step"><span class="num">5</span> 테스트 & 배포</div>
+  </div>
+</section>
+
+<!-- ── 진행 탭 ── -->
+<nav class="g-progress-bar">
+  <div class="g-progress-inner">
+    <a class="g-tab active" href="#step1"><span class="step-num">1</span> 가맹 신청</a>
+    <a class="g-tab" href="#step2"><span class="step-num">2</span> 코드 수정</a>
+    <a class="g-tab" href="#step3"><span class="step-num">3</span> URL 등록</a>
+    <a class="g-tab" href="#step4"><span class="step-num">4</span> 결제 방식</a>
+    <a class="g-tab" href="#step5"><span class="step-num">5</span> 최종 확인</a>
+  </div>
+</nav>
+
+<div class="g-container">
+
+  <!-- ────────────────────────── STEP 1 ────────────────────────── -->
+  <section class="g-section" id="step1">
+    <div class="g-section-header">
+      <div class="g-step-badge">1</div>
+      <div class="g-section-title">
+        <h2>카카오페이 가맹점 신청</h2>
+        <p>결제를 받으려면 카카오페이 사업자 가맹 심사를 먼저 통과해야 합니다.</p>
+      </div>
+    </div>
+
+    <div class="g-alert kakao">
+      <i class="fas fa-info-circle"></i>
+      <div><strong>사전 준비물:</strong> 사업자등록증, 통장 사본, 대표자 신분증 (스캔본). 심사 기간은 보통 <strong>3~7 영업일</strong>.</div>
+    </div>
+
+    <div class="g-steps">
+      <div class="g-step-item">
+        <div class="g-step-dot">1</div>
+        <div class="g-step-content">
+          <strong>카카오페이 파트너스 접속</strong>
+          <p>
+            <a href="https://business.kakao.com/info/kakaopay/" target="_blank" class="g-link">
+              business.kakao.com/info/kakaopay/ <i class="fas fa-external-link-alt" style="font-size:0.7rem"></i>
+            </a>
+            → 상단 <strong>"가맹점 신청"</strong> 버튼 클릭
+          </p>
+        </div>
+      </div>
+      <div class="g-step-item">
+        <div class="g-step-dot">2</div>
+        <div class="g-step-content">
+          <strong>서비스 유형 선택</strong>
+          <p>온라인 결제 → <strong>"단건 결제"</strong> 선택 (정기결제는 구독 서비스 전용)</p>
+        </div>
+      </div>
+      <div class="g-step-item">
+        <div class="g-step-dot">3</div>
+        <div class="g-step-content">
+          <strong>사업자 정보 입력</strong>
+          <p>상호: 큐브박스 · 사업자번호: 537-08-03349 · 서비스명: 운세ON · 서비스 URL: https://unseon.co.kr</p>
+        </div>
+      </div>
+      <div class="g-step-item">
+        <div class="g-step-dot">4</div>
+        <div class="g-step-content">
+          <strong>심사 완료 후 CID 발급</strong>
+          <p>이메일로 <strong>CID (예: CZ0ONETIME)</strong> 와 Admin Key 가 전달됩니다. 반드시 안전하게 보관하세요.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="g-alert ok" style="margin-top:20px">
+      <i class="fas fa-check-circle"></i>
+      <div>운세ON 사업자 정보 (537-08-03349)는 이미 코드에 입력되어 있어 신청 시 그대로 사용하면 됩니다.</div>
+    </div>
+  </section>
+
+  <!-- ────────────────────────── STEP 2 ────────────────────────── -->
+  <section class="g-section" id="step2">
+    <div class="g-section-header">
+      <div class="g-step-badge">2</div>
+      <div class="g-section-title">
+        <h2>코드 설정 수정 (3줄)</h2>
+        <p><code style="background:#f4f6f8;padding:2px 8px;border-radius:4px">js/kakaopay.js</code> 파일 상단 KAKAO_CONFIG 딱 3줄만 수정하면 됩니다.</p>
+      </div>
+    </div>
+
+    <div class="g-alert warn">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div>Admin Key는 절대 프론트엔드 코드에 노출하면 안 됩니다. CID만 프론트엔드에 입력합니다.</div>
+    </div>
+
+    <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:8px">
+      📄 <strong>js/kakaopay.js</strong> 파일을 열고 아래와 같이 수정하세요:
+    </p>
+
+    <div class="g-code-wrap">
+      <div class="g-code-label">
+        js/kakaopay.js — KAKAO_CONFIG (파일 맨 위)
+        <button class="g-copy-btn" onclick="copyCode(this, 'code-config')"><i class="fas fa-copy"></i> 복사</button>
+      </div>
+      <pre><code id="code-config"><span class="hl-key">const</span> KAKAO_CONFIG = {
+  <span class="hl-cmt">/* ① 테스트 → 실서비스 전환 */</span>
+  <span class="hl-attr">IS_TEST</span>: <span class="hl-bool-f">false</span>,                    <span class="hl-cmt">// ← true 에서 false 로 변경</span>
+
+  <span class="hl-cmt">/* ② 가맹 심사 후 발급된 CID 입력 */</span>
+  <span class="hl-attr">CID</span>: <span class="hl-str">'여기에_발급받은_CID_입력'</span>,  <span class="hl-cmt">// ← 예: 'CZ0ONETIME'</span>
+
+  <span class="hl-cmt">/* ③ 실제 서비스 도메인 (이미 설정됨) */</span>
+  <span class="hl-attr">ORIGIN</span>: <span class="hl-str">'https://unseon.co.kr'</span>,    <span class="hl-cmt">// ← 이미 올바르게 설정됨 ✅</span>
+};</code></pre>
+    </div>
+
+    <div class="g-alert ok">
+      <i class="fas fa-check-circle"></i>
+      <div><strong>도메인은 이미 설정됨!</strong> ORIGIN은 <code>https://unseon.co.kr</code>으로 이미 입력되어 있어 변경 불필요합니다.</div>
+    </div>
+
+    <hr class="g-divider"/>
+
+    <p style="font-size:0.9rem;font-weight:700;margin-bottom:12px">변경 전 / 후 비교</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="g-code-wrap" style="margin:0">
+        <div class="g-code-label" style="color:#ef9a9a">❌ 변경 전 (테스트 모드)</div>
+        <pre style="font-size:0.78rem"><code><span class="hl-attr">IS_TEST</span>: <span class="hl-bool-t">true</span>,
+<span class="hl-attr">CID</span>: <span class="hl-str">'TC0ONETIME'</span>,</code></pre>
+      </div>
+      <div class="g-code-wrap" style="margin:0">
+        <div class="g-code-label" style="color:#a5d6a7">✅ 변경 후 (실서비스)</div>
+        <pre style="font-size:0.78rem"><code><span class="hl-attr">IS_TEST</span>: <span class="hl-bool-f">false</span>,
+<span class="hl-attr">CID</span>: <span class="hl-str">'발급받은CID'</span>,</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ────────────────────────── STEP 3 ────────────────────────── -->
+  <section class="g-section" id="step3">
+    <div class="g-section-header">
+      <div class="g-step-badge">3</div>
+      <div class="g-section-title">
+        <h2>카카오페이 관리자 URL 등록</h2>
+        <p>결제 완료/실패/취소 후 카카오 서버가 이 주소로 사용자를 되돌려 보냅니다.</p>
+      </div>
+    </div>
+
+    <div class="g-alert info">
+      <i class="fas fa-info-circle"></i>
+      <div>카카오페이 가맹점 관리자 → <strong>서비스 설정 → 결제 URL 관리</strong>에서 아래 URL을 등록하세요.</div>
+    </div>
+
+    <table class="g-url-table">
+      <thead>
+        <tr>
+          <th>구분</th>
+          <th>등록할 URL</th>
+          <th>상태</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="g-badge success">결제 승인</span></td>
+          <td><code>https://unseon.co.kr/payment-complete.html?result=success</code></td>
+          <td><i class="fas fa-check" style="color:var(--green)"></i></td>
+        </tr>
+        <tr>
+          <td><span class="g-badge fail">결제 실패</span></td>
+          <td><code>https://unseon.co.kr/payment-complete.html?result=fail</code></td>
+          <td><i class="fas fa-check" style="color:var(--green)"></i></td>
+        </tr>
+        <tr>
+          <td><span class="g-badge cancel">결제 취소</span></td>
+          <td><code>https://unseon.co.kr/payment-complete.html?result=cancel</code></td>
+          <td><i class="fas fa-check" style="color:var(--green)"></i></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="g-alert ok">
+      <i class="fas fa-check-circle"></i>
+      <div><strong>payment-complete.html은 이미 완성!</strong> 성공·실패·취소 시나리오 모두 처리하는 코드가 구현되어 있습니다.</div>
+    </div>
+
+    <hr class="g-divider"/>
+    <p style="font-size:0.88rem;font-weight:700;margin-bottom:12px">결제 흐름 (실서비스 리다이렉트 방식)</p>
+
+    <div class="g-flow">
+      <div class="g-flow-node">👤 사용자가 충전 버튼 클릭</div>
+      <div class="g-flow-arrow">↓</div>
+      <div class="g-flow-node kakao-node">🟡 카카오페이 결제창 (카카오 서버)</div>
+      <div class="g-flow-arrow">↓</div>
+      <div class="g-flow-label">결제 완료 후 카카오가 자동 리다이렉트</div>
+      <div class="g-flow-node green-node">✅ payment-complete.html<br/><span style="font-size:0.75rem;font-weight:400">포인트 지급 + 내역 저장 + 완료 화면</span></div>
+    </div>
+  </section>
+
+  <!-- ────────────────────────── STEP 4 ────────────────────────── -->
+  <section class="g-section" id="step4">
+    <div class="g-section-header">
+      <div class="g-step-badge">4</div>
+      <div class="g-section-title">
+        <h2>실결제 방식 선택 및 코드 활성화</h2>
+        <p>정적 사이트에서 실결제를 처리하는 두 가지 방법 중 하나를 선택하세요.</p>
+      </div>
+    </div>
+
+    <div class="g-method-grid">
+      <div class="g-method-card recommended">
+        <div class="g-method-card-header">
+          <h3><i class="fas fa-comment" style="color:#3A1D1D"></i> 방법 A — JS SDK</h3>
+          <span class="g-method-rec">★ 권장</span>
+        </div>
+        <p>카카오에서 공식 제공하는 JavaScript SDK를 사용. 백엔드 서버 없이도 실결제 가능.</p>
+        <ul class="g-method-pros">
+          <li class="pro"><i class="fas fa-check"></i> 백엔드 서버 불필요</li>
+          <li class="pro"><i class="fas fa-check"></i> 카카오 공식 방식</li>
+          <li class="pro"><i class="fas fa-check"></i> 설정이 간단함</li>
+          <li class="con"><i class="fas fa-minus"></i> 카카오 앱 키 필요</li>
+        </ul>
+      </div>
+      <div class="g-method-card">
+        <div class="g-method-card-header">
+          <h3><i class="fas fa-server" style="color:var(--blue)"></i> 방법 B — 백엔드 API</h3>
+        </div>
+        <p>서버에서 Ready API를 호출 후 결제 URL을 받아 이동. 보안성이 더 높음.</p>
+        <ul class="g-method-pros">
+          <li class="pro"><i class="fas fa-check"></i> Admin Key 완벽 보호</li>
+          <li class="pro"><i class="fas fa-check"></i> 서버 검증 가능</li>
+          <li class="con"><i class="fas fa-minus"></i> Node.js/Python 서버 필요</li>
+          <li class="con"><i class="fas fa-minus"></i> 구축 비용 발생</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 방법 A 상세 -->
+    <div style="background:#fffde7;border-radius:14px;padding:24px 28px;margin-bottom:20px;border:1.5px solid #FFE812">
+      <p style="font-size:0.95rem;font-weight:800;color:var(--kakao-dark);margin-bottom:16px">
+        <i class="fas fa-comment"></i> 방법 A — JavaScript SDK 적용 (권장)
+      </p>
+
+      <p style="font-size:0.84rem;color:var(--text-muted);margin-bottom:12px">
+        <strong>① pricing.html <code>&lt;head&gt;</code></strong>의 아래 주석을 해제하세요:
+      </p>
+      <div class="g-code-wrap">
+        <div class="g-code-label">
+          pricing.html &lt;head&gt; — SDK 스크립트 주석 해제
+          <button class="g-copy-btn" onclick="copyCode(this, 'code-sdk')"><i class="fas fa-copy"></i> 복사</button>
+        </div>
+        <pre><code id="code-sdk"><span class="hl-cmt">&lt;!-- 주석 해제 (<!-- 와 --> 제거) --&gt;</span>
+<span class="hl-tag">&lt;script</span> <span class="hl-attr">src</span>=<span class="hl-str">"https://t1.kakaocdn.net/kakaojs/sdk/2.7.4/kakao.min.js"</span><span class="hl-tag">&gt;&lt;/script&gt;</span></code></pre>
+      </div>
+
+      <p style="font-size:0.84rem;color:var(--text-muted);margin:16px 0 12px">
+        <strong>② js/kakaopay.js → runRealKakaoPay()</strong> 함수 내 주석 코드를 해제하고 앱 키를 입력하세요:
+      </p>
+      <div class="g-code-wrap">
+        <div class="g-code-label">
+          js/kakaopay.js — runRealKakaoPay() 내 SDK 코드 활성화
+          <button class="g-copy-btn" onclick="copyCode(this, 'code-sdk2')"><i class="fas fa-copy"></i> 복사</button>
+        </div>
+        <pre><code id="code-sdk2"><span class="hl-key">function</span> <span class="hl-attr">runRealKakaoPay</span>(plan) {
+  <span class="hl-key">const</span> orderId     = generateOrderId();
+  <span class="hl-key">const</span> currentUser = getCurrentUserInfo();
+
+  sessionStorage.setItem(<span class="hl-str">'kakao_pending_plan'</span>, JSON.stringify({
+    planKey: selectedPlan, plan, orderId
+  }));
+
+  <span class="hl-cmt">// ★ Kakao SDK 초기화 (한 번만 실행)</span>
+  Kakao.init(<span class="hl-str">'여기에_카카오_앱키_입력'</span>);  <span class="hl-cmt">// ← 카카오 개발자 앱 키</span>
+
+  Kakao.Pay.createOrder({
+    open_type:        <span class="hl-str">'REDIRECT'</span>,
+    partner_order_id: orderId,
+    partner_user_id:  currentUser?.id || <span class="hl-str">'guest'</span>,
+    quantity:         <span class="hl-val">1</span>,
+    total_amount:     plan.amount,
+    tax_free_amount:  <span class="hl-val">0</span>,
+    name:             plan.name,
+    success_url: KAKAO_CONFIG.APPROVAL_URL + <span class="hl-str">'&order_id='</span> + orderId,
+    fail_url:    KAKAO_CONFIG.FAIL_URL,
+    cancel_url:  KAKAO_CONFIG.CANCEL_URL,
+  });
+}</code></pre>
+      </div>
+
+      <div class="g-alert ok" style="margin:12px 0 0">
+        <i class="fas fa-lightbulb"></i>
+        <div>카카오 앱 키는 <a href="https://developers.kakao.com/console/app" target="_blank" class="g-link">developers.kakao.com/console/app</a> → 앱 선택 → <strong>앱 키</strong>에서 <strong>"JavaScript 키"</strong>를 사용하세요.</div>
+      </div>
+    </div>
+
+    <!-- 방법 B 상세 -->
+    <details style="border:1.5px solid var(--border);border-radius:14px;overflow:hidden">
+      <summary style="padding:16px 24px;font-size:0.9rem;font-weight:700;cursor:pointer;background:var(--bg);color:var(--text)">
+        <i class="fas fa-server" style="color:var(--blue);margin-right:8px"></i>
+        방법 B — 백엔드 서버 연동 (Node.js 예시) 보기
+      </summary>
+      <div style="padding:20px 24px;font-size:0.84rem">
+        <p style="color:var(--text-muted);margin-bottom:14px">서버에서 카카오페이 Ready API를 호출하고, 결제 URL을 프론트엔드로 전달하는 방식입니다.</p>
+
+        <p style="font-weight:700;margin-bottom:8px">서버 코드 (Node.js / Express)</p>
+        <div class="g-code-wrap">
+          <div class="g-code-label">server.js (Node.js)</div>
+          <pre><code><span class="hl-key">const</span> express = require(<span class="hl-str">'express'</span>);
+<span class="hl-key">const</span> axios   = require(<span class="hl-str">'axios'</span>);
+<span class="hl-key">const</span> app     = express();
+app.use(express.json());
+
+app.post(<span class="hl-str">'/api/payment/ready'</span>, <span class="hl-key">async</span> (req, res) => {
+  <span class="hl-key">const</span> { orderId, planName, amount, userId } = req.body;
+  <span class="hl-key">try</span> {
+    <span class="hl-key">const</span> response = <span class="hl-key">await</span> axios.post(
+      <span class="hl-str">'https://open-api.kakaopay.com/online/v1/payment/ready'</span>,
+      {
+        cid:               process.env.KAKAO_CID,   <span class="hl-cmt">// 환경변수로 보호</span>
+        partner_order_id:  orderId,
+        partner_user_id:   userId,
+        item_name:         planName,
+        quantity:          <span class="hl-val">1</span>,
+        total_amount:      amount,
+        tax_free_amount:   <span class="hl-val">0</span>,
+        approval_url:      <span class="hl-str">'https://unseon.co.kr/payment-complete.html?result=success'</span>,
+        fail_url:          <span class="hl-str">'https://unseon.co.kr/payment-complete.html?result=fail'</span>,
+        cancel_url:        <span class="hl-str">'https://unseon.co.kr/payment-complete.html?result=cancel'</span>,
+      },
+      { headers: { Authorization: <span class="hl-str">`SECRET_KEY </span><span class="hl-str">${process.env.KAKAO_ADMIN_KEY}</span><span class="hl-str">`</span> } }
+    );
+    res.json(response.data);  <span class="hl-cmt">// tid, next_redirect_pc_url 반환</span>
+  } <span class="hl-key">catch</span> (e) {
+    res.status(<span class="hl-val">500</span>).json({ error: e.message });
+  }
+});</code></pre>
+        </div>
+
+        <p style="font-weight:700;margin:16px 0 8px">프론트엔드에서 서버 호출</p>
+        <div class="g-code-wrap">
+          <div class="g-code-label">js/kakaopay.js — runRealKakaoPay() 수정</div>
+          <pre><code>fetch(<span class="hl-str">'/api/payment/ready'</span>, {
+  method: <span class="hl-str">'POST'</span>,
+  headers: { <span class="hl-str">'Content-Type'</span>: <span class="hl-str">'application/json'</span> },
+  body: JSON.stringify({
+    orderId:   orderId,
+    planName:  plan.name,
+    amount:    plan.amount,
+    userId:    currentUser?.id || <span class="hl-str">'guest'</span>
+  })
+})
+.then(r => r.json())
+.then(data => {
+  sessionStorage.setItem(<span class="hl-str">'kakao_tid'</span>, data.tid);
+  window.location.href = isMobile()
+    ? data.next_redirect_mobile_url
+    : data.next_redirect_pc_url;
+});</code></pre>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ────────────────────────── STEP 5 ────────────────────────── -->
+  <section class="g-section" id="step5">
+    <div class="g-section-header">
+      <div class="g-step-badge">5</div>
+      <div class="g-section-title">
+        <h2>최종 확인 체크리스트</h2>
+        <p>배포 전 아래 항목을 모두 확인하세요.</p>
+      </div>
+    </div>
+
+    <div class="g-checklist">
+      <div class="g-check-item">
+        <i class="fas fa-check-circle fa-lg"></i>
+        <div>
+          <strong>카카오페이 가맹 심사 완료</strong>
+          <span>→ CID 발급 완료</span>
+        </div>
+      </div>
+      <div class="g-check-item">
+        <i class="fas fa-check-circle fa-lg"></i>
+        <div>
+          <strong>js/kakaopay.js — IS_TEST: false 변경</strong>
+          <span>→ 테스트 배너·팝업 자동 숨김</span>
+        </div>
+      </div>
+      <div class="g-check-item">
+        <i class="fas fa-check-circle fa-lg"></i>
+        <div>
+          <strong>js/kakaopay.js — 실제 CID 입력</strong>
+          <span>→ TC0ONETIME → 발급받은 CID</span>
+        </div>
+      </div>
+      <div class="g-check-item">
+        <i class="fas fa-check-circle fa-lg"></i>
+        <div>
+          <strong>카카오 관리자에서 결제 URL 3개 등록</strong>
+          <span>→ success / fail / cancel URL</span>
+        </div>
+      </div>
+      <div class="g-check-item">
+        <i class="fas fa-check-circle fa-lg"></i>
+        <div>
+          <strong>방법 A: SDK 스크립트 주석 해제 + 앱 키 입력</strong>
+          <span>→ pricing.html &lt;head&gt; 스크립트 활성화</span>
+        </div>
+      </div>
+      <div class="g-check-item">
+        <i class="fas fa-check-circle fa-lg"></i>
+        <div>
+          <strong>HTTPS 배포 확인 (필수!)</strong>
+          <span>→ 카카오페이는 HTTP에서 동작 안 함 (unseon.co.kr SSL ✅)</span>
+        </div>
+      </div>
+      <div class="g-check-item">
+        <i class="fas fa-check-circle fa-lg"></i>
+        <div>
+          <strong>실결제 소액 테스트 (100원~)</strong>
+          <span>→ 결제 완료 후 포인트 지급 및 내역 확인</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="g-divider"/>
+
+    <p style="font-size:0.9rem;font-weight:700;margin-bottom:14px">IS_TEST 값에 따른 자동 변화</p>
+    <div style="overflow-x:auto">
+      <table class="g-url-table">
+        <thead>
+          <tr><th>항목</th><th style="color:#ef5350">IS_TEST: true (현재)</th><th style="color:#66bb6a">IS_TEST: false (전환 후)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>상단 테스트 배너</td><td>🟡 표시</td><td>✅ 자동 숨김</td></tr>
+          <tr><td>결제 확인 모달 배지</td><td>🟡 "테스트 모드" 표시</td><td>✅ 자동 숨김</td></tr>
+          <tr><td>결제 팝업</td><td>🧪 시뮬레이션 팝업</td><td>🟡 실제 카카오페이 창</td></tr>
+          <tr><td>포인트 지급</td><td>즉시 (시뮬)</td><td>결제 승인 후</td></tr>
+          <tr><td>이용 내역 상태</td><td>테스트완료</td><td>결제완료</td></tr>
+          <tr><td>개발자 가이드 배너</td><td>🟡 표시</td><td>✅ 자동 숨김</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── 완료 배너 ── -->
+  <div class="g-done-banner">
+    <div><i class="fas fa-rocket"></i></div>
+    <h2>준비 완료! 이제 배포하세요 🎉</h2>
+    <p>위 5단계를 완료했다면 카카오페이 실결제가 운세ON에 완벽히 탑재됩니다.<br/>Publish 탭에서 배포 후 실결제 테스트를 진행하세요.</p>
+    <a href="pricing.html" class="g-done-btn">
+      <i class="fas fa-coins"></i> 충전 페이지 확인하기
+    </a>
+  </div>
+
+  <!-- ── 빠른 참고 링크 ── -->
+  <section class="g-section" style="padding:28px 36px">
+    <p style="font-size:0.95rem;font-weight:800;margin-bottom:16px"><i class="fas fa-link" style="color:var(--blue)"></i> 공식 참고 링크</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <a href="https://developers.kakao.com/docs/latest/ko/kakaopay/single-payment" target="_blank"
+         style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg);border-radius:10px;text-decoration:none;color:var(--text);font-size:0.85rem;font-weight:600;transition:background 0.2s"
+         onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='var(--bg)'">
+        <i class="fas fa-book" style="color:var(--blue)"></i>
+        카카오페이 단건 결제 공식 문서
+        <i class="fas fa-external-link-alt" style="margin-left:auto;opacity:0.4;font-size:0.75rem"></i>
+      </a>
+      <a href="https://developers.kakao.com/docs/latest/ko/kakaopay/js-sdk" target="_blank"
+         style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg);border-radius:10px;text-decoration:none;color:var(--text);font-size:0.85rem;font-weight:600;transition:background 0.2s"
+         onmouseover="this.style.background='#fffde7'" onmouseout="this.style.background='var(--bg)'">
+        <i class="fas fa-code" style="color:var(--kakao-dark)"></i>
+        카카오페이 JavaScript SDK 문서
+        <i class="fas fa-external-link-alt" style="margin-left:auto;opacity:0.4;font-size:0.75rem"></i>
+      </a>
+      <a href="https://developers.kakao.com/console/app" target="_blank"
+         style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg);border-radius:10px;text-decoration:none;color:var(--text);font-size:0.85rem;font-weight:600;transition:background 0.2s"
+         onmouseover="this.style.background='#e8f5e9'" onmouseout="this.style.background='var(--bg)'">
+        <i class="fas fa-cog" style="color:var(--green)"></i>
+        카카오 개발자 콘솔 (앱 키 확인)
+        <i class="fas fa-external-link-alt" style="margin-left:auto;opacity:0.4;font-size:0.75rem"></i>
+      </a>
+      <a href="https://business.kakao.com/info/kakaopay/" target="_blank"
+         style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg);border-radius:10px;text-decoration:none;color:var(--text);font-size:0.85rem;font-weight:600;transition:background 0.2s"
+         onmouseover="this.style.background='#fffde7'" onmouseout="this.style.background='var(--bg)'">
+        <i class="fas fa-store" style="color:var(--orange)"></i>
+        카카오페이 가맹점 신청 페이지
+        <i class="fas fa-external-link-alt" style="margin-left:auto;opacity:0.4;font-size:0.75rem"></i>
+      </a>
+    </div>
+  </section>
+
+</div>
+
+<div id="copyToast">✅ 클립보드에 복사됨</div>
+
+<script>
+/* 탭 활성화 (스크롤 감지) */
+const sections = document.querySelectorAll('section[id]');
+const tabs     = document.querySelectorAll('.g-tab');
+
+const io = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      tabs.forEach(t => t.classList.remove('active'));
+      const active = document.querySelector(`.g-tab[href="#${entry.target.id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px' });
+
+sections.forEach(s => io.observe(s));
+
+/* 부드러운 스크롤 */
+tabs.forEach(tab => {
+  tab.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(tab.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+/* 코드 복사 */
+function copyCode(btn, id) {
+  const pre   = document.getElementById(id);
+  const text  = pre ? pre.innerText : '';
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('copyToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+    btn.innerHTML = '<i class="fas fa-check"></i> 복사됨';
+    setTimeout(() => btn.innerHTML = '<i class="fas fa-copy"></i> 복사', 2000);
+  });
+}
+</script>
+</body>
+</html>
