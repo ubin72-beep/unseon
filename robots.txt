@@ -52,9 +52,20 @@ User-agent: Daum
 Allow: /
 Allow: /index.html
 Allow: /chat.html
+Allow: /tarot.html
+Allow: /astrology.html
+Allow: /pricing.html
+Allow: /terms.html
+Allow: /privacy.html
+Allow: /refund.html
+Allow: /577cf1ec32a60424b346a5226434544a3d9158aae43c574f1914787de9113e4b.html
 Disallow: /admin.html
 Disallow: /auth.html
+Disallow: /payment-complete.html
 Disallow: /seo-guide.html
+Disallow: /js/
+Disallow: /css/
+Disallow: /tools/
 Crawl-delay: 1
 
 # ===== 빙봇 (마이크로소프트) =====
