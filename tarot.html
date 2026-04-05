@@ -1272,11 +1272,14 @@ function openTarotShare() {
 /* ── 이용 내역 저장 ── */
 function saveHistoryEntry(type, point, memo) {
   const hist = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
+  var userId = null;
+  try { var u = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); userId = u && u.id ? u.id : null; } catch(e2) {}
   hist.unshift({
     date:   new Date().toLocaleString('ko-KR'),
     type:   'AI 상담 · 타로카드',
     amount: point,   // 숫자형 (음수 = 차감)
-    note:   (memo || '타로 상담').slice(0, 30)
+    note:   (memo || '타로 상담').slice(0, 30),
+    userId: userId   // ← 회원 ID 기록
   });
   localStorage.setItem('sajuon_history', JSON.stringify(hist.slice(0, 200)));
   // 로그인 유저라면 sajuon_current_user 포인트도 동기화
