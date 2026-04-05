@@ -1520,12 +1520,15 @@ function deductPoints(amount, memo) {
     } catch(e2) {}
 
     // 3. 이용 내역 저장 (관리자·이용내역 페이지에서 확인 가능)
+    var astroUserId = null;
+    try { var au = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); astroUserId = au && au.id ? au.id : null; } catch(e3) {}
     const history = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
     history.unshift({
       date:   new Date().toLocaleString('ko-KR'),
       type:   'AI 상담 · 점성술',
       amount: -amount,
-      note:   (memo || '점성술').substring(0, 30)
+      note:   (memo || '점성술').substring(0, 30),
+      userId: astroUserId   // ← 회원 ID 기록
     });
     localStorage.setItem('sajuon_history', JSON.stringify(history.slice(0, 200)));
   } catch(e) { console.error(e); }
