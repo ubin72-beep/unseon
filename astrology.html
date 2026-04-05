@@ -426,9 +426,15 @@
       </div>
 
       <!-- 재시작 -->
-      <button class="astro-reset-btn" onclick="resetAstrology()">
-        <i class="fas fa-redo"></i> 다시 계산하기
-      </button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+        <button class="astro-reset-btn" onclick="resetAstrology()">
+          <i class="fas fa-redo"></i> 다시 계산하기
+        </button>
+        <button class="astro-reset-btn" onclick="openAstroShare()"
+          style="background:linear-gradient(135deg,#FFE812,#f7c300);color:#3A1D1D;border:none;font-weight:700;">
+          <i class="fas fa-share-alt"></i> 결과 공유하기
+        </button>
+      </div>
     </div><!-- /result section -->
 
   </div><!-- /modeBirth -->
@@ -536,6 +542,8 @@
 <!-- ===== SCRIPTS ===== -->
 <script src="js/auth.js?v=20260502"></script>
 <script src="js/main.js?v=20260502"></script>
+<script src="js/share.js?v=20260405"></script>
+<script src="js/welcome-popup.js?v=20260405"></script>
 <script src="js/astrology.js?v=20260502"></script>
 <script src="js/gemini.js?v=20260502"></script>
 
@@ -1388,6 +1396,8 @@ async function requestAIAstrology() {
   if (!currentChart) { alert('먼저 출생 차트를 계산해 주세요'); return; }
 
   let apiKey = localStorage.getItem('sajuon_gemini_key') || localStorage.getItem('gemini_api_key') || '';
+  const geminiModel = localStorage.getItem('sajuon_gemini_model') || 'gemini-2.0-flash';
+  const geminiVer   = localStorage.getItem('sajuon_gemini_ver')   || 'v1beta';
   if (!apiKey) {
     apiKey = prompt('🤖 Gemini AI API 키를 입력해 주세요\n\n관리자 페이지 → AI 설정에서도 등록 가능합니다:');
     if (!apiKey) return;
@@ -1416,7 +1426,7 @@ async function requestAIAstrology() {
       generationConfig: { maxOutputTokens: 2500, temperature: 0.8 }
     };
 
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const r = await fetch(`https://generativelanguage.googleapis.com/${geminiVer}/models/${geminiModel}:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -1463,6 +1473,23 @@ function resetAstrology() {
   document.querySelectorAll('.astro-tab-panel').forEach((p,i) => p.classList.toggle('active', i===0));
 
   document.getElementById('birthFormCard').scrollIntoView({ behavior:'smooth' });
+}
+
+/* ---------- 점성술 결과 공유 ---------- */
+function openAstroShare() {
+  const sunSign = currentChart ? (currentChart.sunSign || '') : '';
+  const desc    = sunSign
+    ? `☀️ 태양궁 ${sunSign} 출생 차트 AI 분석 완료! 당신의 별자리 비밀을 확인해보세요 🌙`
+    : '서양 점성술 출생 차트를 AI가 분석해줬어요! 당신도 무료로 확인해보세요 🌙';
+  if (typeof openShareSheet === 'function') {
+    openShareSheet({
+      title:    '🌙 운세ON 출생 차트 분석 결과',
+      desc:     desc,
+      url:      'https://unseon.co.kr/astrology.html',
+      imageUrl: 'https://unseon.co.kr/images/og-image.png',
+      hashtags: ['운세ON', '점성술', '별자리운세', '출생차트', 'AI운세']
+    });
+  }
 }
 
 /* ---------- 포인트 관련 ---------- */

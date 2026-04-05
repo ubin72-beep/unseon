@@ -120,6 +120,9 @@
       <button class="chat-reset-btn" onclick="resetChat()" title="새 대화 시작">
         <i class="fas fa-redo-alt"></i>
       </button>
+      <button class="chat-reset-btn" onclick="openChatShare()" title="결과 공유" style="background:rgba(255,232,18,0.15);color:#FFE812;margin-left:4px">
+        <i class="fas fa-share-alt"></i>
+      </button>
     </div>
 
     <!-- 메시지 영역 -->
@@ -249,6 +252,7 @@
 
 <script src="js/auth.js?v=20260502"></script>
 <script src="js/main.js?v=20260502"></script>
+<script src="js/share.js?v=20260405"></script>
 <script>
 /* chat.html 헤더 인증 초기화 */
 document.addEventListener('DOMContentLoaded', function() {
@@ -296,5 +300,18 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="js/career.js?v=20260406"></script>
 <script src="js/gemini.js?v=20260403"></script>
 <script src="js/chat.js?v=20260430"></script>
-</body>
-</html>
+<script>
+/* ── 채팅 결과 공유 ── */
+function openChatShare() {
+  const catName = document.getElementById('catNameLabel')?.textContent || 'AI 운세 상담';
+  if (typeof openShareSheet === 'function') {
+    openShareSheet({
+      title:    '🔮 운세ON ' + catName + ' 결과',
+      desc:     'AI가 ' + catName + '을 분석해줬어요! 당신도 무료로 500P 받고 시작해보세요 ✨',
+      url:      'https://unseon.co.kr/chat.html',
+      imageUrl: 'https://unseon.co.kr/images/og-image.png',
+      hashtags: ['운세ON', 'AI운세', '사주', '무료운세']
+    });
+  }
+}
+</script>

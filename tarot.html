@@ -441,6 +441,9 @@
       <button class="share-btn" onclick="saveResultImage()">
         <i class="fas fa-download"></i> 저장
       </button>
+      <button class="share-btn" style="background:linear-gradient(135deg,#FFE812,#f7c300);color:#3A1D1D;font-weight:700;border:none;" onclick="openTarotShare()">
+        <i class="fas fa-share-alt"></i> 공유하기
+      </button>
     </div>
   </div>
 
@@ -520,6 +523,8 @@
 
 <script src="js/auth.js?v=20260502"></script>
 <script src="js/main.js?v=20260502"></script>
+<script src="js/share.js?v=20260405"></script>
+<script src="js/welcome-popup.js?v=20260405"></script>
 <script src="js/tarot.js?v=20260502"></script>
 <script src="js/gemini.js?v=20260502"></script>
 <script>
@@ -1142,6 +1147,8 @@ async function requestAIInterpretation(reading, question) {
 
   try {
     const apiKey = localStorage.getItem('sajuon_gemini_key') || localStorage.getItem('gemini_api_key') || '';
+    const geminiModel = localStorage.getItem('sajuon_gemini_model') || 'gemini-2.0-flash';
+    const geminiVer   = localStorage.getItem('sajuon_gemini_ver')   || 'v1beta';
     if (!apiKey) {
       clearInterval(stepInterval);
       analyzing.classList.remove('show');
@@ -1171,7 +1178,7 @@ async function requestAIInterpretation(reading, question) {
     const userMsg = `${question ? `질문: "${question}"` : '오늘의 타로 리딩을 해주세요.'}\n${promptText}`;
 
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/${geminiVer}/models/${geminiModel}:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1247,6 +1254,19 @@ function resetTarot() {
   document.querySelectorAll('.interp-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
   document.getElementById('questionWrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
   setTimeout(() => document.getElementById('tarotQuestion').focus(), 600);
+}
+
+/* ── 타로 결과 공유 ── */
+function openTarotShare() {
+  const spread = currentReading ? (currentReading.spreadName || '타로 리딩') : '타로 리딩';
+  const q      = (document.getElementById('tarotQuestion')?.value || '').slice(0, 30);
+  openShareSheet({
+    title:    '🃏 운세ON 타로 리딩 결과',
+    desc:     (q ? `"${q}"에 대한 ` : '') + spread + ' 결과를 AI가 해석해줬어요! 당신도 무료로 뽑아보세요 ✨',
+    url:      'https://unseon.co.kr/tarot.html',
+    imageUrl: 'https://unseon.co.kr/images/og-image.png',
+    hashtags: ['운세ON', '타로', 'AI타로', '무료타로']
+  });
 }
 
 /* ── 이용 내역 저장 ── */

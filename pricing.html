@@ -31,6 +31,120 @@
   <link rel="stylesheet" href="css/style.css"/>
   <link rel="stylesheet" href="css/pricing.css"/>
   <link rel="stylesheet" href="css/payment.css"/>
+  <style>
+    /* ===== 고액 플랜 섹션 ===== */
+    .plan-grid-vip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 16px;
+    }
+    .plan-card--gold {
+      background: linear-gradient(145deg, #fffbea, #fff8d6);
+      border: 2px solid #d4af37 !important;
+      position: relative;
+      overflow: hidden;
+    }
+    .plan-card--gold::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #d4af37, #f5e27a, #d4af37);
+    }
+    .plan-card--gold .plan-name { color: #8b6914; }
+    .plan-card--gold .plan-amount { color: #8b6914; }
+    .plan-card--gold .plan-point { color: #b8860b; }
+    .plan-card--gold .plan-bonus-tag--plus { background: linear-gradient(135deg, #d4af37, #f5c842); color: #3d2b00; font-weight: 800; }
+
+    .plan-card--vip {
+      background: linear-gradient(145deg, #f0eaff, #e8dfff);
+      border: 2px solid #7c3aed !important;
+      position: relative;
+      overflow: hidden;
+    }
+    .plan-card--vip::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #7c3aed, #a78bfa, #7c3aed);
+    }
+    .plan-card--vip .plan-name { color: #4c1d95; }
+    .plan-card--vip .plan-amount { color: #4c1d95; }
+    .plan-card--vip .plan-point { color: #6d28d9; }
+    .plan-card--vip .plan-bonus-tag--plus { background: linear-gradient(135deg, #7c3aed, #a78bfa); color: #fff; font-weight: 800; }
+    .plan-card--vip .plan-badge { background: linear-gradient(135deg, #7c3aed, #4c1d95); color: #fff; }
+
+    .plan-card--vvip {
+      background: linear-gradient(145deg, #0f0c1a, #1a1040);
+      border: 2px solid #e040fb !important;
+      position: relative;
+      overflow: hidden;
+      color: #fff;
+    }
+    .plan-card--vvip::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #e040fb, #ff80ab, #e040fb);
+      animation: shimmerVvip 2s infinite;
+    }
+    @keyframes shimmerVvip {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+    .plan-card--vvip .plan-name   { color: #f8bbd0; font-size: 1.2rem; }
+    .plan-card--vvip .plan-amount { color: #fff; }
+    .plan-card--vvip .plan-point  { color: #e040fb; text-shadow: 0 0 12px rgba(224,64,251,0.5); }
+    .plan-card--vvip .plan-bonus-tag--plus { background: linear-gradient(135deg, #e040fb, #aa00ff); color: #fff; font-weight: 800; }
+    .plan-card--vvip .plan-badge  { background: linear-gradient(135deg, #e040fb, #ff4081); color: #fff; animation: pulseBadge 1.5s infinite; }
+    .plan-card--vvip ul li        { color: rgba(255,255,255,0.85); }
+    .plan-card--vvip ul li i      { color: #e040fb; }
+    @keyframes pulseBadge {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.06); }
+    }
+    .plan-card--vvip .plan-btn {
+      background: linear-gradient(135deg, #e040fb, #aa00ff);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 20px rgba(224,64,251,0.45);
+    }
+    .plan-card--vvip .plan-btn:hover { opacity: 0.88; }
+
+    .vip-section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #1a1a2e;
+      margin: 44px 0 6px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    .vip-section-title span { font-size: 1.4rem; }
+    .vip-section-sub { font-size: 0.88rem; color: #888; margin-bottom: 20px; }
+
+    /* 보너스 비율 강조 뱃지 */
+    .bonus-rate-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #ff6b35, #f7c59f);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    @media (max-width: 768px) {
+      .plan-grid-vip { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
 
@@ -164,6 +278,72 @@
           <li><i class="fas fa-check"></i> 20% 보너스 포인트</li>
         </ul>
         <button class="plan-btn kakao-pay-btn" onclick="event.stopPropagation();startKakaoPay('premium')">
+          <i class="fas fa-comment"></i> 카카오페이로 충전
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== 고액 VIP 플랜 ===== -->
+    <div class="vip-section-title">
+      <span>💎</span> 고액 충전 플랜
+      <span class="bonus-rate-badge">최대 50% 보너스</span>
+    </div>
+    <p class="vip-section-sub">많이 충전할수록 보너스가 커집니다 — 헤비 유저를 위한 특별 플랜</p>
+
+    <div class="plan-grid-vip">
+      <!-- 골드 -->
+      <div class="plan-card plan-card--gold" data-plan="gold" onclick="selectPlan('gold')">
+        <div class="plan-badge" style="background:linear-gradient(135deg,#d4af37,#f5c842);color:#3d2b00">💛 GOLD</div>
+        <div class="plan-name">골드</div>
+        <div class="plan-amount">₩50,000</div>
+        <div class="plan-point">65,000P</div>
+        <div class="plan-bonus-tag plan-bonus-tag--plus">+15,000P (30% 보너스)</div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check"></i> 타로 상담 650회</li>
+          <li><i class="fas fa-check"></i> 연애운·직업 상담 325회</li>
+          <li><i class="fas fa-check"></i> 사업운·이름 상담 216회</li>
+          <li><i class="fas fa-check"></i> 30% 보너스 포인트 🎁</li>
+        </ul>
+        <button class="plan-btn kakao-pay-btn" style="background:linear-gradient(135deg,#d4af37,#b8962f);color:#fff;border:none;" onclick="event.stopPropagation();startKakaoPay('gold')">
+          <i class="fas fa-comment"></i> 카카오페이로 충전
+        </button>
+      </div>
+
+      <!-- VIP -->
+      <div class="plan-card plan-card--vip" data-plan="vip" onclick="selectPlan('vip')">
+        <div class="plan-badge">👑 VIP</div>
+        <div class="plan-name">VIP</div>
+        <div class="plan-amount">₩100,000</div>
+        <div class="plan-point">140,000P</div>
+        <div class="plan-bonus-tag plan-bonus-tag--plus">+40,000P (40% 보너스)</div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check"></i> 타로 상담 1,400회</li>
+          <li><i class="fas fa-check"></i> 연애운·직업 상담 700회</li>
+          <li><i class="fas fa-check"></i> 사업운·이름 상담 466회</li>
+          <li><i class="fas fa-check"></i> 40% 보너스 포인트 🎁</li>
+          <li><i class="fas fa-star" style="color:#7c3aed"></i> 6개월 유효기간</li>
+        </ul>
+        <button class="plan-btn kakao-pay-btn" style="background:linear-gradient(135deg,#7c3aed,#4c1d95);color:#fff;border:none;" onclick="event.stopPropagation();startKakaoPay('vip')">
+          <i class="fas fa-comment"></i> 카카오페이로 충전
+        </button>
+      </div>
+
+      <!-- VVIP -->
+      <div class="plan-card plan-card--vvip" data-plan="vvip" onclick="selectPlan('vvip')">
+        <div class="plan-badge">🌟 VVIP</div>
+        <div class="plan-name">VVIP</div>
+        <div class="plan-amount" style="color:#fff">₩300,000</div>
+        <div class="plan-point">450,000P</div>
+        <div class="plan-bonus-tag plan-bonus-tag--plus">+150,000P (50% 보너스)</div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check"></i> 타로 상담 4,500회</li>
+          <li><i class="fas fa-check"></i> 연애운·직업 상담 2,250회</li>
+          <li><i class="fas fa-check"></i> 사업운·이름 상담 1,500회</li>
+          <li><i class="fas fa-check"></i> 50% 보너스 포인트 🎁</li>
+          <li><i class="fas fa-star" style="color:#e040fb"></i> 1년 유효기간</li>
+          <li><i class="fas fa-crown" style="color:#e040fb"></i> VVIP 전용 뱃지</li>
+        </ul>
+        <button class="plan-btn" onclick="event.stopPropagation();startKakaoPay('vvip')">
           <i class="fas fa-comment"></i> 카카오페이로 충전
         </button>
       </div>
@@ -436,8 +616,38 @@
 <script src="js/main.js?v=20260502"></script>
 <script src="js/kakaopay.js?v=20260502"></script>
 <script>
+/* ── 관리자 정책(sajuon_policy) 반영 → 플랜 카드 UI 동기화 ── */
+function applySavedPolicy() {
+  var policy = {};
+  try { policy = JSON.parse(localStorage.getItem('sajuon_policy') || '{}'); } catch(e) {}
+  if (!Object.keys(policy).length) return; // 저장된 정책 없으면 스킵
+
+  // 각 플랜별 금액·포인트 업데이트 헬퍼
+  function updateCard(planKey, amtKey, ptKey, bonusKey) {
+    var card = document.querySelector('[data-plan="' + planKey + '"]');
+    if (!card) return;
+    var amtEl    = card.querySelector('.plan-amount');
+    var ptEl     = card.querySelector('.plan-point');
+    var bonusEl  = card.querySelector('.plan-bonus-tag');
+    if (amtEl  && policy[amtKey])   amtEl.textContent  = '₩' + Number(policy[amtKey]).toLocaleString();
+    if (ptEl   && policy[ptKey])    ptEl.textContent   = Number(policy[ptKey]).toLocaleString() + 'P';
+    if (bonusEl && policy[bonusKey] && policy[bonusKey] > 0)
+      bonusEl.textContent = '+' + Number(policy[bonusKey]).toLocaleString() + 'P 보너스';
+  }
+
+  updateCard('basic',    'basicAmt',  'basicPt',  'basicBonus');
+  updateCard('standard', 'stdAmt',    'stdPt',    'stdBonus');
+  updateCard('premium',  'premAmt',   'premPt',   'premBonus');
+  updateCard('gold',     'goldAmt',   'goldPt',   'goldBonus');
+  updateCard('vip',      'vipAmt',    'vipPt',    'vipBonus');
+  updateCard('vvip',     'vvipAmt',   'vvipPt',   'vvipBonus');
+}
+
 /* pricing.html 초기화 */
 document.addEventListener('DOMContentLoaded', function() {
+
+  /* ── 0. 관리자 정책 동기화 ── */
+  applySavedPolicy();
 
   /* ── 1. 헤더 로그인 상태 ── */
   var user = null;
@@ -502,15 +712,21 @@ function renderHistory() {
     tbody.innerHTML = '<tr><td colspan="5" class="empty-row">이용 내역이 없습니다</td></tr>';
     return;
   }
-  tbody.innerHTML = hist.slice(0, 30).map(h => `
-    <tr>
-      <td>${h.date}</td>
-      <td><span class="hist-badge ${h.type === '충전' ? 'hist-charge' : 'hist-use'}">${h.type}</span></td>
-      <td class="${h.type === '충전' ? 'hist-plus' : 'hist-minus'}">${h.point}</td>
-      <td>${h.memo || '—'}</td>
+  tbody.innerHTML = hist.slice(0, 30).map(h => {
+    // point 문자열 또는 amount 숫자 모두 처리
+    var ptStr = h.point || '';
+    if (!ptStr && typeof h.amount === 'number') {
+      ptStr = (h.amount >= 0 ? '+' : '') + h.amount.toLocaleString() + 'P';
+    }
+    var isCharge = h.type === '충전' || (typeof h.amount === 'number' && h.amount > 0);
+    return `<tr>
+      <td>${h.date || ''}</td>
+      <td><span class="hist-badge ${isCharge ? 'hist-charge' : 'hist-use'}">${h.type || '—'}</span></td>
+      <td class="${isCharge ? 'hist-plus' : 'hist-minus'}">${ptStr || '—'}</td>
+      <td>${h.memo || h.note || '—'}</td>
       <td style="font-size:0.72rem;color:#aaa">${h.orderId || '—'}</td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
 
 /* ── 개발자 전환 가이드 (테스트 모드에서만 표시) ── */
