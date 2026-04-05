@@ -453,7 +453,8 @@ function completePayment(plan, orderId, pgToken) {
     memo:    `카카오페이 · ${plan.name}` +
              (plan.bonus > 0 ? ` (+${plan.bonus.toLocaleString()}P 보너스)` : ''),
     orderId,
-    amount:  plan.amount,
+    amount:  plan.point,   // 지급 포인트 수 (양수)
+    userId:  (getCurrentUserInfo() || {}).id || null,  // ← 회원 ID 기록
     pgToken: pgToken || 'test',
     status:  isTest ? '테스트완료' : '결제완료'
   });
