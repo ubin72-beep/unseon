@@ -1668,12 +1668,15 @@ function initChatEvents() {
 // ===== 이용 내역 저장 =====
 function saveHistory(cat, cost, question) {
   try {
+    var userId = null;
+    try { var u = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); userId = u && u.id ? u.id : null; } catch(e2) {}
     const hist = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
     hist.unshift({
       date: new Date().toLocaleString('ko-KR'),
       type: `AI 상담 · ${cat}`,
       amount: -cost,
-      note: question.slice(0, 30) + (question.length > 30 ? '...' : '')
+      note: question.slice(0, 30) + (question.length > 30 ? '...' : ''),
+      userId: userId   // ← 회원 ID 기록 (비로그인이면 null)
     });
     if (hist.length > 100) hist.splice(100);
     localStorage.setItem('sajuon_history', JSON.stringify(hist));
