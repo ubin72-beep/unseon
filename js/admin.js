@@ -243,6 +243,15 @@ function renderDash(container) {
   const totalConsult = hist.filter(h => Number(h.amount) < 0).length;
   const currentPt    = Number(getPoints()) || 0;
 
+  // 결제 금액(원화) 집계 — kakaopay.js completePayment가 저장한 amount 필드
+  const payHist = hist.filter(h => h.type === '충전' && typeof h.amount === 'number' && h.amount > 0);
+  const totalKRW = payHist.reduce((s, h) => s + (h.amount || 0), 0); // amount는 포인트(P=₩1)
+  // 이번 달 매출
+  const nowYM = new Date().toISOString().slice(0, 7); // "2026-04"
+  const monthKRW = payHist
+    .filter(h => h.date && (h.date.includes(nowYM.replace('-', '.')) || (h.date >= nowYM)))
+    .reduce((s, h) => s + (h.amount || 0), 0);
+
   // 타로/점성술 사용 건수 (localStorage 기반)
   let tarotCount = 0, astroCount = 0;
   try {
@@ -252,7 +261,24 @@ function renderDash(container) {
     astroCount = Array.isArray(astroLog) ? astroLog.length : 0;
   } catch(e) {}
 
+  // 회원 수
+  let memberCount = 0;
+  try { memberCount = JSON.parse(localStorage.getItem('sajuon_users') || '[]').length; } catch(e) {}
+
   container.innerHTML = `
+    <!-- 매출 요약 카드 -->
+    <div style="background:linear-gradient(135deg,#1a4838,#2c5f4f);border-radius:16px;padding:20px 24px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+      <div>
+        <div style="font-size:0.78rem;font-weight:600;opacity:0.75;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">💰 이번 달 누적 매출 (테스트 포함)</div>
+        <div style="font-size:2rem;font-weight:800">₩${monthKRW.toLocaleString()}</div>
+        <div style="font-size:0.8rem;opacity:0.7;margin-top:4px">누적 총 매출: ₩${totalKRW.toLocaleString()} · 회원 ${memberCount}명</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:0.78rem;opacity:0.75;margin-bottom:4px">목표 달성률</div>
+        <div style="font-size:1.4rem;font-weight:800">${Math.round((monthKRW/2000000)*100)}%</div>
+        <div style="font-size:0.75rem;opacity:0.6">월 200만원 목표 기준</div>
+      </div>
+    </div>
     <div class="stat-grid">
       <div class="stat-card">
         <div class="stat-icon" style="background:#e8f5e9">💰</div>
@@ -507,6 +533,9 @@ function renderPricing(container) {
     basicAmt: 10000, basicPt: 10000, basicBonus: 0,
     stdAmt: 20000,   stdPt: 22000,   stdBonus: 2000,
     premAmt: 30000,  premPt: 36000,  premBonus: 6000,
+    goldAmt: 50000,  goldPt: 65000,  goldBonus: 15000,
+    vipAmt: 100000,  vipPt: 140000,  vipBonus: 40000,
+    vvipAmt: 300000, vvipPt: 450000, vvipBonus: 150000,
     freePt: 500,
     costBasic: 100,  costNormal: 200, costAdvanced: 300,
   };
@@ -550,21 +579,33 @@ function renderPricing(container) {
           </div>
         </div>
       </div>
-      <div style="margin-bottom:24px">
+      <div style="margin-bottom:20px">
         <h4 style="font-size:0.88rem;font-weight:700;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">프리미엄 플랜</h4>
         <div class="admin-form-2col">
-          <div class="admin-form-row">
-            <label>결제금액 (원)</label>
-            <input class="admin-input" type="number" id="premAmt" value="${p.premAmt}"/>
-          </div>
-          <div class="admin-form-row">
-            <label>지급 포인트</label>
-            <input class="admin-input" type="number" id="premPt" value="${p.premPt}"/>
-          </div>
-          <div class="admin-form-row">
-            <label>보너스 포인트</label>
-            <input class="admin-input" type="number" id="premBonus" value="${p.premBonus}"/>
-          </div>
+          <div class="admin-form-row"><label>결제금액 (원)</label><input class="admin-input" type="number" id="premAmt" value="${p.premAmt}"/></div>
+          <div class="admin-form-row"><label>지급 포인트</label><input class="admin-input" type="number" id="premPt" value="${p.premPt}"/></div>
+          <div class="admin-form-row"><label>보너스 포인트</label><input class="admin-input" type="number" id="premBonus" value="${p.premBonus}"/></div>
+        </div>
+      </div>
+      <div style="border-top:2px dashed #d4af37;margin:20px 0;padding-top:16px">
+        <div style="font-size:0.82rem;font-weight:700;color:#b8962f;margin-bottom:14px">💎 고액 플랜 (신규 추가)</div>
+        <h4 style="font-size:0.88rem;font-weight:700;color:#b8962f;margin-bottom:10px">💛 골드 플랜 (30% 보너스)</h4>
+        <div class="admin-form-2col" style="margin-bottom:14px">
+          <div class="admin-form-row"><label>결제금액 (원)</label><input class="admin-input" type="number" id="goldAmt" value="${p.goldAmt}"/></div>
+          <div class="admin-form-row"><label>지급 포인트</label><input class="admin-input" type="number" id="goldPt" value="${p.goldPt}"/></div>
+          <div class="admin-form-row"><label>보너스 포인트</label><input class="admin-input" type="number" id="goldBonus" value="${p.goldBonus}"/></div>
+        </div>
+        <h4 style="font-size:0.88rem;font-weight:700;color:#6d28d9;margin-bottom:10px">👑 VIP 플랜 (40% 보너스)</h4>
+        <div class="admin-form-2col" style="margin-bottom:14px">
+          <div class="admin-form-row"><label>결제금액 (원)</label><input class="admin-input" type="number" id="vipAmt" value="${p.vipAmt}"/></div>
+          <div class="admin-form-row"><label>지급 포인트</label><input class="admin-input" type="number" id="vipPt" value="${p.vipPt}"/></div>
+          <div class="admin-form-row"><label>보너스 포인트</label><input class="admin-input" type="number" id="vipBonus" value="${p.vipBonus}"/></div>
+        </div>
+        <h4 style="font-size:0.88rem;font-weight:700;color:#e040fb;margin-bottom:10px">🌟 VVIP 플랜 (50% 보너스)</h4>
+        <div class="admin-form-2col">
+          <div class="admin-form-row"><label>결제금액 (원)</label><input class="admin-input" type="number" id="vvipAmt" value="${p.vvipAmt}"/></div>
+          <div class="admin-form-row"><label>지급 포인트</label><input class="admin-input" type="number" id="vvipPt" value="${p.vvipPt}"/></div>
+          <div class="admin-form-row"><label>보너스 포인트</label><input class="admin-input" type="number" id="vvipBonus" value="${p.vvipBonus}"/></div>
         </div>
       </div>
       <button class="admin-save-btn" onclick="savePricing()"><i class="fas fa-save"></i> 저장하기</button>
@@ -600,23 +641,30 @@ function renderPricing(container) {
 }
 
 function savePricing() {
+  const g = id => +document.getElementById(id)?.value || 0;
   const policy = {
-    basicAmt: +document.getElementById('basicAmt')?.value || 10000,
-    basicPt:  +document.getElementById('basicPt')?.value  || 10000,
-    basicBonus: 0,
-    stdAmt:   +document.getElementById('stdAmt')?.value   || 20000,
-    stdPt:    +document.getElementById('stdPt')?.value    || 22000,
-    stdBonus: +document.getElementById('stdBonus')?.value || 2000,
-    premAmt:  +document.getElementById('premAmt')?.value  || 30000,
-    premPt:   +document.getElementById('premPt')?.value   || 36000,
-    premBonus:+document.getElementById('premBonus')?.value|| 6000,
-    freePt:   +document.getElementById('freePt')?.value   || 500,
-    costBasic:   +document.getElementById('costBasic')?.value    || 100,
-    costNormal:  +document.getElementById('costNormal')?.value   || 200,
-    costAdvanced:+document.getElementById('costAdvanced')?.value || 300,
+    basicAmt: g('basicAmt') || 10000, basicPt: g('basicPt') || 10000, basicBonus: 0,
+    stdAmt:   g('stdAmt')  || 20000,  stdPt:   g('stdPt')  || 22000,  stdBonus:  g('stdBonus')  || 2000,
+    premAmt:  g('premAmt') || 30000,  premPt:  g('premPt') || 36000,  premBonus: g('premBonus') || 6000,
+    goldAmt:  g('goldAmt') || 50000,  goldPt:  g('goldPt') || 65000,  goldBonus: g('goldBonus') || 15000,
+    vipAmt:   g('vipAmt')  || 100000, vipPt:   g('vipPt')  || 140000, vipBonus:  g('vipBonus')  || 40000,
+    vvipAmt:  g('vvipAmt') || 300000, vvipPt:  g('vvipPt') || 450000, vvipBonus: g('vvipBonus') || 150000,
+    freePt:   g('freePt')  || 500,
+    costBasic:    g('costBasic')    || 100,
+    costNormal:   g('costNormal')   || 200,
+    costAdvanced: g('costAdvanced') || 300,
   };
   localStorage.setItem('sajuon_policy', JSON.stringify(policy));
-  showToast('✅ 요금 정책이 저장되었습니다');
+  // kakaopay.js PLANS 런타임 동기화
+  if (typeof PLANS !== 'undefined') {
+    PLANS.basic.amount    = policy.basicAmt; PLANS.basic.point    = policy.basicPt;
+    PLANS.standard.amount = policy.stdAmt;   PLANS.standard.point = policy.stdPt;   PLANS.standard.bonus = policy.stdBonus;
+    PLANS.premium.amount  = policy.premAmt;  PLANS.premium.point  = policy.premPt;  PLANS.premium.bonus  = policy.premBonus;
+    PLANS.gold.amount     = policy.goldAmt;  PLANS.gold.point     = policy.goldPt;  PLANS.gold.bonus     = policy.goldBonus;
+    PLANS.vip.amount      = policy.vipAmt;   PLANS.vip.point      = policy.vipPt;   PLANS.vip.bonus      = policy.vipBonus;
+    PLANS.vvip.amount     = policy.vvipAmt;  PLANS.vvip.point     = policy.vvipPt;  PLANS.vvip.bonus     = policy.vvipBonus;
+  }
+  showToast('✅ 요금 정책이 저장되었습니다 (골드·VIP·VVIP 포함)');
 }
 
 // =========================================
@@ -955,7 +1003,7 @@ function resetPoints() {
 
 function resetAllData() {
   if (!confirm('⚠️ 모든 데이터(포인트, 내역, 설정)를 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
-  const keys = ['sajuon_points','sajuon_history','sajuon_banner','sajuon_cats','sajuon_policy','sajuon_reviews','sajuon_faqs','sajuon_initialized'];
+  const keys = ['sajuon_points','sajuon_history','sajuon_banner','sajuon_cats','sajuon_policy','sajuon_reviews','sajuon_faqs','sajuon_initialized','unseon_popup_shown'];
   keys.forEach(k => localStorage.removeItem(k));
   updateAdminPt();
   showToast('🗑️ 전체 데이터가 초기화되었습니다');

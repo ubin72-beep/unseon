@@ -61,21 +61,54 @@ const PLANS = {
     amount: 10000,
     point:  10000,
     bonus:  0,
-    desc:   '10,000P 충전'
+    desc:   '10,000P 충전',
+    badge:  '',
+    color:  ''
   },
   standard: {
     name:   '스탠다드 플랜',
     amount: 20000,
     point:  22000,
     bonus:  2000,
-    desc:   '22,000P 충전 (+2,000P 보너스)'
+    desc:   '22,000P 충전 (+2,000P 보너스)',
+    badge:  '인기',
+    color:  ''
   },
   premium: {
     name:   '프리미엄 플랜',
     amount: 30000,
     point:  36000,
     bonus:  6000,
-    desc:   '36,000P 충전 (+6,000P 보너스)'
+    desc:   '36,000P 충전 (+6,000P 보너스)',
+    badge:  '',
+    color:  ''
+  },
+  gold: {
+    name:   '골드 플랜',
+    amount: 50000,
+    point:  65000,
+    bonus:  15000,
+    desc:   '65,000P 충전 (+15,000P 보너스)',
+    badge:  '30% 보너스',
+    color:  'gold'
+  },
+  vip: {
+    name:   'VIP 플랜',
+    amount: 100000,
+    point:  140000,
+    bonus:  40000,
+    desc:   '140,000P 충전 (+40,000P 보너스)',
+    badge:  '40% 보너스',
+    color:  'vip'
+  },
+  vvip: {
+    name:   'VVIP 플랜',
+    amount: 300000,
+    point:  450000,
+    bonus:  150000,
+    desc:   '450,000P 충전 (+150,000P 보너스)',
+    badge:  '50% 보너스 최대',
+    color:  'vvip'
   }
 };
 
