@@ -1165,14 +1165,23 @@ async function requestAIInterpretation(reading, question) {
     }
 
     const promptText = tarotToPromptText(reading);
+    const cardCount  = reading.cards ? reading.cards.length : 1;
+
+    // 카드 수에 따라 토큰 한도 동적 결정 (1장:1200 / 3장:2500 / 5장:3500 / 10장:5000)
+    const maxTokens = cardCount >= 10 ? 5000
+                    : cardCount >= 5  ? 3500
+                    : cardCount >= 3  ? 2500
+                    : 1800;
+
     const systemMsg  = `당신은 20년 경력의 전문 타로 마스터입니다. 78장 타로카드의 모든 의미를 깊이 이해하고 있으며, 사용자의 질문에 맞는 통찰력 있는 해석을 한국어로 제공합니다.
 
 해석 원칙:
-- 뽑힌 카드들을 반드시 활용하여 질문에 맞는 스토리텔링을 하세요
+- 뽑힌 카드 ${cardCount}장을 모두 빠짐없이 해석하세요 (반드시 전체 카드 수 = ${cardCount}장)
 - 각 카드의 위치적 의미와 에너지를 연결하여 흐름을 만드세요
 - 구체적이고 실용적인 행동 지침을 포함하세요
 - 역방향 카드도 성장의 기회로 따뜻하게 재해석하세요
 - 마크다운(**, ##, ###)을 활용해 가독성 좋게 작성하세요
+- 중간에 절대 내용을 잘라내거나 생략하지 마세요
 - 해석 마지막에는 핵심 메시지를 한 문장으로 요약하세요`;
 
     const userMsg = `${question ? `질문: "${question}"` : '오늘의 타로 리딩을 해주세요.'}\n${promptText}`;
@@ -1184,7 +1193,7 @@ async function requestAIInterpretation(reading, question) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: systemMsg + '\n\n' + userMsg }] }],
-          generationConfig: { maxOutputTokens: 2400, temperature: 0.85 }
+          generationConfig: { maxOutputTokens: maxTokens, temperature: 0.85 }
         })
       }
     );
@@ -1215,14 +1224,44 @@ async function requestAIInterpretation(reading, question) {
   }
 }
 
-/* ── 간단 Markdown → HTML ── */
+/* ── 간단 Markdown → HTML (전체 내용 표시, 잘림 방지) ── */
 function markdownToHTML(text) {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#FFE812">$1</strong>')
-    .replace(/^## (.+)$/gm, '<div style="font-size:1rem;font-weight:900;color:#a8edea;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.1)">$1</div>')
-    .replace(/^### (.+)$/gm, '<div style="font-size:0.88rem;font-weight:800;color:#FFE812;margin:14px 0 6px">$1</div>')
-    .replace(/^- (.+)$/gm, '<div style="padding-left:16px;margin:4px 0;color:rgba(255,255,255,0.8)">• $1</div>')
-    .replace(/\n/g, '<br/>');
+  if (!text) return '';
+
+  // 줄별로 파싱하여 각 요소에 맞는 태그 적용
+  const lines = text.split('\n');
+  const result = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+
+    // ## 헤딩 (카드 섹션 제목)
+    if (/^## (.+)$/.test(line)) {
+      result.push(`<div style="font-size:1rem;font-weight:900;color:#a8edea;margin:22px 0 10px;padding:10px 0 8px;border-bottom:1px solid rgba(255,255,255,0.15)">${line.replace(/^## /, '')}</div>`);
+      continue;
+    }
+    // ### 소제목
+    if (/^### (.+)$/.test(line)) {
+      result.push(`<div style="font-size:0.9rem;font-weight:800;color:#FFE812;margin:16px 0 6px">${line.replace(/^### /, '')}</div>`);
+      continue;
+    }
+    // - 리스트
+    if (/^[-*] (.+)$/.test(line)) {
+      const content = line.replace(/^[-*] /, '').replace(/\*\*(.+?)\*\*/g, '<strong style="color:#FFE812">$1</strong>');
+      result.push(`<div style="padding:3px 0 3px 18px;margin:3px 0;color:rgba(255,255,255,0.85);position:relative"><span style="position:absolute;left:4px;color:#FFE812">•</span>${content}</div>`);
+      continue;
+    }
+    // 빈 줄 → 여백
+    if (line.trim() === '') {
+      if (i > 0 && lines[i-1].trim() !== '') result.push('<div style="margin:8px 0"></div>');
+      continue;
+    }
+    // 일반 텍스트 (볼드 처리 포함)
+    const formatted = line.replace(/\*\*(.+?)\*\*/g, '<strong style="color:#FFE812">$1</strong>');
+    result.push(`<p style="margin:4px 0;line-height:1.85;color:#e0e0e0">${formatted}</p>`);
+  }
+
+  return result.join('');
 }
 
 /* ── 결과 복사 ── */
