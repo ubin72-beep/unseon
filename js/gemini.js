@@ -62,9 +62,10 @@ function buildSystemPrompt(category) {
     '1. 사용자 메시지를 정확히 읽고 그 내용에만 집중하여 답변하세요.\n' +
     `2. 현재 연도는 ${_yr}년입니다. 절대 다른 연도로 말하지 마세요.\n` +
     '3. 매 답변 내용을 다르게 하세요. 이전 답변을 반복하지 마세요.\n' +
-    '4. 반드시 문장을 완전히 끝맺으세요. 절대 중간에 끊지 마세요.\n' +
+    '4. 반드시 문장을 완전히 끝맺으세요. 절대 중간에 끊지 마세요. 마무리 문장(<p class="saju-closing">)까지 반드시 완성하세요.\n' +
     '5. 한국어 경어체(~습니다, ~세요)로 작성하세요.\n' +
-    '6. 마크다운 금지. HTML 태그만 사용하세요.\n\n' +
+    '6. 마크다운 금지. HTML 태그만 사용하세요.\n' +
+    '7. 토큰이 부족할 것을 걱정하지 말고 내용을 끝까지 완성하는 것을 최우선으로 하세요.\n\n' +
     '【HTML 출력 규칙】\n' +
     '제목: <h4>이모지 제목</h4> | 단락: <p>내용</p> | 강조: <strong>단어</strong>\n' +
     '목록: <ul><li>항목</li></ul> | 마무리: <p class="saju-closing">마무리 문장</p>\n';
@@ -422,7 +423,8 @@ function buildSystemPrompt(category) {
       '6. 용신(用神)·희신(喜神) 기반 개인 행운 아이템(색상·방향·숫자)을 안내하세요.\n' +
       '7. 현재 고민이나 질문 내용에 집중하여 실질적 조언을 중심에 두세요.\n' +
       '8. 마무리는 반드시 <p class="saju-closing">...</p> 태그로 희망적 메시지로 끝내세요.\n' +
-      '9. 답변은 600~800자 내외로 충실하게 작성하세요.\n';
+      '9. 답변은 1000~1500자로 충실하게 작성하세요. 내용이 길어도 절대 중간에 끊지 말고 반드시 마무리 문장까지 완성하세요.\n' +
+      '10. 답변을 작성할 때 토큰 한도를 걱정하지 말고 끝까지 완성하는 것을 최우선으로 하세요.\n';
   }
 
   // ── 사주/운세 기본 프롬프트 ──
@@ -475,9 +477,9 @@ function _getMaxTokens(category, message) {
   const birthYearCount = (message.match(/\d{4}년/g) || []).length;
   const hasMultiplePeople = birthYearCount >= 2 || /상대방|두\s*분|본인.*상대|궁합|배우자/.test(message);
 
-  if (hasMultiplePeople)                    return 3500;  // 두 사람 동시 분석
-  if (HEAVY_CATS.includes(category))        return 2800;  // 복잡한 단일 분석
-  return 2000;                                            // 일반 상담
+  if (hasMultiplePeople)                    return 5000;  // 두 사람 동시 분석
+  if (HEAVY_CATS.includes(category))        return 4500;  // 복잡한 단일 분석
+  return 3000;                                            // 일반 상담
 }
 
 // ===== 대화 히스토리 =====
@@ -797,21 +799,23 @@ async function callGeminiStream(category, userMessage, onChunk, onDone, onError)
       }
     }
 
-    // MAX_TOKENS로 잘린 경우: 이어쓰기 요청
-    if (finishReason === 'MAX_TOKENS' && fullText.length > 0) {
-      console.warn('[Gemini] MAX_TOKENS 감지 — 이어쓰기 시도');
+    // MAX_TOKENS로 잘린 경우: 이어쓰기 요청 (최대 3회 반복)
+    let continueCount = 0;
+    while (finishReason === 'MAX_TOKENS' && fullText.length > 0 && continueCount < 3) {
+      continueCount++;
+      console.warn('[Gemini] MAX_TOKENS 감지 — 이어쓰기 시도 #' + continueCount);
       try {
         const continueBody = {
           system_instruction: requestBody.system_instruction,
           contents: [
-            ...conversationHistory.slice(0, -1), // 마지막 user 메시지 제외
+            ...conversationHistory.slice(0, -1),
             { role: 'user',  parts: [{ text: userMessage }] },
             { role: 'model', parts: [{ text: fullText }] },
-            { role: 'user',  parts: [{ text: '이어서 계속 작성해주세요. 앞 내용을 반복하지 말고 이어서만 써주세요.' }] }
+            { role: 'user',  parts: [{ text: '이어서 계속 작성해주세요. 앞 내용을 절대 반복하지 말고, 끊긴 문장부터 자연스럽게 이어서만 써주세요.' }] }
           ],
           generationConfig: {
             temperature: 0.9, topK: 40, topP: 0.95,
-            maxOutputTokens: 1500, candidateCount: 1,
+            maxOutputTokens: 2500, candidateCount: 1,
           },
           safetySettings: requestBody.safetySettings,
         };
@@ -823,14 +827,20 @@ async function callGeminiStream(category, userMessage, onChunk, onDone, onError)
         });
         if (contRes.ok) {
           const contData = await contRes.json();
-          const contText = contData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          const contCand = contData?.candidates?.[0];
+          const contText = contCand?.content?.parts?.[0]?.text || '';
           if (contText) {
             fullText += contText;
             onChunk(fullText);
           }
+          // 이어쓰기에서도 MAX_TOKENS면 계속 반복
+          finishReason = contCand?.finishReason || '';
+        } else {
+          break;
         }
       } catch(e) {
         console.warn('[Gemini] 이어쓰기 실패:', e.message);
+        break;
       }
     }
 
