@@ -421,40 +421,52 @@ function isMobile() {
 /* ──────────────────────────────────────────── */
 
 function completePayment(plan, orderId, pgToken) {
-  /* ① localStorage 포인트 업데이트 */
-  const currentPts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
-  const newPts = currentPts + plan.point;
-  localStorage.setItem('sajuon_points', String(newPts));
+  const currentUser = getCurrentUserInfo();
+  const currentPts  = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+  const newPts      = currentPts + plan.point;
+  const isTest      = !pgToken || String(pgToken).startsWith('KAKAO_TEST_');
 
-  /* ② 사용자 계정 포인트 동기화 */
-  try {
-    const currentUser = getCurrentUserInfo();
-    if (currentUser && currentUser.id) {
-      const users = JSON.parse(localStorage.getItem('sajuon_users') || '[]');
-      const idx = users.findIndex(u => u.id === currentUser.id);
-      if (idx !== -1) {
-        users[idx].points = newPts;
-        localStorage.setItem('sajuon_users', JSON.stringify(users));
-      }
-      localStorage.setItem('sajuon_current_user',
-        JSON.stringify({ ...currentUser, points: newPts }));
-    }
-  } catch (e) {
-    console.warn('[Payment] 포인트 동기화 오류:', e);
+  /* ① localStorage 즉시 반영 (UI 빠른 갱신) */
+  localStorage.setItem('sajuon_points', String(newPts));
+  if (currentUser) {
+    localStorage.setItem('sajuon_current_user', JSON.stringify({ ...currentUser, points: newPts }));
   }
 
-  /* ③ 이용 내역 저장 */
-  const isTest = !pgToken || String(pgToken).startsWith('KAKAO_TEST_');
+  /* ② DB에 포인트 업데이트 + 이력 저장 */
+  if (currentUser && currentUser.id) {
+    // DB 포인트 업데이트
+    fetch('tables/users/' + currentUser.id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ points: newPts })
+    }).catch(e => console.warn('[Payment] DB 포인트 업데이트 실패:', e));
+
+    // DB 이용내역 저장
+    fetch('tables/points_history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id:     currentUser.id,
+        email:       currentUser.email || '',
+        type:        'charge',
+        amount:      plan.point,
+        balance:     newPts,
+        description: `카카오페이 · ${plan.name}` + (plan.bonus > 0 ? ` (+${plan.bonus.toLocaleString()}P 보너스)` : ''),
+        category:    'kakaopay'
+      })
+    }).catch(e => console.warn('[Payment] DB 이력 저장 실패:', e));
+  }
+
+  /* ③ localStorage 이용내역도 병행 저장 (pricing.html 호환) */
   const hist = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
   hist.unshift({
     date:    new Date().toLocaleString('ko-KR'),
     type:    '충전',
     point:   `+${plan.point.toLocaleString()}P`,
-    memo:    `카카오페이 · ${plan.name}` +
-             (plan.bonus > 0 ? ` (+${plan.bonus.toLocaleString()}P 보너스)` : ''),
+    memo:    `카카오페이 · ${plan.name}` + (plan.bonus > 0 ? ` (+${plan.bonus.toLocaleString()}P 보너스)` : ''),
     orderId,
-    amount:  plan.point,   // 지급 포인트 수 (양수)
-    userId:  (getCurrentUserInfo() || {}).id || null,  // ← 회원 ID 기록
+    amount:  plan.point,
+    userId:  currentUser ? currentUser.id : null,
     pgToken: pgToken || 'test',
     status:  isTest ? '테스트완료' : '결제완료'
   });

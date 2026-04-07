@@ -1034,312 +1034,272 @@ function exportData() {
 // 섹션 8: 회원 관리
 // =========================================
 function renderMembersAdmin(container) {
-  let users = [];
-  try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-spinner fa-spin fa-2x"></i><p style="margin-top:12px">회원 데이터 로딩 중...</p></div>';
 
-  // 이용 내역에서 상담 통계 집계
-  let history = [];
-  try { history = JSON.parse(localStorage.getItem('sajuon_history') || '[]'); } catch {}
+  // DB에서 회원 목록 조회
+  Promise.all([
+    fetch('tables/users?limit=200').then(r => r.ok ? r.json() : { data: [] }),
+    fetch('tables/points_history?limit=500').then(r => r.ok ? r.json() : { data: [] })
+  ]).then(([usersRes, histRes]) => {
+    const users   = usersRes.data  || [];
+    const history = histRes.data   || [];
 
-  const totalMembers  = users.length;
-  const activeMembers = users.filter(u => u.status === 'active').length;
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const todayNew = users.filter(u => u.joinDate && u.joinDate.slice(0, 10) === todayStr).length;
-  const mktAgree = users.filter(u => u.marketing).length;
+    const totalMembers  = users.length;
+    const activeMembers = users.filter(u => u.status === 'active').length;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayNew = users.filter(u => u.created_at_str && u.created_at_str.includes(new Date().toLocaleDateString('ko-KR').slice(0,8))).length;
+    const mktAgree = users.filter(u => u.agree_marketing).length;
 
-  // 상담 통계
-  const consultHistory = history.filter(h => h.type && h.type.includes('AI 상담'));
-  const totalConsults  = consultHistory.length;
-  const totalPtUsed    = consultHistory.reduce((s, h) => s + Math.abs(h.amount || 0), 0);
-  const todayConsults  = consultHistory.filter(h => h.date && h.date.includes(new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', ''))).length;
+    const consultHistory = history.filter(h => h.type === 'use');
+    const totalConsults  = consultHistory.length;
+    const totalPtUsed    = consultHistory.reduce((s, h) => s + Math.abs(h.amount || 0), 0);
+    const todayConsults  = consultHistory.filter(h => {
+      return h.created_at && new Date(h.created_at).toISOString().slice(0, 10) === todayStr;
+    }).length;
 
-  // 카테고리별 상담 횟수
-  const catCount = {};
-  consultHistory.forEach(h => {
-    const cat = (h.type || '').replace('AI 상담 · ', '').trim();
-    catCount[cat] = (catCount[cat] || 0) + 1;
+    const catCount = {};
+    consultHistory.forEach(h => {
+      const cat = (h.category || h.description || '기타').replace('AI 상담 — ', '').slice(0, 10);
+      catCount[cat] = (catCount[cat] || 0) + 1;
+    });
+    const topCats = Object.entries(catCount).sort((a,b) => b[1]-a[1]).slice(0, 5);
+
+    container.innerHTML = `
+      <div style="margin-bottom:8px;font-size:0.85rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">👥 회원 현황</div>
+      <div class="stat-grid" style="margin-bottom:20px">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e8f5e9">👥</div>
+          <div class="stat-val">${totalMembers}</div>
+          <div class="stat-label">전체 회원 수</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e3f2fd">✅</div>
+          <div class="stat-val">${activeMembers}</div>
+          <div class="stat-label">활성 회원</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--accent-pale)">🆕</div>
+          <div class="stat-val">${todayNew}</div>
+          <div class="stat-label">오늘 가입</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fce4ec">📢</div>
+          <div class="stat-val">${mktAgree}</div>
+          <div class="stat-label">마케팅 동의</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:8px;font-size:0.85rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">💬 상담 현황</div>
+      <div class="stat-grid" style="margin-bottom:20px">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e8f4fd">💬</div>
+          <div class="stat-val">${totalConsults.toLocaleString()}</div>
+          <div class="stat-label">총 상담 건수</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fff8e1">💰</div>
+          <div class="stat-val">${totalPtUsed.toLocaleString()}P</div>
+          <div class="stat-label">총 포인트 사용</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#f3e5f5">📅</div>
+          <div class="stat-val">${todayConsults}</div>
+          <div class="stat-label">오늘 상담 건수</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e8f5e9">📊</div>
+          <div class="stat-val">${totalMembers ? Math.round(totalPtUsed / Math.max(totalMembers, 1)).toLocaleString() : 0}P</div>
+          <div class="stat-label">회원당 평균 사용</div>
+        </div>
+      </div>
+
+      ${topCats.length > 0 ? `
+      <div class="admin-card" style="margin-bottom:20px">
+        <div class="admin-card-header">
+          <div class="admin-card-title">🏆 인기 상담 분야 TOP 5</div>
+        </div>
+        <div style="padding:0 20px 16px">
+          ${topCats.map(([cat, cnt], idx) => {
+            const maxCnt = topCats[0][1];
+            const pct = Math.round((cnt / maxCnt) * 100);
+            const colors = ['#2c5f4f','#3d7a65','#5a9e86','#d4af37','#b8962f'];
+            return `
+              <div style="margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:0.85rem">
+                  <span><strong>${idx+1}위</strong> ${cat || '기타'}</span>
+                  <span style="color:var(--primary);font-weight:600">${cnt}건</span>
+                </div>
+                <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden">
+                  <div style="height:100%;width:${pct}%;background:${colors[idx]};border-radius:4px;transition:width 0.5s"></div>
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>
+      ` : `<div class="admin-card" style="margin-bottom:20px;padding:24px;text-align:center;color:var(--text-muted)"><p>💬 아직 상담 기록이 없습니다.</p></div>`}
+
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title">회원 목록 (${totalMembers}명)</div>
+            <div class="admin-card-subtitle">서버 DB에서 실시간 조회 중</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input class="admin-input" id="memberSearch" style="width:200px" placeholder="이름·이메일 검색" oninput="filterMembersDB()" data-users='${JSON.stringify(users)}'/>
+            <button class="admin-save-btn" onclick="exportMembersCSVDB()" style="background:var(--primary)"><i class="fas fa-download"></i> CSV</button>
+          </div>
+        </div>
+        <div class="admin-table-wrap" id="memberTableWrap">
+          ${renderMemberTableDB(users)}
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div class="admin-card-title">테스트 회원 생성</div>
+        </div>
+        <div class="admin-form-2col">
+          <div class="admin-form-row"><label>이름</label><input class="admin-input" id="testName" value="테스트회원" /></div>
+          <div class="admin-form-row"><label>이메일</label><input class="admin-input" id="testEmail" value="test@sajuon.kr" /></div>
+          <div class="admin-form-row"><label>비밀번호</label><input class="admin-input" id="testPw" value="test1234" /></div>
+          <div class="admin-form-row"><label>초기 포인트</label><input class="admin-input" type="number" id="testPt" value="500" /></div>
+        </div>
+        <button class="admin-save-btn" onclick="createTestMemberDB()"><i class="fas fa-user-plus"></i> 테스트 회원 생성</button>
+      </div>
+    `;
+  }).catch(() => {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#c62828">❌ 회원 데이터 로드 실패. 잠시 후 다시 시도해주세요.</div>';
   });
-  const topCats = Object.entries(catCount).sort((a,b) => b[1]-a[1]).slice(0, 5);
-
-  container.innerHTML = `
-    <!-- 회원 통계 -->
-    <div style="margin-bottom:8px;font-size:0.85rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">👥 회원 현황</div>
-    <div class="stat-grid" style="margin-bottom:20px">
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#e8f5e9">👥</div>
-        <div class="stat-val">${totalMembers}</div>
-        <div class="stat-label">전체 회원 수</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#e3f2fd">✅</div>
-        <div class="stat-val">${activeMembers}</div>
-        <div class="stat-label">활성 회원</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:var(--accent-pale)">🆕</div>
-        <div class="stat-val">${todayNew}</div>
-        <div class="stat-label">오늘 가입</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#fce4ec">📢</div>
-        <div class="stat-val">${mktAgree}</div>
-        <div class="stat-label">마케팅 동의</div>
-      </div>
-    </div>
-
-    <!-- 상담 통계 -->
-    <div style="margin-bottom:8px;font-size:0.85rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">💬 상담 현황</div>
-    <div class="stat-grid" style="margin-bottom:20px">
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#e8f4fd">💬</div>
-        <div class="stat-val">${totalConsults.toLocaleString()}</div>
-        <div class="stat-label">총 상담 건수</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#fff8e1">💰</div>
-        <div class="stat-val">${totalPtUsed.toLocaleString()}P</div>
-        <div class="stat-label">총 포인트 사용</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#f3e5f5">📅</div>
-        <div class="stat-val">${todayConsults}</div>
-        <div class="stat-label">오늘 상담 건수</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#e8f5e9">📊</div>
-        <div class="stat-val">${totalMembers ? Math.round(totalPtUsed / Math.max(totalMembers, 1)).toLocaleString() : 0}P</div>
-        <div class="stat-label">회원당 평균 사용</div>
-      </div>
-    </div>
-
-    <!-- 인기 상담 분야 -->
-    ${topCats.length > 0 ? `
-    <div class="admin-card" style="margin-bottom:20px">
-      <div class="admin-card-header">
-        <div class="admin-card-title">🏆 인기 상담 분야 TOP 5</div>
-      </div>
-      <div style="padding:0 20px 16px">
-        ${topCats.map(([cat, cnt], idx) => {
-          const maxCnt = topCats[0][1];
-          const pct = Math.round((cnt / maxCnt) * 100);
-          const colors = ['#2c5f4f','#3d7a65','#5a9e86','#d4af37','#b8962f'];
-          return `
-            <div style="margin-bottom:12px">
-              <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:0.85rem">
-                <span><strong>${idx+1}위</strong> ${cat || '기타'}</span>
-                <span style="color:var(--primary);font-weight:600">${cnt}건</span>
-              </div>
-              <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden">
-                <div style="height:100%;width:${pct}%;background:${colors[idx]};border-radius:4px;transition:width 0.5s"></div>
-              </div>
-            </div>`;
-        }).join('')}
-      </div>
-    </div>
-    ` : `
-    <div class="admin-card" style="margin-bottom:20px;padding:24px;text-align:center;color:var(--text-muted)">
-      <p>💬 아직 상담 기록이 없습니다. 사용자가 AI 상담을 시작하면 통계가 표시됩니다.</p>
-    </div>
-    `}
-
-    <!-- 회원 목록 -->
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">회원 목록 (${totalMembers}명)</div>
-          <div class="admin-card-subtitle">가입 회원 정보를 조회하고 관리합니다</div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input class="admin-input" id="memberSearch" style="width:200px" placeholder="이름·이메일 검색" oninput="filterMembers()"/>
-          <button class="admin-save-btn" onclick="exportMembersCSV()" style="background:var(--primary)"><i class="fas fa-download"></i> CSV</button>
-          <button class="admin-del-btn" onclick="clearAllMembers()">전체 초기화</button>
-        </div>
-      </div>
-      <div class="admin-table-wrap" id="memberTableWrap">
-        ${renderMemberTable(users)}
-      </div>
-    </div>
-
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div class="admin-card-title">테스트 회원 생성</div>
-      </div>
-      <div class="admin-form-2col">
-        <div class="admin-form-row">
-          <label>이름</label>
-          <input class="admin-input" id="testName" value="테스트회원" />
-        </div>
-        <div class="admin-form-row">
-          <label>이메일</label>
-          <input class="admin-input" id="testEmail" value="test@sajuon.kr" />
-        </div>
-        <div class="admin-form-row">
-          <label>비밀번호</label>
-          <input class="admin-input" id="testPw" value="test1234" />
-        </div>
-        <div class="admin-form-row">
-          <label>초기 포인트</label>
-          <input class="admin-input" type="number" id="testPt" value="500" />
-        </div>
-      </div>
-      <button class="admin-save-btn" onclick="createTestMember()"><i class="fas fa-user-plus"></i> 테스트 회원 생성</button>
-    </div>
-  `;
 }
 
-// CSV 내보내기
-function exportMembersCSV() {
-  let users = [];
-  try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
-  if (!users.length) { showToast('❌ 내보낼 회원 데이터가 없습니다'); return; }
-
-  const rows = [
-    ['이름', '이메일', '전화', '성별', '포인트', '마케팅동의', '가입일', '상태'],
-    ...users.map(u => [
-      u.name || '',
-      u.email || '',
-      u.phone || '',
-      u.gender === 'female' ? '여성' : u.gender === 'male' ? '남성' : '미설정',
-      u.points || 0,
-      u.marketing ? '동의' : '미동의',
-      u.joinDate ? new Date(u.joinDate).toLocaleDateString('ko-KR') : '',
-      u.status === 'active' ? '활성' : '정지',
-    ])
-  ];
-
-  const csv = '\uFEFF' + rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `운세ON_회원목록_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast(`✅ ${users.length}명 CSV 다운로드 완료`);
-}
-
-function renderMemberTable(users) {
+// DB 기반 회원 테이블 렌더링
+function renderMemberTableDB(users) {
   if (!users.length) {
     return `<p style="text-align:center;color:var(--text-light);padding:40px">가입된 회원이 없습니다</p>`;
   }
-  // 이용내역에서 각 회원의 마지막 상담 날짜 추출
-  let history = [];
-  try { history = JSON.parse(localStorage.getItem('sajuon_history') || '[]'); } catch {}
-  const consultHistory = history.filter(h => h.type && h.type.includes('AI 상담'));
-
   return `
     <table class="admin-table">
       <thead>
         <tr>
-          <th>이름</th>
-          <th>이메일</th>
-          <th>포인트</th>
-          <th>성별</th>
-          <th>마케팅</th>
-          <th>가입일</th>
-          <th>최근로그인</th>
-          <th>상태</th>
-          <th>관리</th>
+          <th>이름</th><th>이메일</th><th>포인트</th><th>마케팅</th><th>가입일</th><th>상태</th><th>관리</th>
         </tr>
       </thead>
       <tbody>
-        ${users.map((u, i) => `
-          <tr id="member-row-${i}">
+        ${users.map(u => `
+          <tr>
             <td><strong>${u.name || '-'}</strong><br/><span style="font-size:0.72rem;color:var(--text-muted)">${u.phone || ''}</span></td>
             <td>${u.email || '-'}</td>
             <td><span class="badge-gold">${(u.points || 0).toLocaleString()}P</span></td>
-            <td>${u.gender === 'female' ? '여성' : u.gender === 'male' ? '남성' : '미설정'}</td>
-            <td>${u.marketing ? '<span class="badge-green">동의</span>' : '<span class="badge-red">미동의</span>'}</td>
-            <td style="font-size:0.78rem">${u.joinDate ? new Date(u.joinDate).toLocaleDateString('ko-KR') : '-'}</td>
-            <td style="font-size:0.78rem">${u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('ko-KR') : '-'}</td>
+            <td>${u.agree_marketing ? '<span class="badge-green">동의</span>' : '<span class="badge-red">미동의</span>'}</td>
+            <td style="font-size:0.78rem">${u.created_at_str || (u.created_at ? new Date(u.created_at).toLocaleDateString('ko-KR') : '-')}</td>
+            <td>${u.status === 'active' ? '<span class="badge-green">활성</span>' : '<span class="badge-red">정지</span>'}</td>
             <td>
-              ${u.status === 'active'
-                ? '<span class="badge-green">활성</span>'
-                : '<span class="badge-red">정지</span>'}
-            </td>
-            <td>
-              <button class="admin-save-btn" style="padding:4px 10px;font-size:0.75rem;margin-bottom:3px" onclick="toggleMemberStatus(${i})">
+              <button class="admin-save-btn" style="padding:4px 10px;font-size:0.75rem;margin-bottom:3px"
+                onclick="toggleMemberStatusDB('${u.id}','${u.status}','${u.name}')">
                 ${u.status === 'active' ? '정지' : '활성화'}
               </button><br/>
-              <button class="admin-del-btn" onclick="deleteMember(${i})">삭제</button>
+              <button class="admin-del-btn" onclick="deleteMemberDB('${u.id}','${u.name}')">삭제</button>
             </td>
           </tr>
         `).join('')}
       </tbody>
-    </table>
-  `;
+    </table>`;
 }
 
-function filterMembers() {
-  const keyword = document.getElementById('memberSearch')?.value?.toLowerCase() || '';
+// DB 기반 회원 검색 필터
+function filterMembersDB() {
+  const keyword = (document.getElementById('memberSearch')?.value || '').toLowerCase();
   let users = [];
-  try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
-  const filtered = keyword
-    ? users.filter(u => (u.name||'').toLowerCase().includes(keyword) || (u.email||'').toLowerCase().includes(keyword))
-    : users;
+  try { users = JSON.parse(document.getElementById('memberSearch')?.dataset.users || '[]'); } catch {}
+  const filtered = keyword ? users.filter(u => (u.name||'').toLowerCase().includes(keyword) || (u.email||'').toLowerCase().includes(keyword)) : users;
   const wrap = document.getElementById('memberTableWrap');
-  if (wrap) wrap.innerHTML = renderMemberTable(filtered);
+  if (wrap) wrap.innerHTML = renderMemberTableDB(filtered);
 }
 
-function toggleMemberStatus(i) {
-  let users = [];
-  try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
-  if (!users[i]) return;
-  users[i].status = users[i].status === 'active' ? 'suspended' : 'active';
-  localStorage.setItem('sajuon_users', JSON.stringify(users));
-  showToast(`✅ ${users[i].name} 회원 상태: ${users[i].status === 'active' ? '활성' : '정지'}`);
-  renderMembersAdmin(document.getElementById('adminContent'));
+// DB 기반 회원 상태 토글
+function toggleMemberStatusDB(userId, currentStatus, name) {
+  const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+  fetch('tables/users/' + userId, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: newStatus })
+  }).then(r => r.ok ? r.json() : null).then(updated => {
+    if (updated) {
+      showToast(`✅ ${name} 회원 상태: ${newStatus === 'active' ? '활성' : '정지'}`);
+      renderMembersAdmin(document.getElementById('adminContent'));
+    } else {
+      showToast('❌ 상태 변경 실패');
+    }
+  }).catch(() => showToast('❌ 서버 오류'));
 }
 
-function deleteMember(i) {
-  let users = [];
-  try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
-  if (!users[i]) return;
-  if (!confirm(`"${users[i].name}" 회원을 삭제하시겠습니까?`)) return;
-  users.splice(i, 1);
-  localStorage.setItem('sajuon_users', JSON.stringify(users));
-  showToast('🗑️ 회원이 삭제되었습니다');
-  renderMembersAdmin(document.getElementById('adminContent'));
+// DB 기반 회원 삭제
+function deleteMemberDB(userId, name) {
+  if (!confirm(`"${name}" 회원을 삭제하시겠습니까?`)) return;
+  fetch('tables/users/' + userId, { method: 'DELETE' })
+    .then(r => {
+      if (r.status === 204 || r.ok) {
+        showToast('🗑️ 회원이 삭제되었습니다');
+        renderMembersAdmin(document.getElementById('adminContent'));
+      } else { showToast('❌ 삭제 실패'); }
+    }).catch(() => showToast('❌ 서버 오류'));
 }
 
-function clearAllMembers() {
-  if (!confirm('⚠️ 모든 회원 데이터를 삭제하시겠습니까?')) return;
-  localStorage.removeItem('sajuon_users');
-  localStorage.removeItem('sajuon_current_user');
-  showToast('🗑️ 회원 데이터가 초기화되었습니다');
-  renderMembersAdmin(document.getElementById('adminContent'));
+// DB 기반 CSV 내보내기
+function exportMembersCSVDB() {
+  fetch('tables/users?limit=500').then(r => r.ok ? r.json() : { data: [] }).then(res => {
+    const users = res.data || [];
+    if (!users.length) { showToast('❌ 내보낼 회원 데이터가 없습니다'); return; }
+    const rows = [
+      ['이름', '이메일', '전화', '포인트', '마케팅동의', '가입일', '상태'],
+      ...users.map(u => [
+        u.name || '', u.email || '', u.phone || '',
+        u.points || 0, u.agree_marketing ? '동의' : '미동의',
+        u.created_at_str || '', u.status === 'active' ? '활성' : '정지'
+      ])
+    ];
+    const csv = '\uFEFF' + rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `운세ON_회원목록_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    showToast(`✅ ${users.length}명 CSV 다운로드 완료`);
+  }).catch(() => showToast('❌ 데이터 조회 실패'));
 }
 
-function createTestMember() {
+// DB 기반 테스트 회원 생성
+function createTestMemberDB() {
   const name  = document.getElementById('testName')?.value?.trim() || '테스트회원';
   const email = document.getElementById('testEmail')?.value?.trim() || 'test@sajuon.kr';
   const pw    = document.getElementById('testPw')?.value || 'test1234';
   const pts   = parseInt(document.getElementById('testPt')?.value || '500', 10);
+  const hashFn = (s) => { let h = 0; for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h = h & h; } return 'h_' + Math.abs(h).toString(36) + '_' + s.length; };
 
-  let users = [];
-  try { users = JSON.parse(localStorage.getItem('sajuon_users') || '[]'); } catch {}
-
-  if (users.find(u => u.email === email)) {
-    showToast('❌ 이미 존재하는 이메일입니다'); return;
-  }
-
-  const hashFn = (s) => {
-    let hash = 0;
-    for (let i = 0; i < s.length; i++) { hash = ((hash << 5) - hash) + s.charCodeAt(i); hash = hash & hash; }
-    return 'h_' + Math.abs(hash).toString(36) + '_' + s.length;
-  };
-
-  users.push({
-    id: 'u_' + Date.now(), name, email, pw: hashFn(pw),
-    phone: '', birth: '', gender: 'none', marketing: false,
-    points: pts, joinDate: new Date().toISOString(),
-    lastLogin: new Date().toISOString(), status: 'active',
-  });
-  localStorage.setItem('sajuon_users', JSON.stringify(users));
-  showToast(`✅ 테스트 회원 "${name}" 생성 완료 (비밀번호: ${pw})`);
-  renderMembersAdmin(document.getElementById('adminContent'));
+  fetch('tables/users?search=' + encodeURIComponent(email) + '&limit=10')
+    .then(r => r.ok ? r.json() : { data: [] })
+    .then(res => {
+      const existing = (res.data || []).find(u => u.email === email);
+      if (existing) { showToast('❌ 이미 존재하는 이메일입니다'); return; }
+      return fetch('tables/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name, email, pw_hash: hashFn(pw), phone: '', status: 'active',
+          agree_marketing: false, points: pts, created_at_str: new Date().toLocaleString('ko-KR'),
+          lastLogin: new Date().toISOString()
+        })
+      });
+    })
+    .then(r => { if (r && r.ok) { showToast(`✅ 테스트 회원 생성 완료: ${email}`); renderMembersAdmin(document.getElementById('adminContent')); } })
+    .catch(() => showToast('❌ 회원 생성 실패'));
 }
 
+// 구버전 호환 (localStorage 기반 — 이제 사용 안 함)
+function filterMembers() { filterMembersDB(); }
+function exportMembersCSV() { exportMembersCSVDB(); }
+function createTestMember() { createTestMemberDB(); }
+function clearAllMembers() { showToast('⚠️ 서버 DB 회원 데이터는 개별 삭제만 가능합니다'); }
 // =========================================
 // 섹션 10: AI 설정 (Gemini API 관리)
 // =========================================

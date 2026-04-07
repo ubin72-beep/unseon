@@ -626,13 +626,22 @@ let isTyping = false;
 
 // ===== 초기화 =====
 function chatInit() {
-  // ★ 로그인 사용자 계정 기준 포인트 동기화 (로그인 시 계정 points가 최신값)
+  // ★ DB에서 최신 포인트 동기화
   try {
     const _cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
-    if (_cu && _cu.id && typeof _cu.points === 'number') {
-      const lsPts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
-      const syncPts = Math.max(_cu.points, lsPts);
-      localStorage.setItem('sajuon_points', String(syncPts));
+    if (_cu && _cu.id) {
+      // DB에서 실시간 포인트 가져오기
+      fetch('tables/users/' + _cu.id)
+        .then(r => r.ok ? r.json() : null)
+        .then(u => {
+          if (u && u.points !== undefined) {
+            localStorage.setItem('sajuon_points', String(u.points));
+            localStorage.setItem('sajuon_current_user', JSON.stringify({ ..._cu, points: u.points }));
+            updateHeaderPoints();
+            updatePointInfo();
+          }
+        })
+        .catch(() => {});
     }
   } catch(_) {}
 
@@ -1296,23 +1305,41 @@ async function sendMessage() {
     return;
   }
 
-  // 포인트 차감
+  // 포인트 차감 — DB 저장
   const newPts = pts - cost;
   localStorage.setItem('sajuon_points', String(newPts));
   updatePointInfo();
 
-  // ★ 사용자 계정(sajuon_users) points 필드 동기화
+  // ★ DB에 포인트 차감 반영 + 이력 저장 (auth.js deductPoints 활용)
   try {
     const _u = (function(){ try { return JSON.parse(localStorage.getItem('sajuon_current_user')||'null'); } catch{return null;} })();
     if (_u && _u.id) {
-      const _users = JSON.parse(localStorage.getItem('sajuon_users') || '[]');
-      const _idx = _users.findIndex(u => u.id === _u.id);
-      if (_idx !== -1) { _users[_idx].points = newPts; localStorage.setItem('sajuon_users', JSON.stringify(_users)); }
+      // DB 포인트 업데이트
+      fetch('tables/users/' + _u.id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ points: newPts })
+      }).catch(e => console.warn('[Chat] DB 포인트 업데이트 실패:', e));
+      // DB 이력 저장
+      fetch('tables/points_history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: _u.id,
+          email: _u.email || '',
+          type: 'use',
+          amount: -cost,
+          balance: newPts,
+          description: 'AI 상담 — ' + (CAT_KR_MAP[currentCat] || currentCat),
+          category: currentCat
+        })
+      }).catch(e => console.warn('[Chat] DB 이력 저장 실패:', e));
+      // localStorage 현재 사용자 포인트 동기화
       localStorage.setItem('sajuon_current_user', JSON.stringify({ ..._u, points: newPts }));
     }
   } catch(_) {}
 
-  // 이용 내역 저장
+  // 이용 내역 저장 (localStorage 병행)
   saveHistory(CAT_KR_MAP[currentCat] || currentCat, cost, text);
 
   // 사용자 메시지 표시
