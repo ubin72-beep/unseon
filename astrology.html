@@ -540,8 +540,8 @@
 </footer>
 
 <!-- ===== SCRIPTS ===== -->
-<script src="js/auth.js?v=20260502"></script>
-<script src="js/main.js?v=20260502"></script>
+<script src="js/auth.js?v=20260407"></script>
+<script src="js/main.js?v=20260407"></script>
 <script src="js/share.js?v=20260405"></script>
 <script src="js/welcome-popup.js?v=20260405"></script>
 <script src="js/astrology.js?v=20260502"></script>
@@ -1501,25 +1501,41 @@ function getPoints() {
 
 function deductPoints(amount, memo) {
   try {
-    // 1. sajuon_points (공통 포인트 키) 차감
+    // 1. sajuon_points 즉시 차감
     const cur = getPoints();
     const next = Math.max(0, cur - amount);
     localStorage.setItem('sajuon_points', String(next));
 
-    // 2. 로그인 유저라면 sajuon_current_user 포인트도 동기화
+    // 2. 로그인 유저: DB 포인트 업데이트 + 이력 저장
     try {
       const user = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
       if (user && user.id) {
         user.points = next;
         localStorage.setItem('sajuon_current_user', JSON.stringify(user));
-        // sajuon_users 배열도 업데이트
-        const users = JSON.parse(localStorage.getItem('sajuon_users') || '[]');
-        const idx = users.findIndex(u => u.id === user.id);
-        if (idx !== -1) { users[idx].points = next; localStorage.setItem('sajuon_users', JSON.stringify(users)); }
+        // DB 포인트 업데이트
+        fetch('tables/users/' + user.id, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ points: next })
+        }).catch(function(e) { console.warn('[Astro] DB 포인트 업데이트 실패:', e); });
+        // DB 이력 저장
+        fetch('tables/points_history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.id,
+            email: user.email || '',
+            type: 'use',
+            amount: -amount,
+            balance: next,
+            description: 'AI 점성술 상담 — ' + (memo || '점성술').substring(0, 30),
+            category: 'astrology'
+          })
+        }).catch(function(e) { console.warn('[Astro] DB 이력 저장 실패:', e); });
       }
     } catch(e2) {}
 
-    // 3. 이용 내역 저장 (관리자·이용내역 페이지에서 확인 가능)
+    // 3. localStorage 이용 내역도 병행 저장
     var astroUserId = null;
     try { var au = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); astroUserId = au && au.id ? au.id : null; } catch(e3) {}
     const history = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
@@ -1528,7 +1544,7 @@ function deductPoints(amount, memo) {
       type:   'AI 상담 · 점성술',
       amount: -amount,
       note:   (memo || '점성술').substring(0, 30),
-      userId: astroUserId   // ← 회원 ID 기록
+      userId: astroUserId
     });
     localStorage.setItem('sajuon_history', JSON.stringify(history.slice(0, 200)));
   } catch(e) { console.error(e); }

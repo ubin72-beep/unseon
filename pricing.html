@@ -612,9 +612,9 @@
   </div>
 </div>
 
-<script src="js/auth.js?v=20260502"></script>
-<script src="js/main.js?v=20260502"></script>
-<script src="js/kakaopay.js?v=20260502"></script>
+<script src="js/auth.js?v=20260407"></script>
+<script src="js/main.js?v=20260407"></script>
+<script src="js/kakaopay.js?v=20260407"></script>
 <script>
 /* ── 관리자 정책(sajuon_policy) 반영 → 플랜 카드 UI 동기화 ── */
 function applySavedPolicy() {
@@ -713,7 +713,7 @@ function renderHistory() {
   var currentUser = null;
   try { currentUser = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); } catch(e) {}
 
-  /* 비로그인: 내역 숨기고 로그인 유도 메시지 표시 */
+  /* 비로그인: 로그인 유도 메시지 */
   if (!currentUser || !currentUser.id) {
     tbody.innerHTML = `
       <tr>
@@ -729,34 +729,91 @@ function renderHistory() {
     return;
   }
 
-  /* ── 로그인 유저: 본인 이용 내역만 표시 ── */
-  var allHist = [];
-  try { allHist = JSON.parse(localStorage.getItem('sajuon_history') || '[]'); } catch(e) {}
+  /* 로딩 표시 */
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#888"><i class="fas fa-spinner fa-spin"></i> 내역 불러오는 중...</td></tr>';
 
-  /* 본인 ID 기록 필터링 (userId 있으면 매칭, 없으면 현재 사용자 기록으로 간주) */
-  var myHist = allHist.filter(function(h) {
-    return !h.userId || h.userId === currentUser.id;
-  });
+  /* ── DB에서 이용 내역 조회 ── */
+  var userId = currentUser.id;
+  fetch('tables/points_history?search=' + encodeURIComponent(userId) + '&limit=50&sort=created_at')
+    .then(function(r) { return r.ok ? r.json() : { data: [] }; })
+    .then(function(res) {
+      var dbHist = (res.data || []).filter(function(h) { return h.user_id === userId; });
 
-  if (!myHist.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-row">이용 내역이 없습니다</td></tr>';
-    return;
-  }
+      /* localStorage 내역도 병합 (DB 미저장 구버전 데이터 대비) */
+      var lsHist = [];
+      try { lsHist = JSON.parse(localStorage.getItem('sajuon_history') || '[]'); } catch(e) {}
+      var lsMyHist = lsHist.filter(function(h) { return !h.userId || h.userId === userId; });
 
-  tbody.innerHTML = myHist.slice(0, 30).map(function(h) {
-    var ptStr = h.point || '';
-    if (!ptStr && typeof h.amount === 'number') {
-      ptStr = (h.amount >= 0 ? '+' : '') + h.amount.toLocaleString() + 'P';
-    }
-    var isCharge = h.type === '충전' || (typeof h.amount === 'number' && h.amount > 0);
-    return '<tr>' +
-      '<td>' + (h.date || '') + '</td>' +
-      '<td><span class="hist-badge ' + (isCharge ? 'hist-charge' : 'hist-use') + '">' + (h.type || '—') + '</span></td>' +
-      '<td class="' + (isCharge ? 'hist-plus' : 'hist-minus') + '">' + (ptStr || '—') + '</td>' +
-      '<td>' + (h.memo || h.note || '—') + '</td>' +
-      '<td style="font-size:0.72rem;color:#aaa">' + (isCharge ? (h.orderId || '—') : '—') + '</td>' +
-      '</tr>';
-  }).join('');
+      /* DB 내역을 통일 포맷으로 변환 */
+      var normalized = dbHist.map(function(h) {
+        var isCharge = h.type === 'charge';
+        return {
+          date:     new Date(h.created_at).toLocaleString('ko-KR'),
+          type:     isCharge ? '충전' : 'AI 상담',
+          amount:   h.amount,
+          note:     h.description || '—',
+          category: h.category || '',
+          balance:  h.balance,
+          _src:     'db'
+        };
+      });
+
+      /* ls 전용 항목 추가 (DB에 없는 구버전 데이터) */
+      if (normalized.length === 0 && lsMyHist.length > 0) {
+        lsMyHist.forEach(function(h) {
+          normalized.push({
+            date:   h.date || '',
+            type:   h.type || '—',
+            amount: typeof h.amount === 'number' ? h.amount : 0,
+            note:   h.memo || h.note || '—',
+            balance: null,
+            _src:   'ls'
+          });
+        });
+      }
+
+      /* 최신순 정렬 (DB는 이미 최신순이지만 혼합 시 재정렬) */
+      normalized.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+
+      if (!normalized.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-row">이용 내역이 없습니다</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = normalized.slice(0, 50).map(function(h) {
+        var isCharge = h.type === '충전' || h.type === 'charge' || (typeof h.amount === 'number' && h.amount > 0);
+        var ptStr = (h.amount >= 0 ? '+' : '') + (Math.abs(h.amount) || 0).toLocaleString() + 'P';
+        var balStr = h.balance !== null && h.balance !== undefined ? h.balance.toLocaleString() + 'P' : '—';
+        return '<tr>' +
+          '<td>' + (h.date || '') + '</td>' +
+          '<td><span class="hist-badge ' + (isCharge ? 'hist-charge' : 'hist-use') + '">' + (h.type || '—') + '</span></td>' +
+          '<td class="' + (isCharge ? 'hist-plus' : 'hist-minus') + '">' + ptStr + '</td>' +
+          '<td>' + (h.note || '—') + '</td>' +
+          '<td style="font-size:0.72rem;color:#aaa">' + balStr + '</td>' +
+          '</tr>';
+      }).join('');
+    })
+    .catch(function() {
+      /* DB 실패 시 localStorage 폴백 */
+      var allHist = [];
+      try { allHist = JSON.parse(localStorage.getItem('sajuon_history') || '[]'); } catch(e) {}
+      var myHist = allHist.filter(function(h) { return !h.userId || h.userId === currentUser.id; });
+      if (!myHist.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-row">이용 내역이 없습니다</td></tr>';
+        return;
+      }
+      tbody.innerHTML = myHist.slice(0, 30).map(function(h) {
+        var isCharge = h.type === '충전' || (typeof h.amount === 'number' && h.amount > 0);
+        var ptStr = (typeof h.amount === 'number' ? (h.amount >= 0 ? '+' : '') + h.amount.toLocaleString() : '—') + 'P';
+        return '<tr>' +
+          '<td>' + (h.date || '') + '</td>' +
+          '<td><span class="hist-badge ' + (isCharge ? 'hist-charge' : 'hist-use') + '">' + (h.type || '—') + '</span></td>' +
+          '<td class="' + (isCharge ? 'hist-plus' : 'hist-minus') + '">' + ptStr + '</td>' +
+          '<td>' + (h.memo || h.note || '—') + '</td>' +
+          '<td style="font-size:0.72rem;color:#aaa">—</td>' +
+          '</tr>';
+      }).join('');
+    });
 }
 
 /* ── 개발자 전환 가이드 (테스트 모드에서만 표시) ── */

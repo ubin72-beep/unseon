@@ -521,8 +521,8 @@
   </div>
 </div>
 
-<script src="js/auth.js?v=20260502"></script>
-<script src="js/main.js?v=20260502"></script>
+<script src="js/auth.js?v=20260407"></script>
+<script src="js/main.js?v=20260407"></script>
 <script src="js/share.js?v=20260405"></script>
 <script src="js/welcome-popup.js?v=20260405"></script>
 <script src="js/tarot.js?v=20260502"></script>
@@ -1312,25 +1312,44 @@ function openTarotShare() {
 function saveHistoryEntry(type, point, memo) {
   const hist = JSON.parse(localStorage.getItem('sajuon_history') || '[]');
   var userId = null;
-  try { var u = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); userId = u && u.id ? u.id : null; } catch(e2) {}
+  var userEmail = null;
+  try { var u = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); userId = u && u.id ? u.id : null; userEmail = u && u.email ? u.email : null; } catch(e2) {}
   hist.unshift({
     date:   new Date().toLocaleString('ko-KR'),
     type:   'AI 상담 · 타로카드',
-    amount: point,   // 숫자형 (음수 = 차감)
+    amount: point,
     note:   (memo || '타로 상담').slice(0, 30),
-    userId: userId   // ← 회원 ID 기록
+    userId: userId
   });
   localStorage.setItem('sajuon_history', JSON.stringify(hist.slice(0, 200)));
-  // 로그인 유저라면 sajuon_current_user 포인트도 동기화
+  // ★ DB에 포인트 차감 반영 + 이력 저장
   try {
-    const user = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
-    if (user && user.id) {
+    if (userId) {
       const newPts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
-      user.points = Math.max(0, newPts);
-      localStorage.setItem('sajuon_current_user', JSON.stringify(user));
-      const users = JSON.parse(localStorage.getItem('sajuon_users') || '[]');
-      const idx = users.findIndex(u => u.id === user.id);
-      if (idx !== -1) { users[idx].points = user.points; localStorage.setItem('sajuon_users', JSON.stringify(users)); }
+      const costAmt = Math.abs(point);
+      // DB 포인트 업데이트
+      fetch('tables/users/' + userId, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ points: newPts })
+      }).catch(function(e) { console.warn('[Tarot] DB 포인트 업데이트 실패:', e); });
+      // DB 이력 저장
+      fetch('tables/points_history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          email: userEmail || '',
+          type: 'use',
+          amount: -costAmt,
+          balance: newPts,
+          description: 'AI 타로 상담 — ' + (memo || '타로 상담').slice(0, 30),
+          category: 'tarot'
+        })
+      }).catch(function(e) { console.warn('[Tarot] DB 이력 저장 실패:', e); });
+      // localStorage current_user 포인트 동기화
+      var cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+      if (cu) { cu.points = newPts; localStorage.setItem('sajuon_current_user', JSON.stringify(cu)); }
     }
   } catch(e2) {}
 }
