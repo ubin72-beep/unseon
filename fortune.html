@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>운세 달력 — 월별·년운·10년·평생운세 | 운세ON</title>
+  <meta name="description" content="AI 사주 기반 월별운세, 올해 년운세, 10년 대운 흐름, 평생 운세를 한눈에 확인하세요. 정밀 사주 계산으로 내 인생 흐름을 분석합니다."/>
+  <meta name="keywords" content="월별운세, 년운세, 10년운세, 평생운세, 대운, 사주운세, AI운세, 운세ON"/>
+  <meta property="og:title" content="운세 달력 — 월별·년운·10년·평생운세 | 운세ON"/>
+  <meta property="og:description" content="AI 사주 분석으로 월별운세부터 평생 운세까지 한눈에 확인하세요."/>
+  <meta property="og:image" content="https://unseon.co.kr/images/og-image.png"/>
+  <meta property="og:url" content="https://unseon.co.kr/fortune.html"/>
+  <meta name="theme-color" content="#1a0a3e"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="css/style.css?v=20260411"/>
+  <link rel="stylesheet" href="css/fortune.css?v=20260411"/>
+</head>
+<body class="fortune-page">
+
+<!-- ===== 헤더 ===== -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">운세ON</a>
+    <nav class="header-nav">
+      <a href="chat.html">AI 상담</a>
+      <a href="fortune.html" class="active">운세 달력</a>
+      <a href="tarot.html">🃏 타로</a>
+      <a href="astrology.html">🌙 점성술</a>
+      <a href="pricing.html">요금 충전</a>
+    </nav>
+    <div class="header-actions" id="headerActions">
+      <div class="point-display" id="headerPoints" style="display:none">
+        <i class="fas fa-coins"></i>
+        <span id="headerPointVal">0</span>P
+      </div>
+      <a href="auth.html" id="btnLogin" class="btn-login">로그인</a>
+      <a href="auth.html?tab=register" id="btnSignup" class="btn-signup">회원가입</a>
+    </div>
+  </div>
+</header>
+
+<!-- ===== 히어로 ===== -->
+<section class="fortune-hero">
+  <div class="fortune-hero-particles" id="heroParticles"></div>
+  <span class="fortune-hero-icon">🗓️</span>
+  <h1>운세 달력</h1>
+  <p>AI 사주 분석으로 <strong>월별운세 · 년운세 · 10년 대운 · 평생 운세</strong>를<br/>한눈에 확인하세요</p>
+  <div class="fortune-hero-badges">
+    <span class="hero-badge"><i class="fas fa-calendar-alt"></i> 월별운세</span>
+    <span class="hero-badge"><i class="fas fa-sun"></i> 년 운세</span>
+    <span class="hero-badge"><i class="fas fa-binoculars"></i> 10년 대운</span>
+    <span class="hero-badge"><i class="fas fa-infinity"></i> 평생 운세</span>
+  </div>
+</section>
+
+<!-- ===== 탭 네비게이션 ===== -->
+<div class="fortune-tabs-wrap">
+  <div class="fortune-tabs">
+    <button class="fortune-tab active" onclick="switchFortuneTab('monthly')" id="tab-monthly">
+      <span class="tab-icon">📅</span>
+      <span class="tab-label">월별 운세</span>
+      <span class="tab-badge">200P</span>
+    </button>
+    <button class="fortune-tab" onclick="switchFortuneTab('yearly')" id="tab-yearly">
+      <span class="tab-icon">🌟</span>
+      <span class="tab-label">년 운세</span>
+      <span class="tab-badge">300P</span>
+    </button>
+    <button class="fortune-tab" onclick="switchFortuneTab('decade')" id="tab-decade">
+      <span class="tab-icon">🔭</span>
+      <span class="tab-label">10년 대운</span>
+      <span class="tab-badge">400P</span>
+    </button>
+    <button class="fortune-tab" onclick="switchFortuneTab('lifetime')" id="tab-lifetime">
+      <span class="tab-icon">♾️</span>
+      <span class="tab-label">평생 운세</span>
+      <span class="tab-badge">500P</span>
+    </button>
+  </div>
+</div>
+
+<!-- ===== 메인 콘텐츠 ===== -->
+<div class="fortune-container">
+
+  <!-- ① 월별 운세 -->
+  <section class="fortune-section active" id="section-monthly">
+
+    <div class="fortune-preview-grid">
+      <div class="fortune-preview-card" data-color="#f59e0b">
+        <span class="preview-icon">💕</span>
+        <div class="preview-title">이번 달 연애운</div>
+        <div class="preview-desc">이달의 인연·감정 흐름</div>
+      </div>
+      <div class="fortune-preview-card" data-color="#10b981">
+        <span class="preview-icon">💰</span>
+        <div class="preview-title">이번 달 재물운</div>
+        <div class="preview-desc">수입·지출·투자 주의일</div>
+      </div>
+      <div class="fortune-preview-card" data-color="#3b82f6">
+        <span class="preview-icon">💼</span>
+        <div class="preview-title">이번 달 직업운</div>
+        <div class="preview-desc">업무·승진·이직 흐름</div>
+      </div>
+      <div class="fortune-preview-card" data-color="#ef4444">
+        <span class="preview-icon">🏥</span>
+        <div class="preview-title">이번 달 건강운</div>
+        <div class="preview-desc">건강 주의일·좋은 날</div>
+      </div>
+    </div>
+
+    <div class="fortune-input-card" id="monthlyForm">
+      <h3><i class="fas fa-calendar-alt"></i> 생년월일 및 조회 월 입력</h3>
+      <div class="fortune-form-grid">
+        <div class="fortune-form-row">
+          <label>생년 (양력)</label>
+          <input type="number" class="fortune-input" id="m-year" placeholder="예: 1990" min="1920" max="2010"/>
+        </div>
+        <div class="fortune-form-row">
+          <label>생월</label>
+          <select class="fortune-select" id="m-month">
+            <option value="">월 선택</option>
+            <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+            <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+            <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+            <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+          </select>
+        </div>
+        <div class="fortune-form-row">
+          <label>생일</label>
+          <input type="number" class="fortune-input" id="m-day" placeholder="예: 15" min="1" max="31"/>
+        </div>
+        <div class="fortune-form-row">
+          <label>성별</label>
+          <select class="fortune-select" id="m-gender">
+            <option value="남성">남성</option>
+            <option value="여성">여성</option>
+          </select>
+        </div>
+        <div class="fortune-form-row">
+          <label>태어난 시간 (선택)</label>
+          <select class="fortune-select" id="m-hour">
+            <option value="">모름</option>
+            <option value="자시(23~1시)">자시 (23~1시)</option>
+            <option value="축시(1~3시)">축시 (1~3시)</option>
+            <option value="인시(3~5시)">인시 (3~5시)</option>
+            <option value="묘시(5~7시)">묘시 (5~7시)</option>
+            <option value="진시(7~9시)">진시 (7~9시)</option>
+            <option value="사시(9~11시)">사시 (9~11시)</option>
+            <option value="오시(11~13시)">오시 (11~13시)</option>
+            <option value="미시(13~15시)">미시 (13~15시)</option>
+            <option value="신시(15~17시)">신시 (15~17시)</option>
+            <option value="유시(17~19시)">유시 (17~19시)</option>
+            <option value="술시(19~21시)">술시 (19~21시)</option>
+            <option value="해시(21~23시)">해시 (21~23시)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="month-selector-wrap">
+        <label class="month-selector-label">📅 조회할 월 선택 (2026년)</label>
+        <div class="month-selector" id="monthSelector">
+          <button class="month-btn" onclick="selectMonth(1)">1월</button>
+          <button class="month-btn" onclick="selectMonth(2)">2월</button>
+          <button class="month-btn" onclick="selectMonth(3)">3월</button>
+          <button class="month-btn" onclick="selectMonth(4)">4월</button>
+          <button class="month-btn" onclick="selectMonth(5)">5월</button>
+          <button class="month-btn" onclick="selectMonth(6)">6월</button>
+          <button class="month-btn" onclick="selectMonth(7)">7월</button>
+          <button class="month-btn" onclick="selectMonth(8)">8월</button>
+          <button class="month-btn" onclick="selectMonth(9)">9월</button>
+          <button class="month-btn" onclick="selectMonth(10)">10월</button>
+          <button class="month-btn" onclick="selectMonth(11)">11월</button>
+          <button class="month-btn" onclick="selectMonth(12)">12월</button>
+        </div>
+      </div>
+
+      <button class="fortune-analyze-btn" id="monthlyBtn" onclick="analyzeMonthly()">
+        <i class="fas fa-magic"></i> 월별 운세 분석하기
+      </button>
+      <div class="fortune-point-notice">
+        <i class="fas fa-coins"></i>
+        <span>월별 운세 분석 <strong>200P</strong> 차감 · 현재 보유: <strong id="monthlyPtDisplay">0P</strong></span>
+      </div>
+    </div>
+
+    <div class="fortune-loading" id="monthlyLoading">
+      <div class="fortune-loading-orb"></div>
+      <p class="loading-title">월별 운세 분석 중...</p>
+      <div class="fortune-loading-steps">
+        <div class="fortune-step active" id="ms1"><span class="fortune-step-dot"></span> 생년월일 사주 계산</div>
+        <div class="fortune-step" id="ms2"><span class="fortune-step-dot"></span> 2026년 세운 분석</div>
+        <div class="fortune-step" id="ms3"><span class="fortune-step-dot"></span> 월간(月干) 상호작용 분석</div>
+        <div class="fortune-step" id="ms4"><span class="fortune-step-dot"></span> 분야별 운세 정리</div>
+      </div>
+    </div>
+
+    <div class="fortune-result" id="monthlyResult">
+      <div class="fortune-result-header">
+        <div class="fortune-result-title"><i class="fas fa-star"></i> <span id="monthlyResultTitle">월별 운세</span></div>
+        <span class="fortune-result-subtitle" id="monthlyResultSub"></span>
+      </div>
+      <div class="fortune-result-body" id="monthlyResultBody"></div>
+      <div class="fortune-result-actions">
+        <button class="fortune-retry-btn" onclick="retryAnalysis('monthly')">
+          <i class="fas fa-redo"></i> 다시 분석하기
+        </button>
+        <button class="fortune-share-btn" onclick="shareResult('monthly')">
+          <i class="fas fa-share-alt"></i> 공유하기
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② 년 운세 -->
+  <section class="fortune-section" id="section-yearly">
+    <div class="fortune-preview-grid">
+      <div class="fortune-preview-card" data-color="#f59e0b">
+        <span class="preview-icon">🌅</span>
+        <div class="preview-title">2026년 전체 흐름</div>
+        <div class="preview-desc">병오년(丙午年) 총운 분석</div>
+      </div>
+      <div class="fortune-preview-card" data-color="#10b981">
+        <span class="preview-icon">📅</span>
+        <div class="preview-title">좋은 달 TOP 3</div>
+        <div class="preview-desc">올해 가장 좋은 시기</div>
+      </div>
+      <div class="fortune-preview-card" data-color="#ef4444">
+        <span class="preview-icon">⚠️</span>
+        <div class="preview-title">조심할 달 TOP 2</div>
+        <div class="preview-desc">주의가 필요한 시기</div>
+      </div>
+      <div class="fortune-preview-card" data-color="#8b5cf6">
+        <span class="preview-icon">🔑</span>
+        <div class="preview-title">올해의 키워드</div>
+        <div class="preview-desc">행운 아이템·방향·색상</div>
+      </div>
+    </div>
+
+    <div class="fortune-input-card">
+      <h3><i class="fas fa-sun"></i> 생년월일 입력</h3>
+      <div class="fortune-form-grid">
+        <div class="fortune-form-row">
+          <label>생년 (양력)</label>
+          <input type="number" class="fortune-input" id="y-year" placeholder="예: 1990" min="1920" max="2010"/>
+        </div>
+        <div class="fortune-form-row">
+          <label>생월</label>
+          <select class="fortune-select" id="y-month">
+            <option value="">월 선택</option>
+            <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+            <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+            <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+            <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+          </select>
+        </div>
+        <div class="fortune-form-row">
+          <label>생일</label>
+          <input type="number" class="fortune-input" id="y-day" placeholder="예: 15" min="1" max="31"/>
+        </div>
+        <div class="fortune-form-row">
+          <label>성별</label>
+          <select class="fortune-select" id="y-gender">
+            <option value="남성">남성</option>
+            <option value="여성">여성</option>
+          </select>
+        </div>
+        <div class="fortune-form-row">
+          <label>태어난 시간 (선택)</label>
+          <select class="fortune-select" id="y-hour">
+            <option value="">모름</option>
+            <option value="자시(23~1시)">자시 (23~1시)</option>
+            <option value="축시(1~3시)">축시 (1~3시)</option>
+            <option value="인시(3~5시)">인시 (3~5시)</option>
+            <option value="묘시(5~7시)">묘시 (5~7시)</option>
+            <option value="진시(7~9시)">진시 (7~9시)</option>
+            <option value="사시(9~11시)">사시 (9~11시)</option>
+            <option value="오시(11~13시)">오시 (11~13시)</option>
+            <option value="미시(13~15시)">미시 (13~15시)</option>
+            <option value="신시(15~17시)">신시 (15~17시)</option>
+            <option value="유시(17~19시)">유시 (17~19시)</option>
+            <option value="술시(19~21시)">술시 (19~21시)</option>
+            <option value="해시(21~23시)">해시 (21~23시)</option>
+          </select>
+        </div>
+        <div class="fortune-form-row">
+          <label>조회 연도</label>
+          <select class="fortune-select" id="y-targetYear">
+            <option value="2026">2026년 (병오년)</option>
+            <option value="2027">2027년 (정미년)</option>
+            <option value="2028">2028년 (무신년)</option>
+            <option value="2029">2029년 (기유년)</option>
+            <option value="2030">2030년 (경술년)</option>
+          </select>
+        </div>
+      </div>
+      <button class="fortune-analyze-btn" id="yearlyBtn" onclick="analyzeYearly()">
+        <i class="fas fa-magic"></i> 년 운세 분석하기
+      </button>
+      <div class="fortune-point-notice">
+        <i class="fas fa-coins"></i>
+        <span>년 운세 분석 <strong>300P</strong> 차감 · 현재 보유: <strong id="yearlyPtDisplay">0P</strong></span>
+      </div>
+    </div>
+
+    <div class="fortune-loading" id="yearlyLoading">
+      <div class="fortune-loading-orb"></div>
+      <p class="loading-title">년 운세 분석 중...</p>
+      <div class="fortune-loading-steps">
+        <div class="fortune-step active" id="ys1"><span class="fortune-step-dot"></span> 사주팔자 정밀 계산</div>
+        <div class="fortune-step" id="ys2"><span class="fortune-step-dot"></span> 세운(歲運) 분석</div>
+        <div class="fortune-step" id="ys3"><span class="fortune-step-dot"></span> 6개 분야 운세 정리</div>
+        <div class="fortune-step" id="ys4"><span class="fortune-step-dot"></span> 월별 길흉 분석</div>
+      </div>
+    </div>
+
+    <div class="fortune-result" id="yearlyResult">
+      <div class="fortune-result-header">
+        <div class="fortune-result-title"><i class="fas fa-sun"></i> <span id="yearlyResultTitle">년 운세</span></div>
+        <span class="fortune-result-subtitle" id="yearlyResultSub"></span>
+      </div>
+      <div class="fortune-result-body" id="yearlyResultBody"></div>
+      <div class="fortune-result-actions">
+        <button class="fortune-retry-btn" onclick="retryAnalysis('yearly')">
+          <i class="fas fa-redo"></i> 다시 분석하기
+        </button>
+        <button class="fortune-share-btn" onclick="shareResult('yearly')">
+          <i class="fas fa-share-alt"></i> 공유하기
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ 10년 대운 -->
+  <section class="fortune-section" id="section-decade">
+    <div class="fortune-preview-grid">
+      <div class="fortune-preview-card" data-color="#8b5cf6">
+        <span class="preview-icon">🔭</span>
+        <div class="preview-title">현재 대운 분석</div>
+        <div class="preview-desc">지금 내가 걷는 운의 흐름</div>
+      </div>
+      <div class="fortune-preview-card" data-color="#3b82f6">
+        <span class="preview-icon">📈</span>
+        <div class="preview-title">향후 10년 예측</div>
+        <div class="preview-desc">10년 단위 인생 변곡점</div>
+      </div>
+      <div class="fortune-preview-card" data-color="#f59e0b">
+        <span class="preview-icon">⚡</span>
+        <div class="preview-title">대운 전환점</div>
+        <div class="preview-desc">운이 바뀌는 핵심 시기</div>
+      </div>
+      <div class="fortune-preview-card" data-color="#10b981">
+        <span class="preview-icon">🎯</span>
+        <div class="preview-title">전략적 시기 제안</div>
+        <div class="preview-desc">행동해야 할 때 vs 기다릴 때</div>
+      </div>
+    </div>
+
+    <div class="fortune-input-card">
+      <h3><i class="fas fa-binoculars"></i> 생년월일 입력</h3>
+      <div class="fortune-form-grid">
+        <div class="fortune-form-row">
+          <label>생년 (양력)</label>
+          <input type="number" class="fortune-input" id="d-year" placeholder="예: 1990" min="1920" max="2010"/>
+        </div>
+        <div class="fortune-form-row">
+          <label>생월</label>
+          <select class="fortune-select" id="d-month">
+            <option value="">월 선택</option>
+            <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+            <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+            <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+            <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+          </select>
+        </div>
+        <div class="fortune-form-row">
+          <label>생일</label>
+          <input type="number" class="fortune-input" id="d-day" placeholder="예: 15" min="1" max="31"/>
+        </div>
+        <div class="fortune-form-row">
+          <label>성별</label>
+          <select class="fortune-select" id="d-gender">
+            <option value="남성">남성</option>
+            <option value="여성">여성</option>
+          </select>
+        </div>
+        <div class="fortune-form-row">
+          <label>태어난 시간 (선택)</label>
+          <select class="fortune-select" id="d-hour">
+            <option value="">모름</option>
+            <option value="자시(23~1시)">자시 (23~1시)</option>
+            <option value="축시(1~3시)">축시 (1~3시)</option>
+            <option value="인시(3~5시)">인시 (3~5시)</option>
+            <option value="묘시(5~7시)">묘시 (5~7시)</option>
+            <option value="진시(7~9시)">진시 (7~9시)</option>
+            <option value="사시(9~11시)">사시 (9~11시)</option>
+            <option value="오시(11~13시)">오시 (11~13시)</option>
+            <option value="미시(13~15시)">미시 (13~15시)</option>
+            <option value="신시(15~17시)">신시 (15~17시)</option>
+            <option value="유시(17~19시)">유시 (17~19시)</option>
+            <option value="술시(19~21시)">술시 (19~21시)</option>
+            <option value="해시(21~23시)">해시 (21~23시)</option>
+          </select>
+        </div>
+      </div>
+      <button class="fortune-analyze-btn" id="decadeBtn" onclick="analyzeDecade()">
+        <i class="fas fa-magic"></i> 10년 대운 분석하기
+      </button>
+      <div class="fortune-point-notice">
+        <i class="fas fa-coins"></i>
+        <span>10년 대운 분석 <strong>400P</strong> 차감 · 현재 보유: <strong id="decadePtDisplay">0P</strong></span>
+      </div>
+    </div>
+
+    <div class="fortune-loading" id="decadeLoading">
+      <div class="fortune-loading-orb"></div>
+      <p class="loading-title">10년 대운 분석 중...</p>
+      <div class="fortune-loading-steps">
+        <div class="fortune-step active" id="ds1"><span class="fortune-step-dot"></span> 사주팔자 정밀 계산</div>
+        <div class="fortune-step" id="ds2"><span class="fortune-step-dot"></span> 대운(大運) 주기 산출</div>
+        <div class="fortune-step" id="ds3"><span class="fortune-step-dot"></span> 현재~향후 10년 분석</div>
+        <div class="fortune-step" id="ds4"><span class="fortune-step-dot"></span> 전략적 시기 도출</div>
+      </div>
+    </div>
+
+    <div class="fortune-result" id="decadeResult">
+      <div class="fortune-result-header">
+        <div class="fortune-result-title"><i class="fas fa-binoculars"></i> <span id="decadeResultTitle">10년 대운</span></div>
+        <span class="fortune-result-subtitle" id="decadeResultSub"></span>
+      </div>
+      <div class="fortune-result-body" id="decadeResultBody"></div>
+      <div class="fortune-result-actions">
+        <button class="fortune-retry-btn" onclick="retryAnalysis('decade')">
+          <i class="fas fa-redo"></i> 다시 분석하기
+        </button>
+        <button class="fortune-share-btn" onclick="shareResult('decade')">
+          <i class="fas fa-share-alt"></i> 공유하기
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ④ 평생 운세 -->
+  <section class="fortune-section" id="section-lifetime">
+    <div class="fortune-preview-grid">
+      <div class="fortune-preview-card" data-color="#22d3ee">
+        <span class="preview-icon">🌱</span>
+        <div class="preview-title">유년~청년 (0~30대)</div>
+        <div class="preview-desc">초반 인생 운의 흐름</div>
+      </div>
+      <div class="fortune-preview-card" data-color="#10b981">
+        <span class="preview-icon">🌿</span>
+        <div class="preview-title">중년 (40~50대)</div>
+        <div class="preview-desc">인생 전성기 분석</div>
+      </div>
+      <div class="fortune-preview-card" data-color="#f59e0b">
+        <span class="preview-icon">🌳</span>
+        <div class="preview-title">장년~노년 (60~)</div>
+        <div class="preview-desc">인생 후반 흐름 예측</div>
+      </div>
+      <div class="fortune-preview-card" data-color="#8b5cf6">
+        <span class="preview-icon">💎</span>
+        <div class="preview-title">인생 최고의 시기</div>
+        <div class="preview-desc">내 인생의 황금기는 언제?</div>
+      </div>
+    </div>
+
+    <div class="fortune-input-card">
+      <h3><i class="fas fa-infinity"></i> 생년월일 입력</h3>
+      <div class="fortune-form-grid">
+        <div class="fortune-form-row">
+          <label>생년 (양력)</label>
+          <input type="number" class="fortune-input" id="l-year" placeholder="예: 1990" min="1920" max="2010"/>
+        </div>
+        <div class="fortune-form-row">
+          <label>생월</label>
+          <select class="fortune-select" id="l-month">
+            <option value="">월 선택</option>
+            <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+            <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+            <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+            <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+          </select>
+        </div>
+        <div class="fortune-form-row">
+          <label>생일</label>
+          <input type="number" class="fortune-input" id="l-day" placeholder="예: 15" min="1" max="31"/>
+        </div>
+        <div class="fortune-form-row">
+          <label>성별</label>
+          <select class="fortune-select" id="l-gender">
+            <option value="남성">남성</option>
+            <option value="여성">여성</option>
+          </select>
+        </div>
+        <div class="fortune-form-row">
+          <label>태어난 시간 (선택)</label>
+          <select class="fortune-select" id="l-hour">
+            <option value="">모름</option>
+            <option value="자시(23~1시)">자시 (23~1시)</option>
+            <option value="축시(1~3시)">축시 (1~3시)</option>
+            <option value="인시(3~5시)">인시 (3~5시)</option>
+            <option value="묘시(5~7시)">묘시 (5~7시)</option>
+            <option value="진시(7~9시)">진시 (7~9시)</option>
+            <option value="사시(9~11시)">사시 (9~11시)</option>
+            <option value="오시(11~13시)">오시 (11~13시)</option>
+            <option value="미시(13~15시)">미시 (13~15시)</option>
+            <option value="신시(15~17시)">신시 (15~17시)</option>
+            <option value="유시(17~19시)">유시 (17~19시)</option>
+            <option value="술시(19~21시)">술시 (19~21시)</option>
+            <option value="해시(21~23시)">해시 (21~23시)</option>
+          </select>
+        </div>
+      </div>
+      <button class="fortune-analyze-btn" id="lifetimeBtn" onclick="analyzeLifetime()">
+        <i class="fas fa-magic"></i> 평생 운세 분석하기
+      </button>
+      <div class="fortune-point-notice">
+        <i class="fas fa-coins"></i>
+        <span>평생 운세 분석 <strong>500P</strong> 차감 · 현재 보유: <strong id="lifetimePtDisplay">0P</strong></span>
+      </div>
+    </div>
+
+    <div class="fortune-loading" id="lifetimeLoading">
+      <div class="fortune-loading-orb"></div>
+      <p class="loading-title">평생 운세 분석 중...</p>
+      <div class="fortune-loading-steps">
+        <div class="fortune-step active" id="ls1"><span class="fortune-step-dot"></span> 사주팔자 정밀 계산</div>
+        <div class="fortune-step" id="ls2"><span class="fortune-step-dot"></span> 전체 대운 흐름 산출</div>
+        <div class="fortune-step" id="ls3"><span class="fortune-step-dot"></span> 유년~노년 분석</div>
+        <div class="fortune-step" id="ls4"><span class="fortune-step-dot"></span> 인생 황금기 도출</div>
+      </div>
+    </div>
+
+    <div class="fortune-result" id="lifetimeResult">
+      <div class="fortune-result-header">
+        <div class="fortune-result-title"><i class="fas fa-infinity"></i> <span id="lifetimeResultTitle">평생 운세</span></div>
+        <span class="fortune-result-subtitle" id="lifetimeResultSub"></span>
+      </div>
+      <div class="fortune-result-body" id="lifetimeResultBody"></div>
+      <div class="fortune-result-actions">
+        <button class="fortune-retry-btn" onclick="retryAnalysis('lifetime')">
+          <i class="fas fa-redo"></i> 다시 분석하기
+        </button>
+        <button class="fortune-share-btn" onclick="shareResult('lifetime')">
+          <i class="fas fa-share-alt"></i> 공유하기
+        </button>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /container -->
+
+<!-- ===== 다른 서비스 배너 ===== -->
+<div class="fortune-other-services">
+  <div class="fortune-container">
+    <h3 class="other-services-title">🔮 다른 운세 서비스도 만나보세요</h3>
+    <div class="other-services-grid">
+      <a href="chat.html" class="other-service-card">
+        <span class="os-icon">💬</span>
+        <div class="os-name">AI 종합 상담</div>
+        <div class="os-desc">38가지 카테고리 맞춤 상담</div>
+      </a>
+      <a href="tarot.html" class="other-service-card">
+        <span class="os-icon">🃏</span>
+        <div class="os-name">타로 카드</div>
+        <div class="os-desc">78장 웨이트 덱 AI 해석</div>
+      </a>
+      <a href="astrology.html" class="other-service-card">
+        <span class="os-icon">🌙</span>
+        <div class="os-name">서양 점성술</div>
+        <div class="os-desc">출생 차트 & 별자리 분석</div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 푸터 ===== -->
+<footer class="site-footer" style="background:rgba(10,8,24,0.95);border-top:1px solid rgba(255,255,255,0.08);margin-top:0">
+  <div class="footer-inner" style="padding:32px 24px;text-align:center;font-size:0.8rem;color:rgba(232,224,255,0.4)">
+    <p style="margin-bottom:6px"><strong style="color:rgba(232,224,255,0.7)">큐브박스</strong> | 대표 김미화 | 사업자등록번호 537-08-03349</p>
+    <p style="margin-bottom:6px">서울 송파구 송파대로 14길 7-10 2층 201-n125호 | sajuon@gmail.com | 0502-1909-7788</p>
+    <p>© 2026 운세ON. All rights reserved. | AI 운세 상담은 오락 목적이며 중요한 결정의 근거로 삼지 마세요.</p>
+  </div>
+</footer>
+
+<!-- ===== 스크립트 ===== -->
+<script src="js/auth.js?v=20260411"></script>
+<script src="js/main.js?v=20260411"></script>
+<script src="js/gemini.js?v=20260411"></script>
+<script src="js/saju.js?v=20260411"></script>
+
+<script>
+/* =========================================
+   fortune.html 전용 스크립트 v2.0
+   월별/년/10년/평생 운세 분석
+   ========================================= */
+
+const FORTUNE_COSTS = { monthly: 200, yearly: 300, decade: 400, lifetime: 500 };
+const GANJI_YEAR = {
+  2024:'갑진년(甲辰年)', 2025:'을사년(乙巳年)', 2026:'병오년(丙午年)',
+  2027:'정미년(丁未年)', 2028:'무신년(戊申年)', 2029:'기유년(己酉年)', 2030:'경술년(庚戌年)'
+};
+
+let selectedMonth = new Date().getMonth() + 1;
+
+// ── 초기화 ──
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof initAuthHeader === 'function') initAuthHeader();
+  selectMonth(new Date().getMonth() + 1);
+  updateAllPointDisplays();
+  autoFillBirthFromUser();
+  initParticles();
+  // URL 파라미터로 탭 자동 선택
+  const urlParams = new URLSearchParams(window.location.search);
+  const tab = urlParams.get('tab');
+  if (['monthly','yearly','decade','lifetime'].includes(tab)) switchFortuneTab(tab);
+});
+
+// 로그인 사용자 생년월일 자동 입력
+function autoFillBirthFromUser() {
+  try {
+    const cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+    if (cu && cu.birth) {
+      const parts = cu.birth.split('-');
+      if (parts.length >= 3) {
+        ['m','y','d','l'].forEach(p => {
+          const yEl = document.getElementById(p + '-year');
+          const mEl = document.getElementById(p + '-month');
+          const dEl = document.getElementById(p + '-day');
+          if (yEl) yEl.value = parts[0];
+          if (mEl) mEl.value = parseInt(parts[1], 10);
+          if (dEl) dEl.value = parseInt(parts[2], 10);
+        });
+      }
+      if (cu.gender) {
+        ['m','y','d','l'].forEach(p => {
+          const gEl = document.getElementById(p + '-gender');
+          if (gEl && cu.gender) gEl.value = cu.gender;
+        });
+      }
+    }
+  } catch(e) {}
+}
+
+// 파티클 초기화
+function initParticles() {
+  const container = document.getElementById('heroParticles');
+  if (!container) return;
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'hero-particle';
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      width:${2+Math.random()*4}px;
+      height:${2+Math.random()*4}px;
+      animation-delay:${Math.random()*5}s;
+      animation-duration:${3+Math.random()*4}s;
+    `;
+    container.appendChild(p);
+  }
+}
+
+// 포인트 표시 갱신
+function updateAllPointDisplays() {
+  const pts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+  ['monthly','yearly','decade','lifetime'].forEach(t => {
+    const el = document.getElementById(t + 'PtDisplay');
+    if (el) el.textContent = pts.toLocaleString() + 'P';
+  });
+}
+
+// 탭 전환
+function switchFortuneTab(tab) {
+  document.querySelectorAll('.fortune-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.fortune-section').forEach(s => s.classList.remove('active'));
+  const tabEl = document.getElementById('tab-' + tab);
+  const sectionEl = document.getElementById('section-' + tab);
+  if (tabEl) tabEl.classList.add('active');
+  if (sectionEl) sectionEl.classList.add('active');
+  // 탭 전환 시 URL 업데이트 (히스토리 추가 없이)
+  history.replaceState(null, '', '?tab=' + tab);
+}
+
+// 월 선택
+function selectMonth(m) {
+  selectedMonth = m;
+  document.querySelectorAll('.month-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i + 1 === m);
+  });
+}
+
+// 로그인/포인트 확인
+function checkAuth(type) {
+  const cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+  if (!cu || !cu.id) {
+    if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+      sessionStorage.setItem('sajuon_auth_redirect', 'fortune.html?tab=' + type);
+      window.location.href = 'auth.html';
+    }
+    return false;
+  }
+  const pts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+  const cost = FORTUNE_COSTS[type];
+  if (pts < cost) {
+    alert(`포인트가 부족합니다.\n필요 포인트: ${cost}P / 현재 보유: ${pts}P\n\n포인트 충전 페이지로 이동합니다.`);
+    window.location.href = 'pricing.html';
+    return false;
+  }
+  return true;
+}
+
+// 입력 유효성 검사
+function getInputData(prefix) {
+  const year   = parseInt(document.getElementById(prefix + '-year')?.value || '0', 10);
+  const month  = parseInt(document.getElementById(prefix + '-month')?.value || '0', 10);
+  const day    = parseInt(document.getElementById(prefix + '-day')?.value || '0', 10);
+  const gender = document.getElementById(prefix + '-gender')?.value || '남성';
+  const hour   = document.getElementById(prefix + '-hour')?.value || '';
+  if (!year || year < 1920 || year > 2010) { alert('올바른 출생연도를 입력해주세요 (1920~2010)'); return null; }
+  if (!month) { alert('생월을 선택해주세요'); return null; }
+  if (!day || day < 1 || day > 31) { alert('올바른 생일을 입력해주세요 (1~31)'); return null; }
+  return { year, month, day, gender, hour };
+}
+
+// 로딩 스텝 애니메이션
+function startLoadingSteps(steps) {
+  let i = 0;
+  steps.forEach(id => { const el = document.getElementById(id); if (el) { el.classList.remove('active','done'); } });
+  if (steps[0]) { const el = document.getElementById(steps[0]); if (el) el.classList.add('active'); }
+  const timer = setInterval(() => {
+    i++;
+    if (i >= steps.length) { clearInterval(timer); return; }
+    const prev = document.getElementById(steps[i-1]);
+    const curr = document.getElementById(steps[i]);
+    if (prev) { prev.classList.remove('active'); prev.classList.add('done'); }
+    if (curr) curr.classList.add('active');
+  }, 1800);
+  return timer;
+}
+
+// 포인트 차감 (localStorage + DB)
+async function deductFortunePoints(cost, desc, category) {
+  const cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+  if (!cu || !cu.id) return false;
+  const cur  = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+  const next = cur - cost;
+  if (next < 0) return false;
+  localStorage.setItem('sajuon_points', String(next));
+  localStorage.setItem('sajuon_current_user', JSON.stringify({ ...cu, points: next }));
+  updateAllPointDisplays();
+  // 헤더 포인트 업데이트
+  document.querySelectorAll('#headerPointVal').forEach(el => { el.textContent = next.toLocaleString(); });
+  // DB 반영
+  try {
+    await fetch('tables/users/' + cu.id, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ points: next })
+    });
+    await fetch('tables/points_history', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: cu.id, email: cu.email || '', type: 'use',
+        amount: -cost, balance: next, description: desc, category
+      })
+    });
+  } catch(e) { console.warn('[Fortune] DB 포인트 업데이트 실패:', e); }
+  return true;
+}
+
+// Gemini API 호출 (스트리밍)
+async function callGeminiForFortune(systemPrompt, userPrompt, onChunk) {
+  const key   = typeof getGeminiKey   === 'function' ? getGeminiKey()   : (localStorage.getItem('sajuon_gemini_key')   || '');
+  const model = typeof getGeminiModel === 'function' ? getGeminiModel() : (localStorage.getItem('sajuon_gemini_model') || 'gemini-2.5-flash');
+  const ver   = typeof getGeminiVer   === 'function' ? getGeminiVer()   : (localStorage.getItem('sajuon_gemini_ver')   || 'v1beta');
+
+  if (!key || !key.startsWith('AIza')) {
+    throw new Error('API 키가 설정되지 않았습니다. 관리자 페이지에서 Gemini API 키를 입력해주세요.');
+  }
+
+  const body = {
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+    generationConfig: { temperature: 0.85, topK: 40, topP: 0.95, maxOutputTokens: 6000, candidateCount: 1 },
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+    ]
+  };
+
+  const url = `https://generativelanguage.googleapis.com/${ver}/models/${model}:streamGenerateContent?alt=sse&key=${key}`;
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err?.error?.message) || `HTTP ${res.status}`);
+  }
+
+  const reader  = res.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '', buffer = '', finishReason = '';
+
+  while (true) {
+    const chunk = await reader.read();
+    if (chunk.done) break;
+    buffer += decoder.decode(chunk.value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const jsonStr = line.slice(6).trim();
+      if (jsonStr === '[DONE]') continue;
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const cand   = parsed?.candidates?.[0];
+        const text   = cand?.content?.parts?.[0]?.text || '';
+        if (text) { fullText += text; onChunk(fullText); }
+        if (cand?.finishReason) finishReason = cand.finishReason;
+      } catch(_) {}
+    }
+  }
+
+  // MAX_TOKENS 이어쓰기 (최대 2회)
+  let contCount = 0;
+  while (finishReason === 'MAX_TOKENS' && fullText && contCount < 2) {
+    contCount++;
+    const contUrl  = `https://generativelanguage.googleapis.com/${ver}/models/${model}:generateContent?key=${key}`;
+    const contBody = {
+      system_instruction: body.system_instruction,
+      contents: [
+        { role: 'user',  parts: [{ text: userPrompt }] },
+        { role: 'model', parts: [{ text: fullText }] },
+        { role: 'user',  parts: [{ text: '이어서 계속 작성해주세요. 앞 내용을 반복하지 말고 끊긴 부분부터 이어서만 써주세요.' }] }
+      ],
+      generationConfig: { temperature: 0.85, maxOutputTokens: 3000, candidateCount: 1 },
+      safetySettings: body.safetySettings
+    };
+    const contRes = await fetch(contUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(contBody) });
+    if (!contRes.ok) break;
+    const contData = await contRes.json();
+    const contCand = contData?.candidates?.[0];
+    const contText = contCand?.content?.parts?.[0]?.text || '';
+    if (contText) { fullText += contText; onChunk(fullText); }
+    finishReason = contCand?.finishReason || '';
+  }
+  return fullText;
+}
+
+// HTML 변환 (응답 텍스트 → 안전한 HTML)
+function fortuneTextToHTML(text) {
+  if (!text) return '';
+  // 이미 HTML 태그가 있는 경우 그대로 사용
+  if (/<[a-z][\s\S]*>/i.test(text)) {
+    return text
+      .replace(/&lt;h4&gt;/g, '<h4>').replace(/&lt;\/h4&gt;/g, '</h4>')
+      .replace(/&lt;p(?: class="([^"]*)")?&gt;/g, (m, c) => c ? `<p class="${c}">` : '<p>')
+      .replace(/&lt;\/p&gt;/g, '</p>')
+      .replace(/&lt;strong&gt;/g, '<strong>').replace(/&lt;\/strong&gt;/g, '</strong>')
+      .replace(/&lt;ul&gt;/g, '<ul>').replace(/&lt;\/ul&gt;/g, '</ul>')
+      .replace(/&lt;li&gt;/g, '<li>').replace(/&lt;\/li&gt;/g, '</li>');
+  }
+  // 마크다운 → HTML 변환
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/^#{1,3}\s+(.+)$/gm, '<h4>$1</h4>')
+    .replace(/^[-•✅🟢]\s+(.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>[^<]+<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
+    .replace(/\n\n+/g, '</p><p>')
+    .replace(/\n/g, '<br/>')
+    .replace(/^(?!<[hup])/gm, m => m.trim() ? `<p>${m}</p>` : '')
+    .replace(/<p><\/p>/g, '');
+}
+
+// 공통 분석 실행
+async function doAnalysis(type, systemPrompt, userPrompt, loadingId, loadingSteps, resultId, resultTitleId, resultSubId, resultBodyId, titleText, subText, btnId) {
+  const cost = FORTUNE_COSTS[type];
+  if (!checkAuth(type)) return;
+
+  const btn      = document.getElementById(btnId);
+  const loadingEl = document.getElementById(loadingId);
+  const resultEl  = document.getElementById(resultId);
+  const bodyEl    = document.getElementById(resultBodyId);
+
+  // 포인트 차감
+  const ok = await deductFortunePoints(cost, `${titleText} AI 분석`, type);
+  if (!ok) { alert('포인트 차감 실패. 잠시 후 다시 시도해주세요.'); return; }
+
+  // UI 전환
+  if (btn) btn.disabled = true;
+  if (resultEl) resultEl.classList.remove('show');
+  if (loadingEl) loadingEl.classList.add('show');
+  if (bodyEl) bodyEl.innerHTML = '<div class="fortune-streaming-placeholder">분석 중...</div>';
+  if (bodyEl) bodyEl.innerHTML = '';
+
+  const timer = startLoadingSteps(loadingSteps);
+
+  try {
+    let fullText = '';
+    await callGeminiForFortune(systemPrompt, userPrompt, (partial) => {
+      fullText = partial;
+      if (bodyEl) bodyEl.innerHTML = fortuneTextToHTML(fullText);
+    });
+
+    clearInterval(timer);
+    loadingSteps.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.classList.remove('active'); el.classList.add('done'); }
+    });
+
+    const titleEl = document.getElementById(resultTitleId);
+    const subEl   = document.getElementById(resultSubId);
+    if (titleEl) titleEl.textContent = titleText;
+    if (subEl)   subEl.textContent   = subText;
+    if (bodyEl)  bodyEl.innerHTML    = fortuneTextToHTML(fullText);
+
+    setTimeout(() => {
+      if (loadingEl) loadingEl.classList.remove('show');
+      if (resultEl) { resultEl.classList.add('show'); resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    }, 600);
+
+  } catch(err) {
+    clearInterval(timer);
+    if (loadingEl) loadingEl.classList.remove('show');
+    if (bodyEl) bodyEl.innerHTML = '';
+    alert('분석 중 오류가 발생했습니다:\n' + err.message);
+    // 포인트 환불
+    const cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+    if (cu && cu.id) {
+      const cur    = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+      const refund = cur + cost;
+      localStorage.setItem('sajuon_points', String(refund));
+      localStorage.setItem('sajuon_current_user', JSON.stringify({ ...cu, points: refund }));
+      updateAllPointDisplays();
+      try {
+        await fetch('tables/users/' + cu.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ points: refund }) });
+      } catch(_) {}
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+/* ============================
+   ① 월별 운세
+   ============================ */
+async function analyzeMonthly() {
+  const d = getInputData('m');
+  if (!d) return;
+  const tm = selectedMonth;
+
+  const GANJI_MONTH = {
+    1:'庚子',2:'辛丑',3:'壬寅',4:'癸卯',5:'甲辰',6:'乙巳',
+    7:'丙午',8:'丁未',9:'戊申',10:'己酉',11:'庚戌',12:'辛亥'
+  };
+  const monthGanji = GANJI_MONTH[tm] || `${tm}월`;
+
+  const system = `당신은 운세ON의 월별 운세 전문 상담사입니다.
+한국 전통 사주명리학 수십 년 경력의 최고 전문가입니다.
+
+【현재 날짜】: 2026년 ${tm}월 (병오년 ${monthGanji}月)
+【핵심 지침】
+1. 사용자의 생년월일로 사주팔자를 계산하여 2026년 ${tm}월 운세를 분석하세요.
+2. 반드시 문장을 완전히 끝맺으세요. 마무리 문장까지 반드시 완성하세요.
+3. 토큰이 부족할 것을 걱정하지 말고 끝까지 완성하는 것을 최우선으로 하세요.
+4. 한국어 경어체(~습니다, ~세요)로 작성하세요.
+5. 마크다운 금지. HTML 태그만 사용하세요.
+
+【HTML 출력 규칙】
+제목: <h4>🟢 이모지 제목</h4>
+단락: <p>내용</p>
+강조: <strong>단어</strong>
+목록: <ul><li>항목</li></ul>
+마무리: <p class="saju-closing">마무리 문장</p>`;
+
+  const user = `저는 ${d.year}년 ${d.month}월 ${d.day}일생 ${d.gender}입니다.${d.hour ? ` 태어난 시간은 ${d.hour}입니다.` : ''}
+
+2026년 ${tm}월(${monthGanji}月) 월별 운세를 상세히 분석해 주세요.
+
+다음 7개 항목을 모두 포함하여 분석해주세요:
+1. 💫 ${tm}월 총운 (이달의 전반적인 기운과 주요 테마)
+2. 💕 연애운·인간관계 (이달의 인연 흐름, 관계 주의사항)
+3. 💰 재물운·금전운 (수입, 지출, 투자 주의일)
+4. 💼 직업운·사업운 (업무 흐름, 기회와 위험 요소)
+5. 🏥 건강운 (주의해야 할 건강 포인트, 관리법)
+6. 📅 이달의 길일(吉日) Top 3 & 주의일 Top 2 (날짜와 이유)
+7. 🍀 이달의 행운 아이템 (행운색·방향·숫자)
+
+마지막에 <p class="saju-closing">으로 이달을 잘 보내는 종합 조언을 마무리해주세요.`;
+
+  await doAnalysis('monthly', system, user,
+    'monthlyLoading', ['ms1','ms2','ms3','ms4'],
+    'monthlyResult', 'monthlyResultTitle', 'monthlyResultSub', 'monthlyResultBody',
+    `2026년 ${tm}월 운세`, `${d.year}년 ${d.month}월 ${d.day}일생 ${d.gender}`,
+    'monthlyBtn');
+}
+
+/* ============================
+   ② 년 운세
+   ============================ */
+async function analyzeYearly() {
+  const d = getInputData('y');
+  if (!d) return;
+  const targetYear = parseInt(document.getElementById('y-targetYear')?.value || '2026', 10);
+  const ganjiStr   = GANJI_YEAR[targetYear] || targetYear + '년';
+
+  const system = `당신은 운세ON의 연간 운세 전문 상담사입니다.
+한국 전통 사주명리학 수십 년 경력의 최고 전문가입니다.
+
+【현재 날짜】: 2026년 4월 (병오년)
+【분석 대상 연도】: ${targetYear}년 ${ganjiStr}
+【핵심 지침】
+1. 사용자의 생년월일로 사주팔자를 계산하여 ${targetYear}년 연간 운세를 분석하세요.
+2. 반드시 문장을 완전히 끝맺으세요. 마무리 문장까지 반드시 완성하세요.
+3. 토큰이 부족할 것을 걱정하지 말고 끝까지 완성하는 것을 최우선으로 하세요.
+4. 한국어 경어체로 작성하세요.
+5. 마크다운 금지. HTML 태그만 사용하세요.
+
+【HTML 출력 규칙】
+제목: <h4>🟢 이모지 제목</h4>
+단락: <p>내용</p>
+강조: <strong>단어</strong>
+목록: <ul><li>항목</li></ul>
+마무리: <p class="saju-closing">마무리 문장</p>`;
+
+  const user = `저는 ${d.year}년 ${d.month}월 ${d.day}일생 ${d.gender}입니다.${d.hour ? ` 태어난 시간은 ${d.hour}입니다.` : ''}
+
+${targetYear}년(${ganjiStr}) 연간 운세를 상세히 분석해 주세요.
+
+다음 9개 항목을 모두 포함해주세요:
+1. 🌅 ${targetYear}년 총운 (올해의 전반적인 기운, 테마, 핵심 메시지)
+2. 💕 연애운·결혼운 (인연, 관계 변화, 결혼 기회)
+3. 💰 재물운·사업운 (수입, 투자, 사업 흐름)
+4. 💼 직업운·승진운 (커리어 변화, 이직, 승진 기회)
+5. 🏥 건강운 (주의 건강 포인트, 관리법)
+6. 👥 인간관계·귀인운 (도움받을 사람, 주의할 관계)
+7. 📅 올해 가장 좋은 달 Top 3 & 조심할 달 Top 2 (구체적인 이유 포함)
+8. 🔑 올해의 키워드 & 행운 아이템 (색상·방향·숫자·보석)
+9. 💡 ${targetYear}년을 성공적으로 보내는 핵심 전략 3가지
+
+마지막에 <p class="saju-closing">으로 희망적인 마무리 메시지를 써주세요.`;
+
+  await doAnalysis('yearly', system, user,
+    'yearlyLoading', ['ys1','ys2','ys3','ys4'],
+    'yearlyResult', 'yearlyResultTitle', 'yearlyResultSub', 'yearlyResultBody',
+    `${targetYear}년 (${ganjiStr}) 운세`, `${d.year}년 ${d.month}월 ${d.day}일생 ${d.gender}`,
+    'yearlyBtn');
+}
+
+/* ============================
+   ③ 10년 대운
+   ============================ */
+async function analyzeDecade() {
+  const d = getInputData('d');
+  if (!d) return;
+  const currentAge = 2026 - d.year;
+  const decadeEnd  = 2036;
+
+  const system = `당신은 운세ON의 대운(大運) 분석 전문 상담사입니다.
+한국 전통 사주명리학 수십 년 경력의 최고 전문가입니다.
+
+【현재 날짜】: 2026년 4월 (병오년)
+【핵심 지침】
+1. 사용자의 생년월일로 사주팔자를 계산하고, 현재 대운(大運)과 향후 10년 흐름을 분석하세요.
+2. 대운은 10년 단위로 천간(天干)·지지(地支)가 순차적으로 바뀌는 큰 운의 흐름입니다.
+3. 현재 대운을 정확히 파악하고, 2026~2036년 연도별 주요 변화를 제시하세요.
+4. 반드시 문장을 완전히 끝맺으세요. 마무리 문장까지 반드시 완성하세요.
+5. 토큰이 부족할 것을 걱정하지 말고 끝까지 완성하는 것을 최우선으로 하세요.
+6. 한국어 경어체로 작성하세요.
+7. 마크다운 금지. HTML 태그만 사용하세요.
+
+【HTML 출력 규칙】
+제목: <h4>🟢 이모지 제목</h4>
+단락: <p>내용</p>
+강조: <strong>단어</strong>
+목록: <ul><li>항목</li></ul>
+마무리: <p class="saju-closing">마무리 문장</p>`;
+
+  const user = `저는 ${d.year}년 ${d.month}월 ${d.day}일생 ${d.gender}입니다.${d.hour ? ` 태어난 시간은 ${d.hour}입니다.` : ''}
+현재 나이는 ${currentAge}세(2026년 기준)입니다.
+
+현재 대운과 향후 10년(2026~${decadeEnd}) 대운 흐름을 상세히 분석해 주세요.
+
+다음 9개 항목을 모두 포함해주세요:
+1. 🔭 현재 대운 분석 (지금 내가 걷고 있는 대운의 천간·지지 기운과 의미)
+2. ⚡ 현재 대운의 핵심 과제 (이 시기에 반드시 해야 할 일과 조심할 점)
+3. 📈 향후 10년 흐름 예측 (2026~${decadeEnd} 연도별 주요 변곡점)
+4. 💡 다음 대운 전환점 (언제, 어떻게 운이 바뀌는지 구체적으로)
+5. 🎯 이 시기 최고의 기회와 최대의 위험
+6. 💕 10년 인연·결혼 운 흐름
+7. 💰 10년 재물·사업운 흐름
+8. 💼 10년 직업·커리어 흐름
+9. 🏆 대운을 최대한 활용하는 핵심 전략 (행동 시기 vs 준비 시기 구분)
+
+마지막에 <p class="saju-closing">으로 힘이 되는 마무리 메시지를 써주세요.`;
+
+  await doAnalysis('decade', system, user,
+    'decadeLoading', ['ds1','ds2','ds3','ds4'],
+    'decadeResult', 'decadeResultTitle', 'decadeResultSub', 'decadeResultBody',
+    `10년 대운 분석 (2026~${decadeEnd})`, `${d.year}년 ${d.month}월 ${d.day}일생 ${d.gender} · 현재 ${currentAge}세`,
+    'decadeBtn');
+}
+
+/* ============================
+   ④ 평생 운세
+   ============================ */
+async function analyzeLifetime() {
+  const d = getInputData('l');
+  if (!d) return;
+  const currentAge = 2026 - d.year;
+
+  const system = `당신은 운세ON의 평생 운세 전문 상담사입니다.
+한국 전통 사주명리학 수십 년 경력의 최고 전문가입니다.
+
+【현재 날짜】: 2026년 4월 (병오년)
+【핵심 지침】
+1. 사용자의 생년월일로 사주팔자를 계산하고, 전체 인생 운세 흐름을 분석하세요.
+2. 유년(0~19세), 청년(20~39세), 중년(40~59세), 장년(60~79세), 노년(80세~)으로 나누어 분석하세요.
+3. 현재 나이(${currentAge}세)를 기준으로 지나온 시간과 앞으로의 시간 모두 분석하세요.
+4. 반드시 문장을 완전히 끝맺으세요. 마무리 문장까지 반드시 완성하세요.
+5. 토큰이 부족할 것을 걱정하지 말고 끝까지 완성하는 것을 최우선으로 하세요.
+6. 한국어 경어체로 작성하세요.
+7. 마크다운 금지. HTML 태그만 사용하세요.
+
+【HTML 출력 규칙】
+제목: <h4>🟢 이모지 제목</h4>
+단락: <p>내용</p>
+강조: <strong>단어</strong>
+목록: <ul><li>항목</li></ul>
+마무리: <p class="saju-closing">마무리 문장</p>`;
+
+  const user = `저는 ${d.year}년 ${d.month}월 ${d.day}일생 ${d.gender}입니다.${d.hour ? ` 태어난 시간은 ${d.hour}입니다.` : ''}
+현재 나이는 ${currentAge}세(2026년 기준)입니다.
+
+평생 운세 전체 흐름을 상세히 분석해 주세요.
+
+다음 10개 항목을 모두 포함해주세요:
+1. 🌟 이 사주의 핵심 특징 (일간 오행, 타고난 기질과 강점·약점)
+2. 🌱 유년~청년기 (0~39세) 흐름 (형성기의 주요 사건, 기회, 위기)
+3. 🌿 중년기 (40~59세) 흐름 (전성기의 핵심 과제와 기회)
+4. 🌳 장년~노년기 (60세~) 흐름 (완성기의 지혜와 여정)
+5. 💎 인생 황금기 (가장 운이 강한 시기, 구체적인 연령대와 이유)
+6. ⚡ 인생 최대의 고비 시기 (언제, 어떻게 극복해야 하는지)
+7. 💕 연애·결혼·인연 패턴 (어떤 인연을 만나고, 언제 인연이 오는지)
+8. 💰 재물운 평생 흐름 (언제 돈이 모이고, 언제 조심해야 하는지)
+9. 💼 천직(天職)과 적성 (이 사주에 가장 잘 맞는 직업과 커리어 방향)
+10. 🏆 이 사주의 핵심 인생 전략 (타고난 운명을 최대한 꽃피우는 방법)
+
+마지막에 <p class="saju-closing">으로 인생 전체를 아우르는 깊이 있는 마무리 메시지를 써주세요.`;
+
+  await doAnalysis('lifetime', system, user,
+    'lifetimeLoading', ['ls1','ls2','ls3','ls4'],
+    'lifetimeResult', 'lifetimeResultTitle', 'lifetimeResultSub', 'lifetimeResultBody',
+    `평생 운세 분석`, `${d.year}년 ${d.month}월 ${d.day}일생 ${d.gender} · 현재 ${currentAge}세`,
+    'lifetimeBtn');
+}
+
+// 재분석
+function retryAnalysis(type) {
+  const resultEl = document.getElementById(type + 'Result');
+  if (resultEl) resultEl.classList.remove('show');
+  const sectionEl = document.getElementById('section-' + type);
+  if (sectionEl) window.scrollTo({ top: sectionEl.offsetTop - 100, behavior: 'smooth' });
+}
+
+// 결과 공유
+function shareResult(type) {
+  const titles = { monthly:'월별운세', yearly:'년운세', decade:'10년대운', lifetime:'평생운세' };
+  const url = window.location.origin + '/fortune.html?tab=' + type;
+  if (navigator.share) {
+    navigator.share({ title: `운세ON ${titles[type]}`, text: `AI 사주 분석으로 나의 ${titles[type]}를 확인해보세요!`, url }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => alert('링크가 복사되었습니다!')).catch(() => {});
+  }
+}
+</script>
+</body>
+</html>
