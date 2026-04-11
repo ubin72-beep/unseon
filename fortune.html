@@ -20,23 +20,50 @@
 <body class="fortune-page">
 
 <!-- ===== 헤더 ===== -->
-<header class="site-header">
-  <div class="header-inner">
-    <a href="index.html" class="logo">운세ON</a>
-    <nav class="header-nav">
-      <a href="chat.html">AI 상담</a>
-      <a href="fortune.html" class="active">운세 달력</a>
-      <a href="tarot.html">🃏 타로</a>
-      <a href="astrology.html">🌙 점성술</a>
-      <a href="pricing.html">요금 충전</a>
+<header class="site-header" id="siteHeader">
+  <div class="container header-inner">
+    <a href="index.html" class="logo">운세<span class="logo-on">ON</span></a>
+    <nav class="main-nav" id="mainNav">
+      <a href="index.html" class="nav-link">홈</a>
+      <a href="chat.html" class="nav-link">AI 상담</a>
+      <a href="fortune.html" class="nav-link active">🗓️ 운세 달력</a>
+      <a href="tarot.html" class="nav-link">🃏 타로카드</a>
+      <a href="astrology.html" class="nav-link">🌙 점성술</a>
+      <a href="pricing.html" class="nav-link">요금 충전</a>
+      <a href="admin.html" class="nav-link nav-admin" id="navAdminLink"><i class="fas fa-cog"></i> 관리자</a>
     </nav>
     <div class="header-actions" id="headerActions">
       <div class="point-display" id="headerPoints" style="display:none">
-        <i class="fas fa-coins"></i>
-        <span id="headerPointVal">0</span>P
+        <i class="fas fa-coins"></i> <span id="headerPointVal">0</span>P
       </div>
-      <a href="auth.html" id="btnLogin" class="btn-login">로그인</a>
-      <a href="auth.html?tab=register" id="btnSignup" class="btn-signup">회원가입</a>
+      <!-- 비로그인 버튼 -->
+      <a href="auth.html" class="btn btn-login" id="btnLogin"><i class="fas fa-sign-in-alt"></i> 로그인</a>
+      <a href="auth.html?tab=register" class="btn btn-signup" id="btnSignup"><i class="fas fa-user-plus"></i> 회원가입</a>
+      <!-- 로그인 후 버튼 (기본 숨김) -->
+      <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
+        <button class="user-menu-btn" onclick="toggleUserMenu(event)" aria-label="사용자 메뉴">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <span class="user-name-label" id="userNameLabel">사용자</span>
+          <i class="fas fa-chevron-down" style="font-size:0.7rem"></i>
+        </button>
+        <div class="user-dropdown" id="userDropdown" style="display:none">
+          <div class="user-dropdown-header">
+            <div class="user-dropdown-name" id="dropdownName"></div>
+            <div class="user-dropdown-email" id="dropdownEmail"></div>
+            <div class="user-dropdown-pt"><i class="fas fa-coins"></i> <span id="dropdownPt">0</span>P</div>
+          </div>
+          <div class="user-dropdown-links">
+            <a href="pricing.html"><i class="fas fa-coins"></i> 포인트 충전</a>
+            <a href="pricing.html#history"><i class="fas fa-history"></i> 이용 내역</a>
+            <a href="mypage.html"><i class="fas fa-user-cog"></i> 내 정보</a>
+          </div>
+          <button class="user-logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
+        </div>
+      </div>
+      <a href="pricing.html" class="btn btn-charge" id="btnCharge">충전하기</a>
+      <button class="hamburger" id="hamburger" aria-label="메뉴">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </div>
 </header>
@@ -607,7 +634,9 @@ let selectedMonth = new Date().getMonth() + 1;
 
 // ── 초기화 ──
 document.addEventListener('DOMContentLoaded', () => {
-  if (typeof initAuthHeader === 'function') initAuthHeader();
+  if (typeof initAuthHeader  === 'function') initAuthHeader();
+  if (typeof initHeader      === 'function') initHeader();
+  if (typeof initHamburger   === 'function') initHamburger();
   selectMonth(new Date().getMonth() + 1);
   updateAllPointDisplays();
   autoFillBirthFromUser();
