@@ -1,11 +1,11 @@
 /* =========================================
-   운세ON — js/auth.js  v3.0 (DB API 연동)
+   운세ON — js/auth.js  v3.1 (DB API 연동)
    회원가입 / 로그인 / 로그아웃 — 서버 DB 영구 저장
    ========================================= */
 
-// ===== API 헬퍼 =====
-const API_USERS  = 'tables/users';
-const API_HIST   = 'tables/points_history';
+// ===== API 경로 =====
+const API_USERS = 'tables/users';
+const API_HIST  = 'tables/points_history';
 
 async function apiGet(url) {
   const r = await fetch(url);
