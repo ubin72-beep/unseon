@@ -53,6 +53,10 @@ const SAJU_DATA = {
     { id: 'astro_3', tab: 'astro',icon: '📅', name: '월별 운세',     pt: '무료',  hook: '2026년 12개월 운세',         link: 'astrology.html' },
     { id: 'astro_4', tab: 'astro',icon: '🔮', name: '오늘의 별자리', pt: '무료',  hook: '오늘 내 별자리 운세',         link: 'astrology.html' },
     { id: 'astro_5', tab: 'astro',icon: '🪐', name: '행성 위치 분석', pt: '100P~', hook: '9개 행성·12하우스 분석',     link: 'astrology.html' },
+    { id: 'cal_1',   tab: 'cal',  icon: '📅', name: '월별운세',      pt: '200P~', hook: '이달 연애·재물·직업·건강 분석', link: 'fortune.html?tab=monthly' },
+    { id: 'cal_2',   tab: 'cal',  icon: '🌟', name: '년운세',        pt: '300P~', hook: '올해 나의 전체 운세 흐름',    link: 'fortune.html?tab=yearly' },
+    { id: 'cal_3',   tab: 'cal',  icon: '🔭', name: '10년대운',      pt: '400P~', hook: '향후 10년 대운 흐름 분석',   link: 'fortune.html?tab=decade' },
+    { id: 'cal_4',   tab: 'cal',  icon: '♾️', name: '평생운세',      pt: '500P~', hook: '내 인생 전체의 운세 지도',    link: 'fortune.html?tab=lifetime' },
   ],
 
   reviews: [
@@ -180,6 +184,7 @@ function initCatTabs() {
       '브랜드네이밍':'브랜드 네이밍','이사운':'이사운','집터운':'집터운','여행운':'여행운',
       '타로상담':'타로 상담','점성술상담':'점성술 상담','2026병오년운세':'2026 병오년',
       '종합운세상담':'종합 운세','재물운':'재물운','취업운':'취업운','이직운':'이직운','승진운':'승진운',
+      '월별운세':'월별 운세','년운세':'년 운세','10년대운':'10년 대운','평생운세':'평생 운세',
     };
     grid.innerHTML = list.map(c => `
       <div class="cat-item" onclick="goCatItem('${c.name}', '${c.link||''}')">

@@ -494,77 +494,123 @@ document.addEventListener('DOMContentLoaded', () => {
    헤더 공통 인증 상태 관리
    ========================================= */
 function initAuthHeader() {
-  const headerActions = document.querySelector('.header-actions');
+  const headerActions = document.querySelector('.header-actions, #headerActions');
   if (!headerActions) return;
   if (headerActions.dataset.authInit === 'true') return;
   headerActions.dataset.authInit = 'true';
 
   const user = getCurrentUser();
 
-  if (user && user.id) {
-    // DB에서 최신 포인트 동기화 (비동기)
-    syncPointsFromDB();
-  }
+  // DB에서 최신 포인트 동기화 (비동기)
+  if (user && user.id) syncPointsFromDB();
 
-  const pts = user ? parseInt(localStorage.getItem('sajuon_points') || (user.points || '0'), 10) : 0;
+  const pts = user ? parseInt(localStorage.getItem('sajuon_points') || user.points || '0', 10) : 0;
 
-  const pointDisplay = headerActions.querySelector('.point-display');
+  // ── 포인트 표시 갱신 ──
+  const pointDisplay = headerActions.querySelector('.point-display, #headerPoints');
   if (pointDisplay) {
-    const valEl = pointDisplay.querySelector('[id$="PointVal"]') || pointDisplay.querySelector('span');
+    pointDisplay.style.display = user ? 'flex' : 'none';
+    const valEl = pointDisplay.querySelector('#headerPointVal, [id$="PointVal"]');
     if (valEl) valEl.textContent = pts.toLocaleString();
   }
 
+  const btnLogin  = headerActions.querySelector('#btnLogin, .btn-login');
+  const btnSignup = headerActions.querySelector('#btnSignup, .btn-signup');
+  const btnCharge = headerActions.querySelector('#btnCharge, .btn-charge');
+
   if (user) {
-    if (!headerActions.querySelector('.user-menu-wrap')) {
+    // ── 로그인 상태 ──
+    if (btnLogin)  btnLogin.style.display  = 'none';
+    if (btnSignup) btnSignup.style.display = 'none';
+    if (btnCharge) btnCharge.style.display = 'none';
+
+    // 기존 HTML에 userMenuWrap이 있으면 표시, 없으면 동적 생성
+    let userMenuWrap = headerActions.querySelector('.user-menu-wrap, #userMenuWrap');
+    if (userMenuWrap) {
+      userMenuWrap.style.display = 'flex';
+      // 기존 HTML 구조의 데이터 채우기
+      const nameLabel = userMenuWrap.querySelector('#userNameLabel, .user-name-label');
+      const avatarEl  = userMenuWrap.querySelector('#userAvatar, .user-avatar');
+      const dropName  = userMenuWrap.querySelector('#dropdownName, .user-dropdown-name');
+      const dropEmail = userMenuWrap.querySelector('#dropdownEmail, .user-dropdown-email');
+      const dropPt    = userMenuWrap.querySelector('#dropdownPt, .user-dropdown-pt span, #dropdownPtVal');
+      if (nameLabel) nameLabel.textContent = user.name || '';
+      if (avatarEl)  avatarEl.textContent  = (user.name || '?')[0].toUpperCase();
+      if (dropName)  dropName.textContent  = user.name || '';
+      if (dropEmail) dropEmail.textContent = user.email || '';
+      if (dropPt)    dropPt.textContent    = pts.toLocaleString();
+    } else {
+      // 동적으로 유저 메뉴 생성
       const userMenu = document.createElement('div');
       userMenu.className = 'user-menu-wrap';
+      userMenu.id = 'userMenuWrap';
+      userMenu.style.display = 'flex';
       userMenu.innerHTML = `
         <button class="user-menu-btn" onclick="toggleUserMenu(event)" aria-label="사용자 메뉴">
-          <span class="user-avatar">${(user.name || '?')[0]}</span>
+          <span class="user-avatar">${(user.name || '?')[0].toUpperCase()}</span>
           <span class="user-name-label">${user.name || ''}</span>
-          <i class="fas fa-chevron-down user-menu-arrow"></i>
+          <i class="fas fa-chevron-down user-menu-arrow" style="font-size:0.7rem"></i>
         </button>
-        <div class="user-dropdown" id="userDropdown">
+        <div class="user-dropdown" id="userDropdown" style="display:none">
           <div class="user-dropdown-header">
-            <span class="ud-name">${user.name || ''}</span>
-            <span class="ud-email">${user.email || ''}</span>
-            <span class="ud-pts"><i class="fas fa-coins"></i> <span id="dropdownPtVal">${pts.toLocaleString()}</span>P</span>
+            <div class="user-dropdown-name">${user.name || ''}</div>
+            <div class="user-dropdown-email">${user.email || ''}</div>
+            <div class="user-dropdown-pt"><i class="fas fa-coins"></i> <span id="dropdownPtVal">${pts.toLocaleString()}</span>P</div>
           </div>
-          <a href="pricing.html" class="ud-item"><i class="fas fa-bolt"></i> 포인트 충전</a>
-          <a href="pricing.html#history" class="ud-item"><i class="fas fa-history"></i> 이용내역</a>
-          <button class="ud-item ud-logout" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
+          <div class="user-dropdown-links" style="padding:8px 0">
+            <a href="pricing.html" style="display:flex;align-items:center;gap:8px;padding:10px 16px;color:#333;text-decoration:none;font-size:0.88rem"><i class="fas fa-bolt"></i> 포인트 충전</a>
+            <a href="pricing.html#history" style="display:flex;align-items:center;gap:8px;padding:10px 16px;color:#333;text-decoration:none;font-size:0.88rem"><i class="fas fa-history"></i> 이용내역</a>
+          </div>
+          <button class="user-logout-btn" onclick="logout()" style="width:100%;padding:10px 16px;background:none;border:none;border-top:1px solid #eee;color:#c62828;font-size:0.88rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
         </div>`;
-      const btnLogin   = headerActions.querySelector('#btnLogin, .btn-login');
-      const btnSignup  = headerActions.querySelector('#btnSignup, .btn-signup');
-      if (btnLogin)  btnLogin.style.display  = 'none';
-      if (btnSignup) btnSignup.style.display = 'none';
       headerActions.appendChild(userMenu);
     }
+
   } else {
-    const um = headerActions.querySelector('.user-menu-wrap');
-    if (um) um.style.display = 'none';
-    const btnLogin  = headerActions.querySelector('#btnLogin, .btn-login');
-    const btnSignup = headerActions.querySelector('#btnSignup, .btn-signup');
+    // ── 비로그인 상태 ──
     if (btnLogin)  btnLogin.style.display  = '';
     if (btnSignup) btnSignup.style.display = '';
+    if (btnCharge) btnCharge.style.display = '';
+    const userMenuWrap = headerActions.querySelector('.user-menu-wrap, #userMenuWrap');
+    if (userMenuWrap) userMenuWrap.style.display = 'none';
   }
 }
 
 function toggleUserMenu(e) {
-  e.stopPropagation();
+  if (e) e.stopPropagation();
   const dd = document.getElementById('userDropdown');
-  if (dd) dd.classList.toggle('show');
+  if (!dd) return;
+  const isOpen = dd.style.display !== 'none' && dd.classList.contains('show');
+  // 열려있으면 닫기, 닫혀있으면 열기
+  if (dd.style.display === 'none' || dd.style.display === '') {
+    dd.style.display = 'block';
+    dd.classList.add('show');
+  } else {
+    dd.style.display = 'none';
+    dd.classList.remove('show');
+  }
 }
-document.addEventListener('click', () => {
+document.addEventListener('click', (e) => {
   const dd = document.getElementById('userDropdown');
-  if (dd) dd.classList.remove('show');
+  if (!dd) return;
+  const wrap = document.querySelector('.user-menu-wrap, #userMenuWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    dd.style.display = 'none';
+    dd.classList.remove('show');
+  }
 });
 
 function handleLogout() {
   setCurrentUser(null);
   localStorage.removeItem('sajuon_points');
+  localStorage.removeItem('sajuon_initialized');
+  // 로그아웃 후 항상 홈으로 이동
   window.location.href = 'index.html';
 }
+
+// ★ 여러 페이지에서 logout() 으로 호출하므로 별칭 등록
+function logout() { handleLogout(); }
+window.logout = logout; // 전역 등록 보장
 
 // ===== 구버전 localStorage 사용자 → DB 마이그레이션 (1회) =====
 async function migrateLocalUsers() {

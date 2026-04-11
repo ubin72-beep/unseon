@@ -1550,7 +1550,11 @@ function showApiKeyBanner() {
 // 채팅창 내 API 키 직접 입력
 function showInlineKeyInput() {
   const existing = document.getElementById('inlineKeyForm');
-  if (existing) return;
+  if (existing) {
+    existing.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    existing.querySelector('#inlineKeyInput')?.focus();
+    return;
+  }
   const msgs = document.getElementById('chatMessages');
   if (!msgs) return;
   const div = document.createElement('div');
@@ -1559,27 +1563,69 @@ function showInlineKeyInput() {
   div.innerHTML = `
     <div class="inline-key-inner">
       <label>🔑 Gemini API 키 입력</label>
+      <p style="font-size:0.82rem;color:#888;margin:0 0 10px">
+        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--primary);font-weight:600">aistudio.google.com</a>에서 무료 발급 후 붙여넣기하세요
+      </p>
       <div class="inline-key-row">
-        <input type="password" id="inlineKeyInput" placeholder="AIzaSy..." class="chat-textarea" style="flex:1;height:auto;padding:10px 14px;font-size:0.88rem" />
-        <button class="chat-send-btn" onclick="saveInlineKey()" style="background:var(--accent)"><i class="fas fa-check"></i></button>
+        <input type="text"
+               id="inlineKeyInput"
+               placeholder="AIzaSy..."
+               autocomplete="off"
+               autocorrect="off"
+               autocapitalize="off"
+               spellcheck="false"
+               inputmode="text"
+               style="flex:1;min-width:0;padding:12px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:monospace;-webkit-appearance:none;appearance:none;box-sizing:border-box"
+        />
       </div>
-      <small>Google AI Studio (aistudio.google.com)에서 무료 발급 가능합니다</small>
+      <button onclick="saveInlineKey()"
+              style="width:100%;margin-top:8px;padding:12px;background:var(--primary);color:white;border:none;border-radius:8px;font-size:0.92rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+        ✅ 저장하고 상담 시작
+      </button>
+      <div id="inlineKeyError" style="color:#c62828;font-size:0.8rem;margin-top:6px;display:none"></div>
     </div>
   `;
   msgs.appendChild(div);
   scrollToBottom();
-  document.getElementById('inlineKeyInput')?.focus();
+  // 약간의 지연 후 포커스 (모바일 키보드 열림 대비)
+  setTimeout(() => {
+    const inp = document.getElementById('inlineKeyInput');
+    if (inp) {
+      inp.focus();
+      inp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, 200);
 }
 
 function saveInlineKey() {
-  const val = document.getElementById('inlineKeyInput')?.value?.trim();
-  if (!val || !val.startsWith('AIza')) {
-    appendSystemMsg('❌ 올바른 API 키 형식이 아닙니다. AIzaSy... 로 시작하는 키를 입력하세요.');
+  const inp = document.getElementById('inlineKeyInput');
+  const errEl = document.getElementById('inlineKeyError');
+
+  if (errEl) errEl.style.display = 'none';
+
+  // 모바일 자동완성/수정으로 인한 공백·특수문자 제거
+  let val = (inp?.value || '').trim().replace(/[\s\u200B\u00A0]/g, '');
+  if (inp) inp.value = val;
+
+  if (!val) {
+    if (errEl) { errEl.textContent = '❌ API 키를 입력해주세요.'; errEl.style.display = 'block'; }
+    inp?.focus();
+    return;
+  }
+  if (!val.startsWith('AIza') || val.length < 20) {
+    if (errEl) {
+      errEl.textContent = '❌ 올바른 형식이 아닙니다. "AIzaSy..."로 시작하는 39자 키를 입력하세요. (현재 ' + val.length + '자)';
+      errEl.style.display = 'block';
+    }
+    inp?.focus();
     return;
   }
   setGeminiKey(val);
   document.getElementById('apiKeyBanner')?.remove();
   document.getElementById('inlineKeyForm')?.remove();
+  // 상단 경고 배너도 닫기
+  const alertBanner = document.getElementById('geminiKeyAlert');
+  if (alertBanner) alertBanner.style.display = 'none';
   appendSystemMsg('✅ API 키가 저장되었습니다! 이제 AI 상담을 시작할 수 있습니다. 🔮');
 }
 

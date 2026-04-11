@@ -235,7 +235,7 @@ function updateAdminPt() {
 // =========================================
 // 섹션 1: 대시보드
 // =========================================
-function renderDash(container) {
+async function renderDash(container) {
   const hist = getHistory();
   // amount가 undefined/NaN일 수 있으므로 Number() 변환 후 처리
   const totalCharge  = hist.filter(h => Number(h.amount) > 0).reduce((s, h) => s + Number(h.amount || 0), 0);
@@ -261,9 +261,17 @@ function renderDash(container) {
     astroCount = Array.isArray(astroLog) ? astroLog.length : 0;
   } catch(e) {}
 
-  // 회원 수
+  // 회원 수 (DB에서 조회, 실패 시 localStorage fallback)
   let memberCount = 0;
-  try { memberCount = JSON.parse(localStorage.getItem('sajuon_users') || '[]').length; } catch(e) {}
+  try {
+    const usersRes = await fetch('tables/users?limit=1');
+    if (usersRes.ok) {
+      const usersData = await usersRes.json();
+      memberCount = usersData.total || 0;
+    }
+  } catch(e) {
+    try { memberCount = JSON.parse(localStorage.getItem('sajuon_users') || '[]').length; } catch(_) {}
+  }
 
   container.innerHTML = `
     <!-- 매출 요약 카드 -->
@@ -1347,21 +1355,22 @@ function renderAISettings(container) {
         savedKeyBlock +
         '<div style="margin-bottom:16px">' +
           '<label style="display:block;margin-bottom:8px;font-weight:600;font-size:0.9rem">' + labelText + '</label>' +
-          '<div style="display:flex;gap:10px;align-items:center">' +
-            '<div style="position:relative;flex:1">' +
-              '<input type="password" id="geminiKeyInput" placeholder="AIzaSy..." style="width:100%;padding:10px 44px 10px 14px;border:1.5px solid #ddd;border-radius:8px;font-family:monospace;font-size:0.9rem;box-sizing:border-box" />' +
-              '<button id="toggleKeyBtn" type="button" onclick="toggleKeyVisibility()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;font-size:1rem">👁️</button>' +
+          /* ★ 모바일 대응: flex-wrap + 세로 배치 */
+          '<div style="display:flex;flex-direction:column;gap:8px">' +
+            '<div style="position:relative;width:100%">' +
+              '<input type="text" id="geminiKeyInput" placeholder="AIzaSy..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="text" style="width:100%;padding:12px 48px 12px 14px;border:1.5px solid #ddd;border-radius:8px;font-family:monospace;font-size:0.9rem;box-sizing:border-box;-webkit-appearance:none;appearance:none" />' +
+              '<button id="toggleKeyBtn" type="button" onclick="toggleKeyVisibility()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;font-size:1.1rem;padding:4px;min-width:32px;min-height:32px;display:flex;align-items:center;justify-content:center" aria-label="키 표시/숨김">👁️</button>' +
             '</div>' +
-            '<button onclick="saveGeminiKey()" style="padding:10px 20px;background:#1b5e20;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:600;white-space:nowrap">💾 저장</button>' +
+            '<button onclick="saveGeminiKey()" style="width:100%;padding:13px;background:#1b5e20;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.95rem;font-weight:700;-webkit-tap-highlight-color:transparent;touch-action:manipulation">💾 API 키 저장</button>' +
           '</div>' +
-          '<small id="geminiKeyMsg" style="display:block;margin-top:8px;color:#666">🔒 키는 이 브라우저의 localStorage에만 저장됩니다. 서버로 전송되지 않습니다.</small>' +
+          '<small id="geminiKeyMsg" style="display:block;margin-top:8px;color:#666">🔒 키는 이 기기의 브라우저(localStorage)에만 저장됩니다. 서버로 전송되지 않습니다.</small>' +
         '</div>' +
-        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">' +
-          '<button onclick="testGeminiKey()" style="padding:10px 20px;background:#1565c0;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:600">🔌 연결 테스트</button>' +
-          '<button onclick="listGeminiModels()" style="padding:10px 16px;background:#37474f;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.85rem">📋 모델 목록 조회</button>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+          '<button onclick="testGeminiKey()" style="flex:1;min-width:140px;padding:11px 16px;background:#1565c0;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.88rem;font-weight:600;-webkit-tap-highlight-color:transparent;touch-action:manipulation">🔌 연결 테스트</button>' +
+          '<button onclick="listGeminiModels()" style="flex:1;min-width:140px;padding:11px 16px;background:#37474f;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.85rem;-webkit-tap-highlight-color:transparent;touch-action:manipulation">📋 모델 목록 조회</button>' +
         '</div>' +
-        '<div id="geminiTestResult" style="font-size:0.88rem;margin-bottom:4px"></div>' +
-        '<div id="geminiModelInfo" style="font-size:0.8rem;color:#888"></div>' +
+        '<div id="geminiTestResult" style="font-size:0.88rem;margin-bottom:4px;word-break:break-all"></div>' +
+        '<div id="geminiModelInfo" style="font-size:0.8rem;color:#888;word-break:break-all"></div>' +
       '</div>' +
     '</div>' +
 
@@ -1400,35 +1409,55 @@ function renderAISettings(container) {
 }
 
 function saveGeminiKey() {
-  const val = document.getElementById('geminiKeyInput')?.value?.trim();
-  const msg = document.getElementById('geminiKeyMsg');
+  const input = document.getElementById('geminiKeyInput');
+  const msg   = document.getElementById('geminiKeyMsg');
+  if (!input) return;
+
+  // 모바일 자동완성/수정으로 인한 공백·특수문자 제거
+  let val = (input.value || '').trim().replace(/[\s\u200B\u00A0]/g, '');
+  input.value = val; // 정제된 값 다시 표시
+
   if (!val) {
-    if (msg) { msg.textContent = '❌ API 키를 입력해주세요.'; msg.style.color='#c62828'; }
+    if (msg) { msg.textContent = '❌ API 키를 입력해주세요.'; msg.style.color = '#c62828'; }
+    input.focus();
     return;
   }
   if (!val.startsWith('AIza') || val.length < 20) {
-    if (msg) { msg.textContent = '❌ 올바른 형식이 아닙니다. AIzaSy...로 시작하는 키를 입력하세요.'; msg.style.color='#c62828'; }
+    if (msg) {
+      msg.textContent = '❌ 올바른 형식이 아닙니다. "AIzaSy..."로 시작하는 39자 키를 입력하세요. (현재 ' + val.length + '자)';
+      msg.style.color = '#c62828';
+    }
+    input.focus();
     return;
   }
-  // gemini.js 함수 또는 직접 저장
-  try { if (typeof setGeminiKey === 'function') setGeminiKey(val); else localStorage.setItem('sajuon_gemini_key', val); } catch(e) { localStorage.setItem('sajuon_gemini_key', val); }
+
+  // 저장 (gemini.js 함수 우선, 없으면 직접)
+  try {
+    if (typeof setGeminiKey === 'function') setGeminiKey(val);
+    else localStorage.setItem('sajuon_gemini_key', val);
+  } catch(e) {
+    localStorage.setItem('sajuon_gemini_key', val);
+  }
+
+  if (msg) { msg.textContent = '✅ 저장되었습니다. 연결 테스트 중...'; msg.style.color = '#2e7d32'; }
   showToast('✅ Gemini API 키가 저장되었습니다!');
-  // 저장 후 UI 재렌더링
+
+  // 저장 후 UI 재렌더링 후 자동 연결 테스트
   renderAISettings(document.getElementById('adminContent'));
-  // 저장 후 자동 테스트 (800ms 후)
-  setTimeout(() => testGeminiKey(), 800);
+  setTimeout(() => testGeminiKey(), 600);
 }
 
 function toggleKeyVisibility() {
   const inp = document.getElementById('geminiKeyInput');
   const btn = document.getElementById('toggleKeyBtn');
   if (!inp) return;
-  if (inp.type === 'password') {
-    inp.type = 'text';
-    if (btn) btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
-  } else {
+  // 기본값: text (보임 상태), 클릭 시 password(숨김) 토글
+  if (inp.type === 'text') {
     inp.type = 'password';
-    if (btn) btn.innerHTML = '<i class="fas fa-eye"></i>';
+    if (btn) btn.textContent = '🙈';
+  } else {
+    inp.type = 'text';
+    if (btn) btn.textContent = '👁️';
   }
 }
 
