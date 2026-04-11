@@ -62,12 +62,26 @@ async function syncPointsFromDB() {
   if (!cu || !cu.id) return;
   try {
     const res = await apiGet(API_USERS + '/' + cu.id);
-    if (res && res.points !== undefined) {
-      localStorage.setItem('sajuon_points', String(res.points));
-      setCurrentUser({ ...cu, points: res.points });
+    if (res && res.id) {
+      const pts = res.points !== undefined ? res.points : cu.points;
+      localStorage.setItem('sajuon_points', String(pts));
+      // DB의 최신 전체 정보로 세션 업데이트 (pw_hash 제외)
+      const updated = {
+        id:              res.id,
+        name:            res.name || cu.name,
+        email:           res.email || cu.email,
+        phone:           res.phone || cu.phone || '',
+        birth:           res.birth || cu.birth || '',
+        gender:          res.gender || cu.gender || 'none',
+        points:          pts,
+        status:          res.status || cu.status || 'active',
+        agree_marketing: res.agree_marketing ?? cu.agree_marketing,
+        created_at_str:  res.created_at_str || cu.created_at_str || '',
+      };
+      setCurrentUser(updated);
       // 헤더 포인트 표시 갱신
       document.querySelectorAll('[id$="PointVal"], .header-point-val').forEach(el => {
-        el.textContent = Number(res.points).toLocaleString();
+        el.textContent = Number(pts).toLocaleString();
       });
     }
   } catch {}
@@ -351,7 +365,7 @@ function handleRegister(e) {
   const pw        = document.getElementById('regPw')?.value;
   const pwc       = document.getElementById('regPwConfirm')?.value;
   const phone     = document.getElementById('regPhone')?.value?.trim();
-  const birth     = document.getElementById('regBirth')?.value;
+  const birth     = document.getElementById('regBirth')?.value || '';
   const gender    = document.querySelector('input[name="gender"]:checked')?.value || 'none';
   const marketing = document.getElementById('agreeMarketing')?.checked || false;
   let valid = true;
@@ -375,31 +389,54 @@ function handleRegister(e) {
       return;
     }
 
-    const FREE_PT = parseInt(localStorage.getItem('sajuon_free_pt') || '500', 10);
+    const FREE_PT = 500; // 신규 가입 무료 포인트 고정
+    // ★ DB 스키마에 맞는 필드만 포함 (birth, gender, lastLogin 포함)
     const newUser = {
-      name,
-      email,
-      pw_hash:       hashPw(pw),
-      phone:         phone || '',
-      birth:         birth || '',
-      gender:        gender,
+      name:            name,
+      email:           email,
+      pw_hash:         hashPw(pw),
+      phone:           phone || '',
+      birth:           birth,
+      gender:          gender,
       agree_marketing: marketing,
-      points:        FREE_PT,
-      status:        'active',
-      created_at_str: new Date().toLocaleString('ko-KR'),
-      lastLogin:     new Date().toISOString(),
+      points:          FREE_PT,
+      status:          'active',
+      created_at_str:  new Date().toLocaleString('ko-KR'),
+      lastLogin:       new Date().toISOString(),
     };
 
     try {
       const created = await apiPost(API_USERS, newUser);
+      if (!created || !created.id) {
+        throw new Error('서버에서 사용자 ID를 반환하지 않았습니다');
+      }
+
       // 가입 환영 포인트 이력 저장
       await apiPost(API_HIST, {
-        user_id: created.id, email: created.email,
-        type: 'charge', amount: FREE_PT, balance: FREE_PT,
-        description: '신규 가입 무료 포인트', category: 'welcome'
-      });
+        user_id:     created.id,
+        email:       created.email,
+        type:        'charge',
+        amount:      FREE_PT,
+        balance:     FREE_PT,
+        description: '신규 가입 무료 포인트',
+        category:    'welcome'
+      }).catch(() => {}); // 이력 저장 실패해도 가입은 완료
 
-      setCurrentUser(created);
+      // 세션에 저장 (pw_hash 제외, 로컬 birth/gender 포함)
+      const sessionUser = {
+        id:              created.id,
+        name:            created.name || name,
+        email:           created.email || email,
+        phone:           created.phone || phone || '',
+        birth:           created.birth || birth,
+        gender:          created.gender || gender,
+        points:          FREE_PT,
+        status:          'active',
+        agree_marketing: marketing,
+        created_at_str:  created.created_at_str || newUser.created_at_str,
+      };
+      setCurrentUser(sessionUser);
+      localStorage.setItem('sajuon_points', String(FREE_PT));
       localStorage.setItem('sajuon_initialized', 'true');
       toggleRegLoading(false);
 
@@ -417,22 +454,29 @@ function handleRegister(e) {
       const autoTarget = savedRedirect || 'chat.html';
       sessionStorage.removeItem('sajuon_auth_redirect');
       if (successScreen) {
-        const countEl = document.createElement('p');
-        countEl.style.cssText = 'font-size:0.82rem;color:var(--text-muted);margin-top:10px';
-        countEl.textContent = '3초 후 자동으로 이동합니다...';
-        successScreen.appendChild(countEl);
-        let count = 3;
-        const t = setInterval(() => {
-          count--;
-          if (count > 0) { countEl.textContent = `${count}초 후 자동으로 이동합니다...`; }
-          else { clearInterval(t); window.location.href = autoTarget; }
-        }, 1000);
+        // 중복 카운트다운 방지
+        const existingCount = successScreen.querySelector('.reg-countdown');
+        if (!existingCount) {
+          const countEl = document.createElement('p');
+          countEl.className = 'reg-countdown';
+          countEl.style.cssText = 'font-size:0.82rem;color:var(--text-muted);margin-top:10px';
+          countEl.textContent = '3초 후 자동으로 이동합니다...';
+          successScreen.appendChild(countEl);
+          let count = 3;
+          const t = setInterval(() => {
+            count--;
+            if (count > 0) { countEl.textContent = `${count}초 후 자동으로 이동합니다...`; }
+            else { clearInterval(t); window.location.href = autoTarget; }
+          }, 1000);
+        }
       }
     } catch (err) {
+      console.error('[회원가입 오류]', err);
       showAuthToast('❌ 가입 처리 중 오류가 발생했습니다. 다시 시도해주세요', 'error');
       toggleRegLoading(false);
     }
-  }).catch(() => {
+  }).catch((err) => {
+    console.error('[회원가입 서버 오류]', err);
     showAuthToast('❌ 서버 오류. 잠시 후 다시 시도해주세요', 'error');
     toggleRegLoading(false);
   });
@@ -614,44 +658,70 @@ window.logout = logout; // 전역 등록 보장
 
 // ===== 구버전 localStorage 사용자 → DB 마이그레이션 (1회) =====
 async function migrateLocalUsers() {
+  // ★ 이미 마이그레이션 완료 → 즉시 종료 (데이터 삭제 방지)
   if (localStorage.getItem('sajuon_migrated_v3')) return;
+
   const oldUsers = [];
   try {
     const raw = localStorage.getItem('sajuon_users');
-    if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) oldUsers.push(...arr); }
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) oldUsers.push(...arr);
+    }
   } catch {}
-  if (oldUsers.length === 0) { localStorage.setItem('sajuon_migrated_v3', '1'); return; }
 
+  // 구버전 사용자가 없으면 플래그만 세우고 종료 (삭제는 하지 않음)
+  if (oldUsers.length === 0) {
+    localStorage.setItem('sajuon_migrated_v3', '1');
+    return;
+  }
+
+  let migratedCount = 0;
   for (const ou of oldUsers) {
+    if (!ou.email) continue;
     try {
       const existing = await findUserByEmail(ou.email);
-      if (existing) continue;
+      if (existing) { migratedCount++; continue; } // 이미 DB에 있으면 스킵
       const pts = parseInt(ou.points || 0, 10);
       const created = await apiPost(API_USERS, {
-        name: ou.name || '',
-        email: ou.email || '',
-        pw_hash: ou.pw || ou.pw_hash || '',
-        phone: ou.phone || '',
-        status: ou.status || 'active',
+        name:            ou.name || '',
+        email:           ou.email || '',
+        pw_hash:         ou.pw || ou.pw_hash || '',
+        phone:           ou.phone || '',
+        birth:           ou.birth || '',
+        gender:          ou.gender || 'none',
+        status:          ou.status || 'active',
         agree_marketing: ou.marketing || false,
-        points: pts,
-        created_at_str: ou.joinDate || new Date().toLocaleString('ko-KR'),
-        lastLogin: ou.lastLogin || new Date().toISOString(),
+        points:          pts,
+        created_at_str:  ou.joinDate || new Date().toLocaleString('ko-KR'),
+        lastLogin:       ou.lastLogin || new Date().toISOString(),
       });
       if (pts > 0) {
         await apiPost(API_HIST, {
-          user_id: created.id, email: created.email,
-          type: 'charge', amount: pts, balance: pts,
-          description: '기존 데이터 마이그레이션', category: 'migrate'
-        });
+          user_id:     created.id,
+          email:       created.email,
+          type:        'charge',
+          amount:      pts,
+          balance:     pts,
+          description: '기존 데이터 마이그레이션',
+          category:    'migrate'
+        }).catch(() => {});
       }
       // 현재 로그인 사용자면 세션 업데이트
       const cu = getCurrentUser();
       if (cu && cu.email === ou.email) setCurrentUser({ ...created });
-    } catch {}
+      migratedCount++;
+    } catch (err) {
+      console.warn('[마이그레이션 실패]', ou.email, err);
+    }
   }
+
+  // 마이그레이션 완료 후 플래그 설정
+  // ★ 원본 sajuon_users는 삭제하지 않음 — 혹시 모를 데이터 손실 방지
   localStorage.setItem('sajuon_migrated_v3', '1');
-  localStorage.removeItem('sajuon_users'); // 구버전 삭제
+  if (migratedCount > 0) {
+    console.log(`[마이그레이션 완료] ${migratedCount}명 DB 이전 완료`);
+  }
 }
 
 // 페이지 로드 시 마이그레이션 실행
