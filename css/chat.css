@@ -432,8 +432,13 @@ body.chat-page {
 }
 .inline-key-row {
   display: flex;
-  gap: 8px;
+  gap: 0;
   margin-bottom: 8px;
+  width: 100%;
+}
+.inline-key-row input {
+  width: 100%;
+  min-width: 0;
 }
 .inline-key-inner small {
   color: var(--text-light);
@@ -552,4 +557,15 @@ body.chat-page {
   .chat-messages { padding: 20px 14px; }
   .msg-bubble { max-width: 85vw; }
   .chat-input-inner { padding: 10px 14px; }
+
+  /* 모바일 API 키 배너 */
+  .api-key-banner-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .api-key-banner-icon { display: none; }
+  .api-key-banner-text { min-width: unset; }
+  .api-key-banner-actions { width: 100%; }
+  .api-key-banner-actions .btn { flex: 1; text-align: center; justify-content: center; }
+
+  /* 모바일 인라인 키 입력 */
+  .inline-key-inner { padding: 14px 16px; }
+  .gemini-key-alert .container { padding-top: 8px; padding-bottom: 8px; }
 }
