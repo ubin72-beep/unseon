@@ -368,6 +368,7 @@ function handleRegister(e) {
   const birth     = document.getElementById('regBirth')?.value || '';
   const gender    = document.querySelector('input[name="gender"]:checked')?.value || 'none';
   const marketing = document.getElementById('agreeMarketing')?.checked || false;
+
   let valid = true;
   if (!name || name.length < 2) { setFieldError('regNameErr', '이름은 2자 이상 입력해주세요'); valid = false; }
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFieldError('regEmailErr', '올바른 이메일을 입력해주세요'); valid = false; }
@@ -389,8 +390,7 @@ function handleRegister(e) {
       return;
     }
 
-    const FREE_PT = 500; // 신규 가입 무료 포인트 고정
-    // ★ DB 스키마에 맞는 필드만 포함 (birth, gender, lastLogin 포함)
+    const FREE_PT = 500;
     const newUser = {
       name:            name,
       email:           email,
