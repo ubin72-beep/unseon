@@ -23,9 +23,45 @@
   min-height: 100vh;
   background: radial-gradient(ellipse at 20% 10%, #1a0a3e 0%, #0a0818 50%, #050310 100%);
   color: var(--fortune-text);
-  padding-top: 70px;
+  padding-top: var(--header-h);
   padding-bottom: 0;
   font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* ══════════════════════════════
+   헤더 색상 재정의
+   (fortune-page의 color 상속 방지)
+   ══════════════════════════════ */
+.fortune-page .site-header {
+  color: var(--text-body, #333);
+}
+.fortune-page .site-header .logo {
+  color: var(--primary, #2c5f4f);
+}
+.fortune-page .site-header .logo-on {
+  color: var(--accent, #e67e22);
+}
+.fortune-page .site-header .nav-link {
+  color: var(--text-body, #333);
+}
+.fortune-page .site-header .nav-link:hover,
+.fortune-page .site-header .nav-link.active {
+  background: var(--primary-pale, #e8f5e9);
+  color: var(--primary, #2c5f4f);
+}
+.fortune-page .site-header .btn-login {
+  color: var(--primary, #2c5f4f);
+  border-color: var(--primary, #2c5f4f);
+  background: transparent;
+}
+.fortune-page .site-header .btn-signup {
+  color: #fff;
+}
+.fortune-page .site-header .user-name-label {
+  color: var(--text-body, #333);
+}
+.fortune-page .site-header .hamburger span {
+  background: var(--primary, #2c5f4f);
 }
 
 /* ══════════════════════════════
@@ -121,7 +157,7 @@
    ══════════════════════════════ */
 .fortune-tabs-wrap {
   position: sticky;
-  top: 65px;
+  top: var(--header-h);
   z-index: 100;
   background: rgba(10,8,24,0.88);
   backdrop-filter: blur(12px);
@@ -652,4 +688,23 @@
   .os-icon { font-size: 1.8rem; }
   .os-name { font-size: 0.78rem; }
   .os-desc { display: none; }
+}
+
+/* ══════════════════════════════
+   모바일 메뉴 오픈 시 헤더 색상 보정
+   (다크 배경 페이지에서 흰 배경 드롭다운 색상)
+   ══════════════════════════════ */
+@media (max-width: 960px) {
+  .fortune-page .site-header .main-nav.open {
+    background: #fff;
+    color: var(--text-body, #333);
+  }
+  .fortune-page .site-header .main-nav.open .nav-link {
+    color: var(--text-body, #333);
+  }
+  .fortune-page .site-header .main-nav.open .nav-link:hover,
+  .fortune-page .site-header .main-nav.open .nav-link.active {
+    background: var(--primary-pale, #e8f5e9);
+    color: var(--primary, #2c5f4f);
+  }
 }
