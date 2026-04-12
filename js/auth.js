@@ -1,11 +1,32 @@
 /* =========================================
-   운세ON — js/auth.js  v3.1 (DB API 연동)
+   운세ON — js/auth.js  v3.2 (DB API 연동)
    회원가입 / 로그인 / 로그아웃 — 서버 DB 영구 저장
    ========================================= */
 
-// ===== API 경로 =====
-const API_USERS = 'tables/users';
-const API_HIST  = 'tables/points_history';
+// ===== API 경로 설정 =====
+// ★ Genspark Publish URL 설정 (GitHub Pages에서 DB API 호출용)
+// Genspark 편집기 상단 Publish 탭에서 URL을 복사해서 아래에 입력하세요
+// 예: 'https://project-abc123.genspark.site/'
+// 비워두면 상대경로 사용 (Genspark 편집기 내에서만 동작)
+const GENSPARK_PUBLISH_URL = '';  // ← 여기에 Publish URL 입력
+
+// 자동 경로 설정 (수정 불필요)
+const _API_BASE = (function() {
+  if (GENSPARK_PUBLISH_URL) {
+    // Publish URL이 설정된 경우 절대경로 사용
+    return GENSPARK_PUBLISH_URL.replace(/\/$/, '') + '/';
+  }
+  // 현재 origin이 genspark.ai면 상대경로, 아니면 경고
+  if (location.hostname.includes('genspark')) {
+    return '';
+  }
+  // GitHub Pages 등 외부 배포 환경 — GENSPARK_PUBLISH_URL 필요
+  console.warn('[운세ON] GENSPARK_PUBLISH_URL이 설정되지 않았습니다. js/auth.js 상단에 Publish URL을 입력해주세요.');
+  return '';
+})();
+
+const API_USERS = _API_BASE + 'tables/users';
+const API_HIST  = _API_BASE + 'tables/points_history';
 
 async function apiGet(url) {
   const r = await fetch(url);

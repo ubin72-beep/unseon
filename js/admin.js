@@ -3,6 +3,10 @@
    관리자 대시보드 기능
    ========================================= */
 
+// ===== API 경로 (auth.js의 _API_BASE 공유) =====
+// auth.js가 먼저 로드되면 _API_BASE 사용, 아니면 빈 문자열
+const _GSAPI = (typeof _API_BASE !== 'undefined') ? _API_BASE : '';
+
 // =========================================
 // 관리자 인증 시스템
 // =========================================
@@ -264,7 +268,7 @@ async function renderDash(container) {
   // 회원 수 (DB에서 조회, 실패 시 localStorage fallback)
   let memberCount = 0;
   try {
-    const usersRes = await fetch('tables/users?limit=1');
+    const usersRes = await fetch(_GSAPI + 'tables/users?limit=1');
     if (usersRes.ok) {
       const usersData = await usersRes.json();
       memberCount = usersData.total || 0;
@@ -1046,8 +1050,8 @@ function renderMembersAdmin(container) {
 
   // DB에서 회원 목록 조회
   Promise.all([
-    fetch('tables/users?limit=200').then(r => r.ok ? r.json() : { data: [] }),
-    fetch('tables/points_history?limit=500').then(r => r.ok ? r.json() : { data: [] })
+    fetch(_GSAPI + 'tables/users?limit=200').then(r => r.ok ? r.json() : { data: [] }),
+    fetch(_GSAPI + 'tables/points_history?limit=500').then(r => r.ok ? r.json() : { data: [] })
   ]).then(([usersRes, histRes]) => {
     const users   = usersRes.data  || [];
     const history = histRes.data   || [];
@@ -1227,7 +1231,7 @@ function filterMembersDB() {
 // DB 기반 회원 상태 토글
 function toggleMemberStatusDB(userId, currentStatus, name) {
   const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
-  fetch('tables/users/' + userId, {
+  fetch(_GSAPI + 'tables/users/' + userId, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: newStatus })
@@ -1244,7 +1248,7 @@ function toggleMemberStatusDB(userId, currentStatus, name) {
 // DB 기반 회원 삭제
 function deleteMemberDB(userId, name) {
   if (!confirm(`"${name}" 회원을 삭제하시겠습니까?`)) return;
-  fetch('tables/users/' + userId, { method: 'DELETE' })
+  fetch(_GSAPI + 'tables/users/' + userId, { method: 'DELETE' })
     .then(r => {
       if (r.status === 204 || r.ok) {
         showToast('🗑️ 회원이 삭제되었습니다');
@@ -1255,7 +1259,7 @@ function deleteMemberDB(userId, name) {
 
 // DB 기반 CSV 내보내기
 function exportMembersCSVDB() {
-  fetch('tables/users?limit=500').then(r => r.ok ? r.json() : { data: [] }).then(res => {
+  fetch(_GSAPI + 'tables/users?limit=500').then(r => r.ok ? r.json() : { data: [] }).then(res => {
     const users = res.data || [];
     if (!users.length) { showToast('❌ 내보낼 회원 데이터가 없습니다'); return; }
     const rows = [
@@ -1284,12 +1288,12 @@ function createTestMemberDB() {
   const pts   = parseInt(document.getElementById('testPt')?.value || '500', 10);
   const hashFn = (s) => { let h = 0; for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h = h & h; } return 'h_' + Math.abs(h).toString(36) + '_' + s.length; };
 
-  fetch('tables/users?search=' + encodeURIComponent(email) + '&limit=10')
+  fetch(_GSAPI + 'tables/users?search=' + encodeURIComponent(email) + '&limit=10')
     .then(r => r.ok ? r.json() : { data: [] })
     .then(res => {
       const existing = (res.data || []).find(u => u.email === email);
       if (existing) { showToast('❌ 이미 존재하는 이메일입니다'); return; }
-      return fetch('tables/users', {
+      return fetch(_GSAPI + 'tables/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

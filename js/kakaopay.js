@@ -434,15 +434,16 @@ function completePayment(plan, orderId, pgToken) {
 
   /* ② DB에 포인트 업데이트 + 이력 저장 */
   if (currentUser && currentUser.id) {
+    const _GAPI_K = typeof _API_BASE!=='undefined'?_API_BASE:'';
     // DB 포인트 업데이트
-    fetch('tables/users/' + currentUser.id, {
+    fetch(_GAPI_K + 'tables/users/' + currentUser.id, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ points: newPts })
     }).catch(e => console.warn('[Payment] DB 포인트 업데이트 실패:', e));
 
     // DB 이용내역 저장
-    fetch('tables/points_history', {
+    fetch(_GAPI_K + 'tables/points_history', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
