@@ -333,6 +333,10 @@ function handleLogin(e) {
   }
 
   // 로그인 성공
+  // id 없는 구버전 사용자 자동 보정
+  if (!user.id) {
+    user.id = 'uid_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+  }
   user.lastLogin = new Date().toISOString();
   saveUser(user);
   setCurrentUser(user);
