@@ -631,7 +631,7 @@ function chatInit() {
     const _cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
     if (_cu && _cu.id) {
       // DB에서 실시간 포인트 가져오기
-      fetch((typeof _API_BASE!=='undefined'?_API_BASE:'') + 'tables/users/' + _cu.id)
+      fetch('tables/users/' + _cu.id)
         .then(r => r.ok ? r.json() : null)
         .then(u => {
           if (u && u.points !== undefined) {
@@ -1314,15 +1314,14 @@ async function sendMessage() {
   try {
     const _u = (function(){ try { return JSON.parse(localStorage.getItem('sajuon_current_user')||'null'); } catch{return null;} })();
     if (_u && _u.id) {
-      const _GAPI_C = typeof _API_BASE!=='undefined'?_API_BASE:'';
       // DB 포인트 업데이트
-      fetch(_GAPI_C + 'tables/users/' + _u.id, {
+      fetch('tables/users/' + _u.id, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ points: newPts })
       }).catch(e => console.warn('[Chat] DB 포인트 업데이트 실패:', e));
       // DB 이력 저장
-      fetch(_GAPI_C + 'tables/points_history', {
+      fetch('tables/points_history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
