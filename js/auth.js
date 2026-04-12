@@ -8,7 +8,7 @@
 // Genspark 편집기 상단 Publish 탭에서 URL을 복사해서 아래에 입력하세요
 // 예: 'https://project-abc123.genspark.site/'
 // 비워두면 상대경로 사용 (Genspark 편집기 내에서만 동작)
-const GENSPARK_PUBLISH_URL = '';  // ← 여기에 Publish URL 입력
+const GENSPARK_PUBLISH_URL = 'https://www.genspark.ai/api/code_sandbox_light/preview/1fdd431b-7885-44c6-97e8-6894441f9e2f/';  // Genspark Sandbox API Base
 
 // 자동 경로 설정 (수정 불필요)
 const _API_BASE = (function() {
