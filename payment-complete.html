@@ -85,7 +85,7 @@
   </div>
 </div>
 
-<script src="js/auth.js?v=20260411"></script>
+<script src="js/auth.js?v=20260412"></script>
 <script src="js/kakaopay.js?v=20260407"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -142,7 +142,7 @@ function renderSuccess(pgToken) {
       localStorage.setItem('sajuon_current_user', JSON.stringify(currentUser));
 
       // ★ DB에 포인트 업데이트 (PATCH)
-      fetch('tables/users/' + currentUser.id, {
+      fetch((typeof _API_BASE!=='undefined'?_API_BASE:'') + 'tables/users/' + currentUser.id, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ points: newPts })
@@ -150,7 +150,7 @@ function renderSuccess(pgToken) {
 
       // ★ DB에 이용내역 저장 (POST)
       const isTest = !pgToken || String(pgToken).startsWith('KAKAO_TEST');
-      fetch('tables/points_history', {
+      fetch((typeof _API_BASE!=='undefined'?_API_BASE:'') + 'tables/points_history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

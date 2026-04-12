@@ -613,7 +613,7 @@
 </footer>
 
 <!-- ===== 스크립트 ===== -->
-<script src="js/auth.js?v=20260411"></script>
+<script src="js/auth.js?v=20260412"></script>
 <script src="js/main.js?v=20260411"></script>
 <script src="js/gemini.js?v=20260411"></script>
 <script src="js/saju.js?v=20260411"></script>
@@ -784,11 +784,12 @@ async function deductFortunePoints(cost, desc, category) {
   document.querySelectorAll('#headerPointVal').forEach(el => { el.textContent = next.toLocaleString(); });
   // DB 반영
   try {
-    await fetch('tables/users/' + cu.id, {
+    const _GAPI = typeof _API_BASE!=='undefined'?_API_BASE:'';
+    await fetch(_GAPI + 'tables/users/' + cu.id, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ points: next })
     });
-    await fetch('tables/points_history', {
+    await fetch(_GAPI + 'tables/points_history', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         user_id: cu.id, email: cu.email || '', type: 'use',
@@ -965,7 +966,8 @@ async function doAnalysis(type, systemPrompt, userPrompt, loadingId, loadingStep
       localStorage.setItem('sajuon_current_user', JSON.stringify({ ...cu, points: refund }));
       updateAllPointDisplays();
       try {
-        await fetch('tables/users/' + cu.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ points: refund }) });
+        const _GAPI = typeof _API_BASE!=='undefined'?_API_BASE:'';
+        await fetch(_GAPI + 'tables/users/' + cu.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ points: refund }) });
       } catch(_) {}
     }
   } finally {
