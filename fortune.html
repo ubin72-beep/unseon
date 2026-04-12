@@ -613,7 +613,7 @@
 </footer>
 
 <!-- ===== 스크립트 ===== -->
-<script src="js/auth.js?v=20260412c"></script>
+<script src="js/auth.js?v=20260412d"></script>
 <script src="js/main.js?v=20260411"></script>
 <script src="js/gemini.js?v=20260411"></script>
 <script src="js/saju.js?v=20260411"></script>
@@ -723,15 +723,27 @@ function selectMonth(m) {
 
 // 로그인/포인트 확인
 function checkAuth(type) {
-  const cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
-  if (!cu || !cu.id) {
+  let cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+  if (!cu) {
     if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-      sessionStorage.setItem('sajuon_auth_redirect', 'fortune.html?tab=' + type);
+      sessionStorage.setItem('sajuon_auth_redirect', 'fortune.html');
       window.location.href = 'auth.html';
     }
     return false;
   }
-  const pts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
+  // id 없으면 자동 생성 (구버전 호환)
+  if (!cu.id) {
+    cu.id = 'uid_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    localStorage.setItem('sajuon_current_user', JSON.stringify(cu));
+    // 사용자 목록에도 id 반영
+    try {
+      const users = JSON.parse(localStorage.getItem('sajuon_users') || '[]');
+      const idx = users.findIndex(u => u.email === cu.email);
+      if (idx >= 0) { users[idx].id = cu.id; localStorage.setItem('sajuon_users', JSON.stringify(users)); }
+      else { users.push(cu); localStorage.setItem('sajuon_users', JSON.stringify(users)); }
+    } catch(e) {}
+  }
+  const pts = parseInt(localStorage.getItem('sajuon_points') || cu.points || '0', 10);
   const cost = FORTUNE_COSTS[type];
   if (pts < cost) {
     alert(`포인트가 부족합니다.\n필요 포인트: ${cost}P / 현재 보유: ${pts}P\n\n포인트 충전 페이지로 이동합니다.`);
@@ -770,10 +782,14 @@ function startLoadingSteps(steps) {
   return timer;
 }
 
-// 포인트 차감 (localStorage + DB)
+// 포인트 차감 (localStorage)
 async function deductFortunePoints(cost, desc, category) {
-  const cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
-  if (!cu || !cu.id) return false;
+  let cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+  if (!cu) return false;
+  if (!cu.id) {
+    cu.id = 'uid_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    localStorage.setItem('sajuon_current_user', JSON.stringify(cu));
+  }
   const cur  = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
   const next = cur - cost;
   if (next < 0) return false;

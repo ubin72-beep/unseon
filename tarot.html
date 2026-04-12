@@ -522,7 +522,7 @@
   </div>
 </div>
 
-<script src="js/auth.js?v=20260412c"></script>
+<script src="js/auth.js?v=20260412d"></script>
 <script src="js/main.js?v=20260407"></script>
 <script src="js/share.js?v=20260405"></script>
 <script src="js/welcome-popup.js?v=20260405"></script>
@@ -563,6 +563,11 @@ document.addEventListener('DOMContentLoaded', () => {
   (function() {
     var user = null;
     try { user = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); } catch(e) {}
+    // id 없는 구버전 사용자 자동 보정
+    if (user && !user.id) {
+      user.id = 'uid_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      localStorage.setItem('sajuon_current_user', JSON.stringify(user));
+    }
 
     var btnLogin     = document.getElementById('btnLogin');
     var btnSignup    = document.getElementById('btnSignup');
