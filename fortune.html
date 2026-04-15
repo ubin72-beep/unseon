@@ -997,6 +997,18 @@ async function analyzeMonthly() {
   if (!d) return;
   const tm = selectedMonth;
 
+  // ★ saju.js로 사주팔자 정확히 계산 (시간은 시작 시각 숫자로 변환)
+  const hourNum = (function(h) {
+    if (!h) return -1;
+    const map = { '자시':23,'축시':1,'인시':3,'묘시':5,'진시':7,'사시':9,'오시':11,'미시':13,'신시':15,'유시':17,'술시':19,'해시':21 };
+    for (const [k,v] of Object.entries(map)) { if (h.includes(k)) return v; }
+    return -1;
+  })(d.hour);
+  const sajuData = typeof calcSaju === 'function'
+    ? calcSaju({ year: d.year, month: d.month, day: d.day, hour: hourNum, gender: d.gender })
+    : null;
+  const sajuText = (sajuData && typeof sajuToPromptText === 'function') ? sajuToPromptText(sajuData) : '';
+
   const GANJI_MONTH = {
     1:'庚子',2:'辛丑',3:'壬寅',4:'癸卯',5:'甲辰',6:'乙巳',
     7:'丙午',8:'丁未',9:'戊申',10:'己酉',11:'庚戌',12:'辛亥'
@@ -1008,7 +1020,7 @@ async function analyzeMonthly() {
 
 【현재 날짜】: 2026년 ${tm}월 (병오년 ${monthGanji}月)
 【핵심 지침】
-1. 사용자의 생년월일로 사주팔자를 계산하여 2026년 ${tm}월 운세를 분석하세요.
+1. 아래 제공된 사주팔자 계산 결과를 그대로 사용하세요. 절대 다시 계산하지 마세요.
 2. 반드시 문장을 완전히 끝맺으세요. 마무리 문장까지 반드시 완성하세요.
 3. 토큰이 부족할 것을 걱정하지 말고 끝까지 완성하는 것을 최우선으로 하세요.
 4. 한국어 경어체(~습니다, ~세요)로 작성하세요.
@@ -1022,7 +1034,7 @@ async function analyzeMonthly() {
 마무리: <p class="saju-closing">마무리 문장</p>`;
 
   const user = `저는 ${d.year}년 ${d.month}월 ${d.day}일생 ${d.gender}입니다.${d.hour ? ` 태어난 시간은 ${d.hour}입니다.` : ''}
-
+${sajuText}
 2026년 ${tm}월(${monthGanji}月) 월별 운세를 상세히 분석해 주세요.
 
 다음 7개 항목을 모두 포함하여 분석해주세요:
@@ -1052,13 +1064,25 @@ async function analyzeYearly() {
   const targetYear = parseInt(document.getElementById('y-targetYear')?.value || '2026', 10);
   const ganjiStr   = GANJI_YEAR[targetYear] || targetYear + '년';
 
+  // ★ saju.js로 사주팔자 정확히 계산 (시간은 시작 시각 숫자로 변환)
+  const hourNumY = (function(h) {
+    if (!h) return -1;
+    const map = { '자시':23,'축시':1,'인시':3,'묘시':5,'진시':7,'사시':9,'오시':11,'미시':13,'신시':15,'유시':17,'술시':19,'해시':21 };
+    for (const [k,v] of Object.entries(map)) { if (h.includes(k)) return v; }
+    return -1;
+  })(d.hour);
+  const sajuData = typeof calcSaju === 'function'
+    ? calcSaju({ year: d.year, month: d.month, day: d.day, hour: hourNumY, gender: d.gender })
+    : null;
+  const sajuText = (sajuData && typeof sajuToPromptText === 'function') ? sajuToPromptText(sajuData) : '';
+
   const system = `당신은 운세ON의 연간 운세 전문 상담사입니다.
 한국 전통 사주명리학 수십 년 경력의 최고 전문가입니다.
 
 【현재 날짜】: 2026년 4월 (병오년)
 【분석 대상 연도】: ${targetYear}년 ${ganjiStr}
 【핵심 지침】
-1. 사용자의 생년월일로 사주팔자를 계산하여 ${targetYear}년 연간 운세를 분석하세요.
+1. 아래 제공된 사주팔자 계산 결과를 그대로 사용하세요. 절대 다시 계산하지 마세요.
 2. 반드시 문장을 완전히 끝맺으세요. 마무리 문장까지 반드시 완성하세요.
 3. 토큰이 부족할 것을 걱정하지 말고 끝까지 완성하는 것을 최우선으로 하세요.
 4. 한국어 경어체로 작성하세요.
@@ -1072,7 +1096,7 @@ async function analyzeYearly() {
 마무리: <p class="saju-closing">마무리 문장</p>`;
 
   const user = `저는 ${d.year}년 ${d.month}월 ${d.day}일생 ${d.gender}입니다.${d.hour ? ` 태어난 시간은 ${d.hour}입니다.` : ''}
-
+${sajuText}
 ${targetYear}년(${ganjiStr}) 연간 운세를 상세히 분석해 주세요.
 
 다음 9개 항목을 모두 포함해주세요:
@@ -1104,12 +1128,24 @@ async function analyzeDecade() {
   const currentAge = 2026 - d.year;
   const decadeEnd  = 2036;
 
+  // ★ saju.js로 사주팔자 정확히 계산 (시간은 시작 시각 숫자로 변환)
+  const hourNumD = (function(h) {
+    if (!h) return -1;
+    const map = { '자시':23,'축시':1,'인시':3,'묘시':5,'진시':7,'사시':9,'오시':11,'미시':13,'신시':15,'유시':17,'술시':19,'해시':21 };
+    for (const [k,v] of Object.entries(map)) { if (h.includes(k)) return v; }
+    return -1;
+  })(d.hour);
+  const sajuData = typeof calcSaju === 'function'
+    ? calcSaju({ year: d.year, month: d.month, day: d.day, hour: hourNumD, gender: d.gender })
+    : null;
+  const sajuText = (sajuData && typeof sajuToPromptText === 'function') ? sajuToPromptText(sajuData) : '';
+
   const system = `당신은 운세ON의 대운(大運) 분석 전문 상담사입니다.
 한국 전통 사주명리학 수십 년 경력의 최고 전문가입니다.
 
 【현재 날짜】: 2026년 4월 (병오년)
 【핵심 지침】
-1. 사용자의 생년월일로 사주팔자를 계산하고, 현재 대운(大運)과 향후 10년 흐름을 분석하세요.
+1. 아래 제공된 사주팔자 계산 결과를 그대로 사용하세요. 절대 다시 계산하지 마세요.
 2. 대운은 10년 단위로 천간(天干)·지지(地支)가 순차적으로 바뀌는 큰 운의 흐름입니다.
 3. 현재 대운을 정확히 파악하고, 2026~2036년 연도별 주요 변화를 제시하세요.
 4. 반드시 문장을 완전히 끝맺으세요. 마무리 문장까지 반드시 완성하세요.
@@ -1126,6 +1162,7 @@ async function analyzeDecade() {
 
   const user = `저는 ${d.year}년 ${d.month}월 ${d.day}일생 ${d.gender}입니다.${d.hour ? ` 태어난 시간은 ${d.hour}입니다.` : ''}
 현재 나이는 ${currentAge}세(2026년 기준)입니다.
+${sajuText}
 
 현재 대운과 향후 10년(2026~${decadeEnd}) 대운 흐름을 상세히 분석해 주세요.
 
@@ -1157,12 +1194,24 @@ async function analyzeLifetime() {
   if (!d) return;
   const currentAge = 2026 - d.year;
 
+  // ★ saju.js로 사주팔자 정확히 계산 (시간은 시작 시각 숫자로 변환)
+  const hourNumL = (function(h) {
+    if (!h) return -1;
+    const map = { '자시':23,'축시':1,'인시':3,'묘시':5,'진시':7,'사시':9,'오시':11,'미시':13,'신시':15,'유시':17,'술시':19,'해시':21 };
+    for (const [k,v] of Object.entries(map)) { if (h.includes(k)) return v; }
+    return -1;
+  })(d.hour);
+  const sajuData = typeof calcSaju === 'function'
+    ? calcSaju({ year: d.year, month: d.month, day: d.day, hour: hourNumL, gender: d.gender })
+    : null;
+  const sajuText = (sajuData && typeof sajuToPromptText === 'function') ? sajuToPromptText(sajuData) : '';
+
   const system = `당신은 운세ON의 평생 운세 전문 상담사입니다.
 한국 전통 사주명리학 수십 년 경력의 최고 전문가입니다.
 
 【현재 날짜】: 2026년 4월 (병오년)
 【핵심 지침】
-1. 사용자의 생년월일로 사주팔자를 계산하고, 전체 인생 운세 흐름을 분석하세요.
+1. 아래 제공된 사주팔자 계산 결과를 그대로 사용하세요. 절대 다시 계산하지 마세요.
 2. 유년(0~19세), 청년(20~39세), 중년(40~59세), 장년(60~79세), 노년(80세~)으로 나누어 분석하세요.
 3. 현재 나이(${currentAge}세)를 기준으로 지나온 시간과 앞으로의 시간 모두 분석하세요.
 4. 반드시 문장을 완전히 끝맺으세요. 마무리 문장까지 반드시 완성하세요.
@@ -1179,6 +1228,7 @@ async function analyzeLifetime() {
 
   const user = `저는 ${d.year}년 ${d.month}월 ${d.day}일생 ${d.gender}입니다.${d.hour ? ` 태어난 시간은 ${d.hour}입니다.` : ''}
 현재 나이는 ${currentAge}세(2026년 기준)입니다.
+${sajuText}
 
 평생 운세 전체 흐름을 상세히 분석해 주세요.
 
