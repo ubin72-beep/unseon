@@ -531,94 +531,143 @@ function addCat() {
 }
 
 // =========================================
-// 섹션 4: 요금 정책 관리
+// 섹션 4: 요금 정책 관리  (kakaopay.js v3.0 플랜 구조 기준)
 // =========================================
 function renderPricing(container) {
   let policy = {};
   try { policy = JSON.parse(localStorage.getItem('sajuon_policy') || '{}'); } catch {}
 
+  // ── 기본값 (kakaopay.js v3.0 PLANS 와 동일) ──
   const defaults = {
-    basicAmt: 10000, basicPt: 10000, basicBonus: 0,
-    stdAmt: 20000,   stdPt: 22000,   stdBonus: 2000,
-    premAmt: 30000,  premPt: 36000,  premBonus: 6000,
-    goldAmt: 50000,  goldPt: 65000,  goldBonus: 15000,
-    vipAmt: 100000,  vipPt: 140000,  vipBonus: 40000,
-    vvipAmt: 300000, vvipPt: 450000, vvipBonus: 150000,
+    // ── 1회 결제 플랜 (카카오페이 1회 한도 50,000원) ──
+    plan5Amt:   5000,  plan5Pt:   5000,  plan5Bonus:  0,
+    plan10Amt: 10000,  plan10Pt: 10000,  plan10Bonus: 0,
+    plan20Amt: 20000,  plan20Pt: 22000,  plan20Bonus: 2000,
+    plan30Amt: 30000,  plan30Pt: 36000,  plan30Bonus: 6000,
+    plan50Amt: 50000,  plan50Pt: 60000,  plan50Bonus: 10000,
+    // ── 분할 결제 플랜 (회당 50,000원 × N회) ──
+    plan100TotalAmt: 100000, plan100TotalPt: 120000, plan100TotalBonus: 20000, plan100Times: 2,
+    plan150TotalAmt: 150000, plan150TotalPt: 187500, plan150TotalBonus: 37500, plan150Times: 3,
+    plan200TotalAmt: 200000, plan200TotalPt: 260000, plan200TotalBonus: 60000, plan200Times: 4,
+    // ── 상담 차감 & 무료 포인트 ──
     freePt: 500,
-    costBasic: 100,  costNormal: 200, costAdvanced: 300,
+    costBasic: 100, costNormal: 200, costAdvanced: 300,
   };
   const p = { ...defaults, ...policy };
 
   container.innerHTML = `
+    <!-- KakaoPay 한도 안내 배너 -->
+    <div style="background:linear-gradient(135deg,#fff8e1,#fff3cd);border:1px solid #f9c74f;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:1.4rem">💳</span>
+      <div>
+        <div style="font-weight:700;font-size:0.95rem;color:#7d5800">카카오페이 1회 결제 한도: 50,000원</div>
+        <div style="font-size:0.82rem;color:#a06000;margin-top:2px">단일 플랜은 최대 ₩50,000, 그 이상은 분할 결제(N회 × ₩50,000)로 처리됩니다.</div>
+      </div>
+      <a href="pricing.html" target="_blank" style="margin-left:auto;padding:7px 14px;background:#ffe066;border-radius:8px;font-size:0.82rem;font-weight:700;color:#7d5800;text-decoration:none;white-space:nowrap">
+        <i class="fas fa-external-link-alt"></i> 요금 페이지 확인
+      </a>
+    </div>
+
+    <!-- ── 1회 결제 플랜 ── -->
     <div class="admin-card">
       <div class="admin-card-header">
         <div>
-          <div class="admin-card-title">충전 플랜 설정</div>
-          <div class="admin-card-subtitle">플랜별 금액, 포인트, 보너스를 설정합니다</div>
+          <div class="admin-card-title">1회 결제 플랜 설정</div>
+          <div class="admin-card-subtitle">카카오페이 1회 한도(50,000원) 이하 단일 결제 플랜 — kakaopay.js PLANS.plan5 ~ plan50</div>
         </div>
       </div>
+
       <div style="margin-bottom:20px">
-        <h4 style="font-size:0.88rem;font-weight:700;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">베이직 플랜</h4>
+        <h4 style="font-size:0.88rem;font-weight:700;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">🟢 plan5 — 5,000P (₩5,000)</h4>
         <div class="admin-form-2col">
-          <div class="admin-form-row">
-            <label>결제금액 (원)</label>
-            <input class="admin-input" type="number" id="basicAmt" value="${p.basicAmt}"/>
-          </div>
-          <div class="admin-form-row">
-            <label>지급 포인트</label>
-            <input class="admin-input" type="number" id="basicPt" value="${p.basicPt}"/>
-          </div>
+          <div class="admin-form-row"><label>결제금액 (원)</label><input class="admin-input" type="number" id="plan5Amt" value="${p.plan5Amt}" max="50000"/></div>
+          <div class="admin-form-row"><label>지급 포인트</label><input class="admin-input" type="number" id="plan5Pt" value="${p.plan5Pt}"/></div>
+          <div class="admin-form-row"><label>보너스 포인트</label><input class="admin-input" type="number" id="plan5Bonus" value="${p.plan5Bonus}"/></div>
         </div>
       </div>
+
       <div style="margin-bottom:20px">
-        <h4 style="font-size:0.88rem;font-weight:700;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">스탠다드 플랜 ⭐</h4>
+        <h4 style="font-size:0.88rem;font-weight:700;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">🟢 plan10 — 10,000P (₩10,000)</h4>
         <div class="admin-form-2col">
-          <div class="admin-form-row">
-            <label>결제금액 (원)</label>
-            <input class="admin-input" type="number" id="stdAmt" value="${p.stdAmt}"/>
-          </div>
-          <div class="admin-form-row">
-            <label>지급 포인트</label>
-            <input class="admin-input" type="number" id="stdPt" value="${p.stdPt}"/>
-          </div>
-          <div class="admin-form-row">
-            <label>보너스 포인트</label>
-            <input class="admin-input" type="number" id="stdBonus" value="${p.stdBonus}"/>
-          </div>
+          <div class="admin-form-row"><label>결제금액 (원)</label><input class="admin-input" type="number" id="plan10Amt" value="${p.plan10Amt}" max="50000"/></div>
+          <div class="admin-form-row"><label>지급 포인트</label><input class="admin-input" type="number" id="plan10Pt" value="${p.plan10Pt}"/></div>
+          <div class="admin-form-row"><label>보너스 포인트</label><input class="admin-input" type="number" id="plan10Bonus" value="${p.plan10Bonus}"/></div>
         </div>
       </div>
+
       <div style="margin-bottom:20px">
-        <h4 style="font-size:0.88rem;font-weight:700;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">프리미엄 플랜</h4>
+        <h4 style="font-size:0.88rem;font-weight:700;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">⭐ plan20 — 22,000P (₩20,000, +2,000P 보너스) 인기</h4>
         <div class="admin-form-2col">
-          <div class="admin-form-row"><label>결제금액 (원)</label><input class="admin-input" type="number" id="premAmt" value="${p.premAmt}"/></div>
-          <div class="admin-form-row"><label>지급 포인트</label><input class="admin-input" type="number" id="premPt" value="${p.premPt}"/></div>
-          <div class="admin-form-row"><label>보너스 포인트</label><input class="admin-input" type="number" id="premBonus" value="${p.premBonus}"/></div>
+          <div class="admin-form-row"><label>결제금액 (원)</label><input class="admin-input" type="number" id="plan20Amt" value="${p.plan20Amt}" max="50000"/></div>
+          <div class="admin-form-row"><label>지급 포인트</label><input class="admin-input" type="number" id="plan20Pt" value="${p.plan20Pt}"/></div>
+          <div class="admin-form-row"><label>보너스 포인트</label><input class="admin-input" type="number" id="plan20Bonus" value="${p.plan20Bonus}"/></div>
         </div>
       </div>
-      <div style="border-top:2px dashed #d4af37;margin:20px 0;padding-top:16px">
-        <div style="font-size:0.82rem;font-weight:700;color:#b8962f;margin-bottom:14px">💎 고액 플랜 (신규 추가)</div>
-        <h4 style="font-size:0.88rem;font-weight:700;color:#b8962f;margin-bottom:10px">💛 골드 플랜 (30% 보너스)</h4>
-        <div class="admin-form-2col" style="margin-bottom:14px">
-          <div class="admin-form-row"><label>결제금액 (원)</label><input class="admin-input" type="number" id="goldAmt" value="${p.goldAmt}"/></div>
-          <div class="admin-form-row"><label>지급 포인트</label><input class="admin-input" type="number" id="goldPt" value="${p.goldPt}"/></div>
-          <div class="admin-form-row"><label>보너스 포인트</label><input class="admin-input" type="number" id="goldBonus" value="${p.goldBonus}"/></div>
-        </div>
-        <h4 style="font-size:0.88rem;font-weight:700;color:#6d28d9;margin-bottom:10px">👑 VIP 플랜 (40% 보너스)</h4>
-        <div class="admin-form-2col" style="margin-bottom:14px">
-          <div class="admin-form-row"><label>결제금액 (원)</label><input class="admin-input" type="number" id="vipAmt" value="${p.vipAmt}"/></div>
-          <div class="admin-form-row"><label>지급 포인트</label><input class="admin-input" type="number" id="vipPt" value="${p.vipPt}"/></div>
-          <div class="admin-form-row"><label>보너스 포인트</label><input class="admin-input" type="number" id="vipBonus" value="${p.vipBonus}"/></div>
-        </div>
-        <h4 style="font-size:0.88rem;font-weight:700;color:#e040fb;margin-bottom:10px">🌟 VVIP 플랜 (50% 보너스)</h4>
+
+      <div style="margin-bottom:20px">
+        <h4 style="font-size:0.88rem;font-weight:700;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">🔵 plan30 — 36,000P (₩30,000, +6,000P 보너스)</h4>
         <div class="admin-form-2col">
-          <div class="admin-form-row"><label>결제금액 (원)</label><input class="admin-input" type="number" id="vvipAmt" value="${p.vvipAmt}"/></div>
-          <div class="admin-form-row"><label>지급 포인트</label><input class="admin-input" type="number" id="vvipPt" value="${p.vvipPt}"/></div>
-          <div class="admin-form-row"><label>보너스 포인트</label><input class="admin-input" type="number" id="vvipBonus" value="${p.vvipBonus}"/></div>
+          <div class="admin-form-row"><label>결제금액 (원)</label><input class="admin-input" type="number" id="plan30Amt" value="${p.plan30Amt}" max="50000"/></div>
+          <div class="admin-form-row"><label>지급 포인트</label><input class="admin-input" type="number" id="plan30Pt" value="${p.plan30Pt}"/></div>
+          <div class="admin-form-row"><label>보너스 포인트</label><input class="admin-input" type="number" id="plan30Bonus" value="${p.plan30Bonus}"/></div>
         </div>
       </div>
+
+      <div style="margin-bottom:8px;border-top:2px solid #d4af37;padding-top:16px">
+        <h4 style="font-size:0.88rem;font-weight:700;color:#b8962f;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">💛 plan50 — 60,000P (₩50,000, +10,000P 보너스) 최대 단일 결제</h4>
+        <div class="admin-form-2col">
+          <div class="admin-form-row"><label>결제금액 (원) <span style="color:#c00;font-size:0.78rem">최대 50,000</span></label><input class="admin-input" type="number" id="plan50Amt" value="${p.plan50Amt}" max="50000"/></div>
+          <div class="admin-form-row"><label>지급 포인트</label><input class="admin-input" type="number" id="plan50Pt" value="${p.plan50Pt}"/></div>
+          <div class="admin-form-row"><label>보너스 포인트</label><input class="admin-input" type="number" id="plan50Bonus" value="${p.plan50Bonus}"/></div>
+        </div>
+      </div>
+
       <button class="admin-save-btn" onclick="savePricing()"><i class="fas fa-save"></i> 저장하기</button>
     </div>
 
+    <!-- ── 분할 결제 플랜 ── -->
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <div>
+          <div class="admin-card-title">분할 결제 플랜 설정</div>
+          <div class="admin-card-subtitle">₩50,000 초과 금액 → 50,000원 × N회 자동 분할 — kakaopay.js PLANS.plan100 ~ plan200</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <h4 style="font-size:0.88rem;font-weight:700;color:#1e40af;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">🔷 plan100 — 120,000P (₩100,000 = 50,000 × 2회)</h4>
+        <div class="admin-form-2col">
+          <div class="admin-form-row"><label>총 결제금액 (원)</label><input class="admin-input" type="number" id="plan100TotalAmt" value="${p.plan100TotalAmt}"/></div>
+          <div class="admin-form-row"><label>총 지급 포인트</label><input class="admin-input" type="number" id="plan100TotalPt" value="${p.plan100TotalPt}"/></div>
+          <div class="admin-form-row"><label>총 보너스 포인트</label><input class="admin-input" type="number" id="plan100TotalBonus" value="${p.plan100TotalBonus}"/></div>
+          <div class="admin-form-row"><label>분할 횟수</label><input class="admin-input" type="number" id="plan100Times" value="${p.plan100Times}" min="2"/></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <h4 style="font-size:0.88rem;font-weight:700;color:#1e40af;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">🔷 plan150 — 187,500P (₩150,000 = 50,000 × 3회)</h4>
+        <div class="admin-form-2col">
+          <div class="admin-form-row"><label>총 결제금액 (원)</label><input class="admin-input" type="number" id="plan150TotalAmt" value="${p.plan150TotalAmt}"/></div>
+          <div class="admin-form-row"><label>총 지급 포인트</label><input class="admin-input" type="number" id="plan150TotalPt" value="${p.plan150TotalPt}"/></div>
+          <div class="admin-form-row"><label>총 보너스 포인트</label><input class="admin-input" type="number" id="plan150TotalBonus" value="${p.plan150TotalBonus}"/></div>
+          <div class="admin-form-row"><label>분할 횟수</label><input class="admin-input" type="number" id="plan150Times" value="${p.plan150Times}" min="2"/></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:8px">
+        <h4 style="font-size:0.88rem;font-weight:700;color:#1e40af;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">🔷 plan200 — 260,000P (₩200,000 = 50,000 × 4회)</h4>
+        <div class="admin-form-2col">
+          <div class="admin-form-row"><label>총 결제금액 (원)</label><input class="admin-input" type="number" id="plan200TotalAmt" value="${p.plan200TotalAmt}"/></div>
+          <div class="admin-form-row"><label>총 지급 포인트</label><input class="admin-input" type="number" id="plan200TotalPt" value="${p.plan200TotalPt}"/></div>
+          <div class="admin-form-row"><label>총 보너스 포인트</label><input class="admin-input" type="number" id="plan200TotalBonus" value="${p.plan200TotalBonus}"/></div>
+          <div class="admin-form-row"><label>분할 횟수</label><input class="admin-input" type="number" id="plan200Times" value="${p.plan200Times}" min="2"/></div>
+        </div>
+      </div>
+
+      <button class="admin-save-btn" onclick="savePricing()"><i class="fas fa-save"></i> 저장하기</button>
+    </div>
+
+    <!-- ── 상담 차감 & 무료 포인트 ── -->
     <div class="admin-card">
       <div class="admin-card-header">
         <div>
@@ -649,30 +698,91 @@ function renderPricing(container) {
 }
 
 function savePricing() {
-  const g = id => +document.getElementById(id)?.value || 0;
+  const g = id => Number(document.getElementById(id)?.value) || 0;
+
+  // ── 1회 결제 플랜 ──
+  const plan5Amt   = g('plan5Amt')   || 5000;
+  const plan10Amt  = g('plan10Amt')  || 10000;
+  const plan20Amt  = g('plan20Amt')  || 20000;
+  const plan30Amt  = g('plan30Amt')  || 30000;
+  const plan50Amt  = g('plan50Amt')  || 50000;
+
+  // 단일 결제 한도 초과 방지
+  const capSingle = v => Math.min(v, 50000);
+
+  // ── 분할 결제 플랜 ──
+  const plan100Times = g('plan100Times') || 2;
+  const plan150Times = g('plan150Times') || 3;
+  const plan200Times = g('plan200Times') || 4;
+
   const policy = {
-    basicAmt: g('basicAmt') || 10000, basicPt: g('basicPt') || 10000, basicBonus: 0,
-    stdAmt:   g('stdAmt')  || 20000,  stdPt:   g('stdPt')  || 22000,  stdBonus:  g('stdBonus')  || 2000,
-    premAmt:  g('premAmt') || 30000,  premPt:  g('premPt') || 36000,  premBonus: g('premBonus') || 6000,
-    goldAmt:  g('goldAmt') || 50000,  goldPt:  g('goldPt') || 65000,  goldBonus: g('goldBonus') || 15000,
-    vipAmt:   g('vipAmt')  || 100000, vipPt:   g('vipPt')  || 140000, vipBonus:  g('vipBonus')  || 40000,
-    vvipAmt:  g('vvipAmt') || 300000, vvipPt:  g('vvipPt') || 450000, vvipBonus: g('vvipBonus') || 150000,
-    freePt:   g('freePt')  || 500,
+    // 1회 결제
+    plan5Amt:   capSingle(plan5Amt),   plan5Pt:   g('plan5Pt')   || 5000,   plan5Bonus:   g('plan5Bonus')   || 0,
+    plan10Amt:  capSingle(plan10Amt),  plan10Pt:  g('plan10Pt')  || 10000,  plan10Bonus:  g('plan10Bonus')  || 0,
+    plan20Amt:  capSingle(plan20Amt),  plan20Pt:  g('plan20Pt')  || 22000,  plan20Bonus:  g('plan20Bonus')  || 2000,
+    plan30Amt:  capSingle(plan30Amt),  plan30Pt:  g('plan30Pt')  || 36000,  plan30Bonus:  g('plan30Bonus')  || 6000,
+    plan50Amt:  capSingle(plan50Amt),  plan50Pt:  g('plan50Pt')  || 60000,  plan50Bonus:  g('plan50Bonus')  || 10000,
+    // 분할 결제
+    plan100TotalAmt:   g('plan100TotalAmt')   || 100000,
+    plan100TotalPt:    g('plan100TotalPt')    || 120000,
+    plan100TotalBonus: g('plan100TotalBonus') || 20000,
+    plan100Times:      plan100Times,
+    plan150TotalAmt:   g('plan150TotalAmt')   || 150000,
+    plan150TotalPt:    g('plan150TotalPt')    || 187500,
+    plan150TotalBonus: g('plan150TotalBonus') || 37500,
+    plan150Times:      plan150Times,
+    plan200TotalAmt:   g('plan200TotalAmt')   || 200000,
+    plan200TotalPt:    g('plan200TotalPt')    || 260000,
+    plan200TotalBonus: g('plan200TotalBonus') || 60000,
+    plan200Times:      plan200Times,
+    // 상담 & 무료
+    freePt:       g('freePt')       || 500,
     costBasic:    g('costBasic')    || 100,
     costNormal:   g('costNormal')   || 200,
     costAdvanced: g('costAdvanced') || 300,
   };
+
   localStorage.setItem('sajuon_policy', JSON.stringify(policy));
-  // kakaopay.js PLANS 런타임 동기화
+
+  // ── kakaopay.js PLANS 런타임 동기화 (같은 페이지에 로드된 경우) ──
   if (typeof PLANS !== 'undefined') {
-    PLANS.basic.amount    = policy.basicAmt; PLANS.basic.point    = policy.basicPt;
-    PLANS.standard.amount = policy.stdAmt;   PLANS.standard.point = policy.stdPt;   PLANS.standard.bonus = policy.stdBonus;
-    PLANS.premium.amount  = policy.premAmt;  PLANS.premium.point  = policy.premPt;  PLANS.premium.bonus  = policy.premBonus;
-    PLANS.gold.amount     = policy.goldAmt;  PLANS.gold.point     = policy.goldPt;  PLANS.gold.bonus     = policy.goldBonus;
-    PLANS.vip.amount      = policy.vipAmt;   PLANS.vip.point      = policy.vipPt;   PLANS.vip.bonus      = policy.vipBonus;
-    PLANS.vvip.amount     = policy.vvipAmt;  PLANS.vvip.point     = policy.vvipPt;  PLANS.vvip.bonus     = policy.vvipBonus;
+    // 1회 결제
+    PLANS.plan5.amount  = policy.plan5Amt;  PLANS.plan5.point  = policy.plan5Pt;  PLANS.plan5.bonus  = policy.plan5Bonus;
+    PLANS.plan10.amount = policy.plan10Amt; PLANS.plan10.point = policy.plan10Pt; PLANS.plan10.bonus = policy.plan10Bonus;
+    PLANS.plan20.amount = policy.plan20Amt; PLANS.plan20.point = policy.plan20Pt; PLANS.plan20.bonus = policy.plan20Bonus;
+    PLANS.plan30.amount = policy.plan30Amt; PLANS.plan30.point = policy.plan30Pt; PLANS.plan30.bonus = policy.plan30Bonus;
+    PLANS.plan50.amount = policy.plan50Amt; PLANS.plan50.point = policy.plan50Pt; PLANS.plan50.bonus = policy.plan50Bonus;
+    // 분할 결제
+    if (PLANS.plan100) {
+      PLANS.plan100.totalAmount = policy.plan100TotalAmt;
+      PLANS.plan100.totalPoint  = policy.plan100TotalPt;
+      PLANS.plan100.totalBonus  = policy.plan100TotalBonus;
+      PLANS.plan100.times       = policy.plan100Times;
+      PLANS.plan100.amount      = Math.round(policy.plan100TotalAmt / policy.plan100Times);
+      PLANS.plan100.point       = Math.round(policy.plan100TotalPt  / policy.plan100Times);
+      PLANS.plan100.bonus       = Math.round(policy.plan100TotalBonus / policy.plan100Times);
+    }
+    if (PLANS.plan150) {
+      PLANS.plan150.totalAmount = policy.plan150TotalAmt;
+      PLANS.plan150.totalPoint  = policy.plan150TotalPt;
+      PLANS.plan150.totalBonus  = policy.plan150TotalBonus;
+      PLANS.plan150.times       = policy.plan150Times;
+      PLANS.plan150.amount      = Math.round(policy.plan150TotalAmt / policy.plan150Times);
+      PLANS.plan150.point       = Math.round(policy.plan150TotalPt  / policy.plan150Times);
+      PLANS.plan150.bonus       = Math.round(policy.plan150TotalBonus / policy.plan150Times);
+    }
+    if (PLANS.plan200) {
+      PLANS.plan200.totalAmount = policy.plan200TotalAmt;
+      PLANS.plan200.totalPoint  = policy.plan200TotalPt;
+      PLANS.plan200.totalBonus  = policy.plan200TotalBonus;
+      PLANS.plan200.times       = policy.plan200Times;
+      PLANS.plan200.amount      = Math.round(policy.plan200TotalAmt / policy.plan200Times);
+      PLANS.plan200.point       = Math.round(policy.plan200TotalPt  / policy.plan200Times);
+      PLANS.plan200.bonus       = Math.round(policy.plan200TotalBonus / policy.plan200Times);
+    }
   }
-  showToast('✅ 요금 정책이 저장되었습니다 (골드·VIP·VVIP 포함)');
+
+  showToast('✅ 요금 정책이 저장되었습니다 (kakaopay.js v3.0 플랜 기준)');
 }
 
 // =========================================
