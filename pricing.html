@@ -718,22 +718,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var btnLogin     = document.getElementById('btnLogin');
   var btnSignup    = document.getElementById('btnSignup');
+  var btnCharge2   = document.getElementById('btnCharge'); // pricing 페이지엔 별도 충전 UI 있음
   var userMenuWrap = document.getElementById('userMenuWrap');
   var headerPoints = document.getElementById('headerPoints');
   var headerPointVal = document.getElementById('headerPointVal');
 
   if (user && user.id) {
-    var pts = parseInt(user.points || localStorage.getItem('sajuon_points') || '0', 10);
+    var pts = parseInt(localStorage.getItem('sajuon_points') || user.points || '0', 10);
+    if (isNaN(pts)) pts = 0;
     localStorage.setItem('sajuon_points', String(pts));
     if (btnLogin)  btnLogin.style.display  = 'none';
     if (btnSignup) btnSignup.style.display = 'none';
+    if (btnCharge2) btnCharge2.style.display = 'none';
     if (userMenuWrap) {
       userMenuWrap.style.display = 'flex';
-      document.getElementById('userAvatar').textContent    = user.name ? user.name[0] : 'U';
-      document.getElementById('userNameLabel').textContent = user.name || '사용자';
-      document.getElementById('dropdownName').textContent  = user.name || '';
-      document.getElementById('dropdownEmail').textContent = user.email || '';
-      document.getElementById('dropdownPt').textContent    = pts.toLocaleString();
+      var avEl  = document.getElementById('userAvatar');    if (avEl)  avEl.textContent  = user.name ? user.name[0].toUpperCase() : 'U';
+      var nlEl  = document.getElementById('userNameLabel'); if (nlEl)  nlEl.textContent  = user.name || '사용자';
+      var dnEl  = document.getElementById('dropdownName');  if (dnEl)  dnEl.textContent  = user.name  || '';
+      var deEl  = document.getElementById('dropdownEmail'); if (deEl)  deEl.textContent  = user.email || '';
+      var dpEl  = document.getElementById('dropdownPt');
+      if (dpEl) { if (dpEl.tagName==='SPAN') dpEl.textContent=pts.toLocaleString(); else { var s=dpEl.querySelector('span'); if(s) s.textContent=pts.toLocaleString(); else dpEl.textContent=pts.toLocaleString(); } }
     }
     if (headerPoints)   headerPoints.style.display   = 'flex';
     if (headerPointVal) headerPointVal.textContent   = pts.toLocaleString();
@@ -745,6 +749,7 @@ document.addEventListener('DOMContentLoaded', function() {
   } else {
     if (btnLogin)     btnLogin.style.display     = 'inline-flex';
     if (btnSignup)    btnSignup.style.display    = 'inline-flex';
+    if (btnCharge2)   btnCharge2.style.display   = 'inline-flex';
     if (userMenuWrap) userMenuWrap.style.display = 'none';
     if (headerPoints) headerPoints.style.display = 'none';
 
