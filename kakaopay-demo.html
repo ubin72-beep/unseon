@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>카카오페이 결제 테스트 — 운세ON</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f8f5ff;
+      min-height: 100vh;
+      color: #222;
+    }
+
+    /* ── 헤더 ── */
+    .demo-header {
+      background: linear-gradient(135deg, #1a0a3e 0%, #2d1266 100%);
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .demo-logo { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+    .demo-logo span { color: #f59e0b; font-style: italic; }
+    .demo-badge {
+      background: #f59e0b;
+      color: #1a0a3e;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    /* ── 심사 안내 배너 ── */
+    .review-banner {
+      background: linear-gradient(135deg, #1565c0, #0d47a1);
+      color: #fff;
+      text-align: center;
+      padding: 14px 20px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .review-banner strong { color: #90caf9; }
+
+    /* ── 메인 컨테이너 ── */
+    .demo-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    .demo-title {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .demo-title h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #1a0a3e;
+      margin-bottom: 8px;
+    }
+    .demo-title p {
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    /* ── 서비스 소개 ── */
+    .service-intro {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border-left: 4px solid #7c3aed;
+    }
+    .service-intro h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1a0a3e;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .service-intro p {
+      color: #555;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+    .service-features {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .feature-item {
+      background: #f8f5ff;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: #4a3080;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .feature-item i { color: #7c3aed; font-size: 0.9rem; }
+
+    /* ── 플랜 섹션 ── */
+    .plans-section h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a0a3e;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 500px) {
+      .plans-grid { grid-template-columns: 1fr; }
+      .service-features { grid-template-columns: 1fr; }
+    }
+
+    .plan-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px;
+      border: 2px solid #e8e0ff;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .plan-card:hover {
+      border-color: #7c3aed;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.15);
+    }
+    .plan-card.selected {
+      border-color: #7c3aed;
+      background: linear-gradient(135deg, #faf7ff, #f3eeff);
+      box-shadow: 0 6px 24px rgba(124,58,237,0.2);
+    }
+    .plan-badge {
+      position: absolute;
+      top: -10px;
+      right: 14px;
+      background: #7c3aed;
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
+    .plan-badge.gold-badge { background: #d4af37; color: #1a0a3e; }
+    .plan-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    .plan-amount {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #1a0a3e;
+      margin-bottom: 4px;
+    }
+    .plan-points {
+      font-size: 0.88rem;
+      color: #7c3aed;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .plan-bonus {
+      font-size: 0.78rem;
+      color: #e65100;
+      font-weight: 600;
+    }
+    .plan-check {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #7c3aed;
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+    .plan-card.selected .plan-check { display: flex; }
+
+    /* ── 선택 요약 ── */
+    .order-summary {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin: 24px 0;
+      border: 2px solid #e8e0ff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .order-summary h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a0a3e;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #f0ebff;
+    }
+    .order-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    .order-row.total {
+      border-top: 1px solid #f0ebff;
+      margin-top: 8px;
+      padding-top: 12px;
+      font-weight: 700;
+      color: #1a0a3e;
+      font-size: 1rem;
+    }
+    .order-row.total .val { color: #7c3aed; font-size: 1.15rem; }
+
+    /* ── 결제 버튼 ── */
+    .pay-btn {
+      width: 100%;
+      background: #fee500;
+      color: #191919;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(254,229,0,0.4);
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    .pay-btn:hover { background: #fdd800; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(254,229,0,0.5); }
+    .pay-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .kakao-icon {
+      width: 24px;
+      height: 24px;
+      background: #191919;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: #fee500;
+      font-weight: 900;
+    }
+
+    /* ── 테스트 안내 ── */
+    .test-guide {
+      background: #fff8e1;
+      border: 1px solid #ffd54f;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: #e65100;
+      line-height: 1.7;
+    }
+    .test-guide strong { color: #bf360c; }
+    .test-guide ul { margin: 8px 0 0 16px; }
+    .test-guide li { margin-bottom: 4px; }
+
+    /* ── 이용약관 ── */
+    .terms-box {
+      background: #f9f9f9;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-top: 16px;
+      font-size: 0.8rem;
+      color: #888;
+      line-height: 1.6;
+    }
+    .terms-box a { color: #7c3aed; text-decoration: none; }
+
+    /* ── 보안 배지 ── */
+    .security-badges {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    .sec-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .sec-badge i { color: #4caf50; }
+
+    /* ── 모달 ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: #fff;
+      border-radius: 20px;
+      padding: 32px 28px;
+      max-width: 380px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-icon { font-size: 3rem; margin-bottom: 12px; }
+    .modal-title { font-size: 1.2rem; font-weight: 800; color: #1a0a3e; margin-bottom: 8px; }
+    .modal-desc { font-size: 0.9rem; color: #666; line-height: 1.6; margin-bottom: 20px; }
+    .modal-btn {
+      background: #7c3aed;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 28px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<header class="demo-header">
+  <div class="demo-logo">운세<span>ON</span></div>
+  <div class="demo-badge">카카오페이 결제 테스트</div>
+</header>
+
+<!-- 심사 안내 배너 -->
+<div class="review-banner">
+  📋 <strong>카카오페이 가맹 심사용 테스트 페이지</strong>입니다 &nbsp;|&nbsp;
+  실제 결제 없이 <strong>카카오페이 테스트 결제(TC0ONETIME)</strong>로 진행됩니다 &nbsp;|&nbsp;
+  비회원도 자유롭게 테스트 가능합니다
+</div>
+
+<!-- 메인 -->
+<main class="demo-container">
+
+  <div class="demo-title">
+    <h1>🔮 운세ON 포인트 충전</h1>
+    <p>AI 사주·타로·운세 상담에 사용하는 포인트를 충전합니다</p>
+  </div>
+
+  <!-- 서비스 소개 -->
+  <div class="service-intro">
+    <h2><i class="fas fa-info-circle" style="color:#7c3aed"></i> 운세ON 서비스 소개</h2>
+    <p>
+      운세ON은 AI 기반 사주·타로·운세 상담 플랫폼입니다.<br>
+      충전한 포인트로 연애운·사업운·이름풀이 등 38가지 AI 상담 서비스를 이용할 수 있습니다.
+    </p>
+    <div class="service-features">
+      <div class="feature-item"><i class="fas fa-comments"></i> AI 사주 상담 (100P~)</div>
+      <div class="feature-item"><i class="fas fa-moon"></i> 타로 카드 (100P)</div>
+      <div class="feature-item"><i class="fas fa-calendar"></i> 운세 달력 (200~500P)</div>
+      <div class="feature-item"><i class="fas fa-star"></i> 점성술 분석 (200P)</div>
+    </div>
+  </div>
+
+  <!-- 플랜 선택 -->
+  <div class="plans-section">
+    <h2><i class="fas fa-coins" style="color:#f59e0b"></i> 충전 플랜 선택</h2>
+    <div class="plans-grid">
+      <div class="plan-card" onclick="selectPlan('basic')" id="plan-basic">
+        <div class="plan-check"><i class="fas fa-check"></i></div>
+        <div class="plan-name">베이직 플랜</div>
+        <div class="plan-amount">10,000원</div>
+        <div class="plan-points">10,000P 지급</div>
+        <div class="plan-bonus">&nbsp;</div>
+      </div>
+      <div class="plan-card selected" onclick="selectPlan('standard')" id="plan-standard">
+        <div class="plan-badge">인기</div>
+        <div class="plan-check"><i class="fas fa-check"></i></div>
+        <div class="plan-name">스탠다드 플랜</div>
+        <div class="plan-amount">20,000원</div>
+        <div class="plan-points">22,000P 지급</div>
+        <div class="plan-bonus">+2,000P 보너스</div>
+      </div>
+      <div class="plan-card" onclick="selectPlan('premium')" id="plan-premium">
+        <div class="plan-check"><i class="fas fa-check"></i></div>
+        <div class="plan-name">프리미엄 플랜</div>
+        <div class="plan-amount">30,000원</div>
+        <div class="plan-points">36,000P 지급</div>
+        <div class="plan-bonus">+6,000P 보너스</div>
+      </div>
+      <div class="plan-card" onclick="selectPlan('gold')" id="plan-gold">
+        <div class="plan-badge gold-badge">30% 보너스</div>
+        <div class="plan-check"><i class="fas fa-check"></i></div>
+        <div class="plan-name">골드 플랜</div>
+        <div class="plan-amount">50,000원</div>
+        <div class="plan-points">65,000P 지급</div>
+        <div class="plan-bonus">+15,000P 보너스</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 주문 요약 -->
+  <div class="order-summary">
+    <h3><i class="fas fa-receipt"></i> 주문 내역</h3>
+    <div class="order-row">
+      <span>상품명</span>
+      <span id="sum-name">스탠다드 플랜</span>
+    </div>
+    <div class="order-row">
+      <span>지급 포인트</span>
+      <span id="sum-points" style="color:#7c3aed;font-weight:600">22,000P</span>
+    </div>
+    <div class="order-row">
+      <span>보너스 포인트</span>
+      <span id="sum-bonus" style="color:#e65100;font-weight:600">+2,000P</span>
+    </div>
+    <div class="order-row total">
+      <span>결제금액</span>
+      <span class="val" id="sum-amount">20,000원</span>
+    </div>
+  </div>
+
+  <!-- 카카오페이 결제 버튼 -->
+  <button class="pay-btn" onclick="startKakaoPay()" id="payBtn">
+    <div class="kakao-icon">K</div>
+    카카오페이로 결제하기
+  </button>
+
+  <!-- 테스트 안내 -->
+  <div class="test-guide">
+    <strong>⚠️ 카카오페이 심사용 테스트 안내</strong>
+    <ul>
+      <li>현재 <strong>테스트 모드(TC0ONETIME)</strong>로 동작합니다 — 실제 결제가 발생하지 않습니다</li>
+      <li>카카오페이 앱 또는 웹에서 <strong>테스트 결제 승인</strong>을 진행하면 됩니다</li>
+      <li>결제 완료 후 payment-complete.html 페이지로 이동합니다</li>
+      <li>비회원 상태에서도 결제 플로우 전체를 테스트할 수 있습니다</li>
+    </ul>
+  </div>
+
+  <!-- 이용약관 -->
+  <div class="terms-box">
+    결제 진행 시 <a href="terms.html" target="_blank">이용약관</a> 및
+    <a href="privacy.html" target="_blank">개인정보처리방침</a>,
+    <a href="refund.html" target="_blank">환불정책</a>에 동의하는 것으로 간주됩니다.<br>
+    사업자: 큐브박스 | 대표: 김미화 | 사업자번호: 537-08-03349 | 전화: 0502-1909-7788
+  </div>
+
+  <!-- 보안 배지 -->
+  <div class="security-badges">
+    <div class="sec-badge"><i class="fas fa-shield-alt"></i> SSL 보안 결제</div>
+    <div class="sec-badge"><i class="fas fa-lock"></i> 개인정보 암호화</div>
+    <div class="sec-badge"><i class="fas fa-check-circle"></i> 카카오페이 인증</div>
+  </div>
+
+</main>
+
+<!-- 로딩 모달 -->
+<div class="modal-overlay" id="loadingModal">
+  <div class="modal-box">
+    <div class="modal-icon">⏳</div>
+    <div class="modal-title">결제 준비 중...</div>
+    <div class="modal-desc">카카오페이 결제창을 불러오고 있습니다.<br>잠시만 기다려주세요.</div>
+  </div>
+</div>
+
+<!-- 오류 모달 -->
+<div class="modal-overlay" id="errorModal">
+  <div class="modal-box">
+    <div class="modal-icon">❌</div>
+    <div class="modal-title">결제 준비 실패</div>
+    <div class="modal-desc" id="errorMsg">결제 준비 중 오류가 발생했습니다.</div>
+    <button class="modal-btn" onclick="document.getElementById('errorModal').classList.remove('show')">확인</button>
+  </div>
+</div>
+
+<script>
+/* ── 플랜 데이터 ── */
+const PLANS = {
+  basic:    { name:'베이직 플랜',    amount:10000,  point:10000,  bonus:0     },
+  standard: { name:'스탠다드 플랜',  amount:20000,  point:22000,  bonus:2000  },
+  premium:  { name:'프리미엄 플랜',  amount:30000,  point:36000,  bonus:6000  },
+  gold:     { name:'골드 플랜',      amount:50000,  point:65000,  bonus:15000 },
+};
+
+let selectedPlanKey = 'standard';
+
+function selectPlan(key) {
+  selectedPlanKey = key;
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('plan-' + key).classList.add('selected');
+  const p = PLANS[key];
+  document.getElementById('sum-name').textContent   = p.name;
+  document.getElementById('sum-points').textContent = p.point.toLocaleString() + 'P';
+  document.getElementById('sum-bonus').textContent  = p.bonus > 0 ? '+' + p.bonus.toLocaleString() + 'P' : '-';
+  document.getElementById('sum-amount').textContent = p.amount.toLocaleString() + '원';
+}
+
+/* ── 카카오페이 결제 요청 ── */
+async function startKakaoPay() {
+  const plan    = PLANS[selectedPlanKey];
+  const orderId = 'DEMO_' + Date.now();
+  const btn     = document.getElementById('payBtn');
+
+  btn.disabled = true;
+  document.getElementById('loadingModal').classList.add('show');
+
+  // 카카오페이 Ready API 호출
+  const body = {
+    cid:              'TC0ONETIME',           // 테스트 CID (고정)
+    partner_order_id: orderId,
+    partner_user_id:  'demo_user',            // 비회원용 고정값
+    item_name:        '운세ON ' + plan.name,
+    quantity:         1,
+    total_amount:     plan.amount,
+    tax_free_amount:  0,
+    approval_url:     'https://unseon.co.kr/payment-complete.html?result=success',
+    fail_url:         'https://unseon.co.kr/payment-complete.html?result=fail',
+    cancel_url:       'https://unseon.co.kr/payment-complete.html?result=cancel',
+  };
+
+  // 주문 정보 저장 (결제 완료 페이지에서 사용)
+  sessionStorage.setItem('kakao_pending', JSON.stringify({
+    orderId, plan, tid: null, demo: true
+  }));
+
+  try {
+    const res = await fetch('https://open-api.kakaopay.com/online/v1/payment/ready', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'SECRET_KEY DEV 개발 키 필요',  // ← 카카오 개발자 Secret Key
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    document.getElementById('loadingModal').classList.remove('show');
+
+    if (res.ok) {
+      const data = await res.json();
+      // TID 저장
+      const pending = JSON.parse(sessionStorage.getItem('kakao_pending') || '{}');
+      pending.tid = data.tid;
+      sessionStorage.setItem('kakao_pending', JSON.stringify(pending));
+      // 결제 페이지 이동 (PC: next_redirect_pc_url, 모바일: next_redirect_mobile_url)
+      const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+      window.location.href = isMobile ? data.next_redirect_mobile_url : data.next_redirect_pc_url;
+    } else {
+      const err = await res.json().catch(() => ({}));
+      showError('결제 준비 실패: ' + (err.message || res.status));
+    }
+  } catch(e) {
+    document.getElementById('loadingModal').classList.remove('show');
+    showError('네트워크 오류: ' + e.message + '\n\n※ 카카오페이 Secret Key가 설정되어야 실제 결제가 진행됩니다.');
+  }
+
+  btn.disabled = false;
+}
+
+function showError(msg) {
+  document.getElementById('errorMsg').textContent = msg;
+  document.getElementById('errorModal').classList.add('show');
+}
+</script>
+</body>
+</html>
