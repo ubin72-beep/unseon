@@ -1014,6 +1014,7 @@ function renderHistoryTable(hist) {
 }
 
 function getHistory() {
+  // localStorage 이력은 레거시 — DB 기반으로 전환됨
   try { return JSON.parse(localStorage.getItem('sajuon_history') || '[]'); } catch { return []; }
 }
 
@@ -1083,17 +1084,30 @@ function renderPointsAdmin(container) {
 }
 
 function quickAddPoint(amt) {
-  const current = getPoints();
-  const newPts = current + amt;
-  localStorage.setItem('sajuon_points', String(newPts));
-  const hist = getHistory();
-  hist.unshift({
-    date: new Date().toLocaleString('ko-KR'),
-    type: '관리자 포인트 지급',
-    amount: amt,
-    note: '관리자 직접 충전'
+  // 관리자 포인트 지급 — 현재 로그인된 사용자 세션 기준
+  const cu = (function(){ try { return JSON.parse(localStorage.getItem('sajuon_current_user')||'null'); } catch { return null; } })();
+  if (!cu) { showToast('❌ 포인트를 지급할 로그인 사용자가 없습니다'); return; }
+  const current = parseInt(localStorage.getItem('sajuon_points') || cu.points || '0', 10);
+  const newPts  = current + amt;
+  // DB 업데이트
+  fetch('tables/users/' + cu.id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ points: newPts })
+  }).then(() => {
+    fetch('tables/point_history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: 'adm_' + Date.now(),
+        user_id: cu.id, email: cu.email,
+        type: 'charge', amount: amt, balance: newPts,
+        description: '관리자 직접 충전', category: 'admin'
+      })
+    });
   });
-  localStorage.setItem('sajuon_history', JSON.stringify(hist));
+  localStorage.setItem('sajuon_points', String(newPts));
+  localStorage.setItem('sajuon_current_user', JSON.stringify({...cu, points: newPts}));
   const el = document.getElementById('curPtDisplay');
   if (el) el.textContent = newPts.toLocaleString();
   updateAdminPt();
@@ -1103,6 +1117,15 @@ function quickAddPoint(amt) {
 function setManualPoint() {
   const val = parseInt(document.getElementById('manualPt')?.value || '0', 10);
   if (isNaN(val) || val < 0) { showToast('❌ 올바른 숫자를 입력해주세요'); return; }
+  const cu = (function(){ try { return JSON.parse(localStorage.getItem('sajuon_current_user')||'null'); } catch { return null; } })();
+  if (cu) {
+    fetch('tables/users/' + cu.id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ points: val })
+    });
+    localStorage.setItem('sajuon_current_user', JSON.stringify({...cu, points: val}));
+  }
   localStorage.setItem('sajuon_points', String(val));
   const el = document.getElementById('curPtDisplay');
   if (el) el.textContent = val.toLocaleString();
@@ -1157,7 +1180,7 @@ function renderMembersAdmin(container) {
   // DB에서 회원 목록 조회
   Promise.all([
     fetch('tables/users?limit=200').then(r => r.ok ? r.json() : { data: [] }),
-    fetch('tables/points_history?limit=500').then(r => r.ok ? r.json() : { data: [] })
+    fetch('tables/point_history?limit=500').then(r => r.ok ? r.json() : { data: [] })
   ]).then(([usersRes, histRes]) => {
     const users   = usersRes.data  || [];
     const history = histRes.data   || [];
@@ -1846,8 +1869,103 @@ function renderSecurity(container) {
         </ul>
       </div>
 
+      <!-- 소셜 로그인 앱키 설정 -->
+      <div class="admin-card" style="border-left:4px solid #ff9800;margin-top:24px" id="socialConfigCard">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-share-alt" style="color:#ff9800"></i> 소셜 로그인 앱키 설정
+        </h3>
+        <p style="font-size:0.82rem;color:#888;margin-bottom:18px">
+          카카오·네이버 로그인이 동작하려면 각 플랫폼 개발자 센터에서 앱키를 발급받아 입력해주세요.
+        </p>
+
+        <!-- 카카오 -->
+        <div style="background:#fffde7;border:1px solid #ffe082;border-radius:12px;padding:16px 18px;margin-bottom:14px">
+          <div style="font-weight:700;font-size:0.9rem;color:#7d5800;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            <i class="fas fa-comment" style="color:#3C1E1E;background:#FEE500;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem"></i>
+            카카오 로그인
+          </div>
+          <div style="font-size:0.8rem;color:#a06000;margin-bottom:10px;line-height:1.7">
+            📌 <a href="https://developers.kakao.com" target="_blank" style="color:#b07000;font-weight:600">developers.kakao.com</a> →
+            내 애플리케이션 → 앱 키 → <strong>JavaScript 키</strong><br>
+            📌 플랫폼 → Web → 사이트 도메인에 <code style="background:#fff3cd;padding:1px 6px;border-radius:4px">https://unseon.co.kr</code> 등록 필수<br>
+            📌 카카오 로그인 → 활성화 ON, Redirect URI에 <code style="background:#fff3cd;padding:1px 6px;border-radius:4px">https://unseon.co.kr/auth.html</code> 등록
+          </div>
+          <div class="admin-form-row">
+            <label>JavaScript 앱키</label>
+            <input class="admin-input" type="text" id="sc_kakaoJsKey"
+              placeholder="예: abc123def456..."
+              value="${(function(){try{return JSON.parse(localStorage.getItem('sajuon_social_config')||'{}').kakaoJsKey||'';}catch(e){return '';}})()}"/>
+          </div>
+        </div>
+
+        <!-- 네이버 -->
+        <div style="background:#f1fff7;border:1px solid #a5d6a7;border-radius:12px;padding:16px 18px;margin-bottom:18px">
+          <div style="font-weight:700;font-size:0.9rem;color:#1b5e20;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            <span style="background:#03C75A;color:#fff;font-weight:900;font-size:0.8rem;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center">N</span>
+            네이버 로그인
+          </div>
+          <div style="font-size:0.8rem;color:#2e7d32;margin-bottom:10px;line-height:1.7">
+            📌 <a href="https://developers.naver.com" target="_blank" style="color:#1b5e20;font-weight:600">developers.naver.com</a> →
+            Application → 애플리케이션 등록 → <strong>Client ID / Secret</strong><br>
+            📌 서비스 URL에 <code style="background:#e8f5e9;padding:1px 6px;border-radius:4px">https://unseon.co.kr</code> 등록 필수<br>
+            📌 Callback URL: <code style="background:#e8f5e9;padding:1px 6px;border-radius:4px">https://unseon.co.kr/oauth-callback.html</code>
+          </div>
+          <div class="admin-form-row" style="margin-bottom:10px">
+            <label>Client ID</label>
+            <input class="admin-input" type="text" id="sc_naverClientId"
+              placeholder="예: AbCdEfGhIj..."
+              value="${(function(){try{return JSON.parse(localStorage.getItem('sajuon_social_config')||'{}').naverClientId||'';}catch(e){return '';}})()}"/>
+          </div>
+          <div class="admin-form-row" style="margin-bottom:10px">
+            <label>Client Secret</label>
+            <input class="admin-input" type="password" id="sc_naverClientSecret"
+              placeholder="예: xXxXxXxX..."
+              value="${(function(){try{return JSON.parse(localStorage.getItem('sajuon_social_config')||'{}').naverClientSecret||'';}catch(e){return '';}})()}"/>
+          </div>
+          <div class="admin-form-row">
+            <label>Callback URL (자동 입력)</label>
+            <input class="admin-input" type="text" id="sc_naverRedirectUri"
+              placeholder="https://unseon.co.kr/oauth-callback.html"
+              value="${(function(){try{return JSON.parse(localStorage.getItem('sajuon_social_config')||'{}').naverRedirectUri||'https://unseon.co.kr/oauth-callback.html';}catch(e){return 'https://unseon.co.kr/oauth-callback.html';}})()}"/>
+          </div>
+        </div>
+
+        <button class="admin-save-btn" onclick="saveSocialConfig()" style="width:100%">
+          <i class="fas fa-save"></i> 소셜 로그인 설정 저장
+        </button>
+        <div style="font-size:0.78rem;color:#888;margin-top:10px;text-align:center">
+          ⚠️ 앱키는 이 브라우저의 localStorage에만 저장됩니다.
+          실서버 배포 시 소스코드에 직접 입력하거나 환경변수를 사용하세요.
+        </div>
+      </div>
+
     </div>
   `;
+}
+
+/* 소셜 로그인 설정 저장 */
+function saveSocialConfig() {
+  const g = id => document.getElementById(id)?.value?.trim() || '';
+  const cfg = {
+    kakaoJsKey:          g('sc_kakaoJsKey'),
+    naverClientId:       g('sc_naverClientId'),
+    naverClientSecret:   g('sc_naverClientSecret'),
+    naverRedirectUri:    g('sc_naverRedirectUri') || 'https://unseon.co.kr/oauth-callback.html',
+  };
+  localStorage.setItem('sajuon_social_config', JSON.stringify(cfg));
+
+  // 카카오 SDK 즉시 재초기화
+  if (cfg.kakaoJsKey && typeof Kakao !== 'undefined') {
+    try {
+      if (Kakao.isInitialized()) Kakao.cleanup();
+      Kakao.init(cfg.kakaoJsKey);
+      showToast('✅ 소셜 로그인 설정이 저장되었습니다 (카카오 SDK 초기화 완료)');
+    } catch(e) {
+      showToast('⚠️ 설정 저장 완료 (카카오 SDK 초기화 실패: 앱키 확인 필요)');
+    }
+  } else {
+    showToast('✅ 소셜 로그인 설정이 저장되었습니다');
+  }
 }
 
 /* 보안 섹션 헬퍼 함수들 */
