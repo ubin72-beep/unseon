@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>로그인 처리 중... — 운세ON</title>
+  <meta name="robots" content="noindex, nofollow"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: linear-gradient(135deg, #1a2e1a 0%, #2c5f4f 100%);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+    }
+    .box {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 48px 40px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+    .logo { font-size: 1.6rem; font-weight: 800; margin-bottom: 24px; color: #fff; }
+    .logo span { color: #d4af37; }
+    .spinner {
+      width: 52px; height: 52px;
+      border: 4px solid rgba(255,255,255,0.2);
+      border-top-color: #d4af37;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status { font-size: 1.05rem; font-weight: 600; margin-bottom: 8px; }
+    .sub    { font-size: 0.85rem; opacity: 0.7; }
+    .error-box {
+      display: none;
+      background: rgba(198,40,40,0.18);
+      border: 1px solid rgba(198,40,40,0.4);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-top: 20px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+    .back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 24px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 10px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">운세<span>ON</span></div>
+  <div class="spinner" id="spinner"></div>
+  <div class="status" id="statusMsg">로그인 처리 중...</div>
+  <div class="sub"   id="subMsg">잠시만 기다려주세요</div>
+  <div class="error-box" id="errorBox"></div>
+  <a href="auth.html" class="back-btn" id="backBtn" style="display:none">
+    ← 로그인 페이지로 돌아가기
+  </a>
+</div>
+
+<script src="js/auth.js?v=20260419s"></script>
+<script>
+/* ============================================================
+   oauth-callback.html
+   네이버 OAuth 2.0 콜백 처리
+   URL 형식: /oauth-callback.html?code=XXX&state=YYY
+   ============================================================ */
+
+function setStatus(msg, sub) {
+  document.getElementById('statusMsg').textContent = msg;
+  if (sub !== undefined) document.getElementById('subMsg').textContent = sub;
+}
+function showError(msg) {
+  document.getElementById('spinner').style.display = 'none';
+  document.getElementById('statusMsg').textContent = '로그인 실패';
+  document.getElementById('subMsg').textContent    = '';
+  const eb = document.getElementById('errorBox');
+  eb.style.display = 'block';
+  eb.innerHTML = '❌ ' + msg;
+  document.getElementById('backBtn').style.display = 'inline-block';
+}
+
+(async function() {
+  const params   = new URLSearchParams(location.search);
+  const code     = params.get('code');
+  const state    = params.get('state');
+  const error    = params.get('error');
+  const errorDesc= params.get('error_description');
+
+  /* ── 오류 응답 처리 ── */
+  if (error) {
+    if (error === 'access_denied') {
+      showError('네이버 로그인이 취소되었습니다.');
+    } else {
+      showError('네이버 로그인 오류: ' + (errorDesc || error));
+    }
+    return;
+  }
+
+  /* ── 파라미터 검증 ── */
+  if (!code || !state) {
+    showError('잘못된 접근입니다. (파라미터 없음)');
+    return;
+  }
+
+  /* ── CSRF state 검증 ── */
+  const savedState = sessionStorage.getItem('naver_oauth_state');
+  if (!savedState || savedState !== state) {
+    showError('보안 검증 실패 (state 불일치). 다시 시도해주세요.');
+    return;
+  }
+  sessionStorage.removeItem('naver_oauth_state');
+
+  /* ── 네이버 토큰 교환 ── */
+  // 정적 사이트에서는 client_secret을 노출할 수 없으므로
+  // 네이버의 CORS 정책상 토큰 교환을 브라우저에서 직접 할 수 없습니다.
+  // → 네이버 로그인 JavaScript SDK 방식으로 대체합니다.
+  //
+  // ★ 실제 운영 환경에서는 아래 두 가지 중 선택:
+  //   1) 네이버 클라우드 Functions / AWS Lambda 등 서버리스로 토큰 교환
+  //   2) 네이버 로그인 JS SDK (naver_id_login.js) 사용 → 이 파일에서 처리
+
+  setStatus('네이버 계정 정보 확인 중...', '토큰을 교환하고 있습니다');
+
+  try {
+    // 네이버 JS SDK를 통한 토큰 교환 시도
+    const cfg        = getSocialConfig ? getSocialConfig() : {};
+    const clientId   = cfg.naverClientId   || '';
+    const clientSec  = cfg.naverClientSecret || '';
+    const redirectUri= cfg.naverRedirectUri  || (location.origin + '/oauth-callback.html');
+
+    if (!clientId || !clientSec) {
+      showError('관리자 설정에서 네이버 클라이언트 ID와 Secret을 등록해주세요.');
+      return;
+    }
+
+    // ▶ 네이버 토큰 교환 API 호출
+    //   (CORS 허용 프록시 없이는 브라우저에서 직접 호출 불가 → 서버리스 필요)
+    //   현재는 네이버 JS SDK(naver_id_login.js) 방식으로 처리합니다.
+    //   SDK가 로드되어 있으면 SDK로, 없으면 안내 메시지 표시
+    if (typeof naver_id_login !== 'undefined') {
+      const naverLogin = new naver_id_login(clientId, redirectUri);
+      naverLogin.get_naver_userprofile(function() {
+        const email  = naverLogin.getProfileData('email') || ('naver_' + naverLogin.getProfileData('id') + '@naver.social');
+        const name   = naverLogin.getProfileData('name') || naverLogin.getProfileData('nickname') || '네이버사용자';
+        const naverId= naverLogin.getProfileData('id')   || state;
+        const avatar = naverLogin.getProfileData('profile_image') || '';
+
+        if (typeof handleSocialLoginSuccess === 'function') {
+          handleSocialLoginSuccess({
+            provider:    'naver',
+            provider_id: String(naverId),
+            email:       email,
+            name:        name,
+            avatar:      avatar,
+          });
+        }
+      });
+    } else {
+      // SDK 없는 경우 — mock 처리 (테스트용)
+      // 실제 운영에서는 서버리스 토큰 교환 함수를 구현해야 합니다.
+      showError(
+        '네이버 로그인 SDK가 로드되지 않았습니다.<br><br>' +
+        '운영 환경에서는 <code>naver_id_login.js</code> SDK를 ' +
+        'auth.html에 추가하거나,<br>' +
+        '서버리스 함수로 토큰 교환을 처리해야 합니다.<br><br>' +
+        '<a href="https://developers.naver.com/docs/login/sdks/sdks.md" ' +
+        'target="_blank" style="color:#ffb74d">네이버 로그인 SDK 가이드 →</a>'
+      );
+    }
+  } catch(e) {
+    console.error('[네이버 콜백]', e);
+    showError('네이버 로그인 처리 중 오류가 발생했습니다: ' + e.message);
+  }
+})();
+</script>
+</body>
+</html>

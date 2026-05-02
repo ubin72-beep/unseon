@@ -253,6 +253,33 @@
   </div>
 </div>
 
-<script src="js/auth.js?v=20260412d"></script>
-</body>
-</html>
+<script src="js/auth.js?v=20260419s"></script>
+
+<!-- ★ 카카오 JavaScript SDK (소셜 로그인) -->
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+        integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4"
+        crossorigin="anonymous"></script>
+
+<!-- ★ 네이버 로그인 JavaScript SDK -->
+<script src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js"
+        charset="utf-8"></script>
+
+<script>
+/* auth.html 초기화 — 카카오/네이버 SDK 준비 후 앱키 설정 */
+(function() {
+  const cfg = (function() {
+    try { return JSON.parse(localStorage.getItem('sajuon_social_config') || '{}'); } catch { return {}; }
+  })();
+
+  /* 카카오 SDK 초기화 */
+  if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
+    const kakaoKey = cfg.kakaoJsKey || '';
+    if (kakaoKey && kakaoKey !== 'YOUR_KAKAO_JS_APP_KEY') {
+      try { Kakao.init(kakaoKey); } catch(e) { console.warn('[카카오 SDK init]', e); }
+    }
+  }
+
+  /* 네이버 SDK는 oauth-callback.html에서 사용 — 여기서는 별도 초기화 불필요 */
+})();
+</script>
+
