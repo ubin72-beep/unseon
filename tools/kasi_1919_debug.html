@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>1919년 윤달 분석</title>
+<style>body{font-family:monospace;font-size:13px;padding:16px;background:#111;color:#eee}.ok{color:#4f4}.err{color:#f44}</style>
+</head>
+<body><pre id="out"></pre>
+<script>
+function toAbsDay(y, m, d) {
+  if (m <= 2) { y -= 1; m += 12; }
+  const A = Math.floor(y / 100);
+  const B = 2 - A + Math.floor(A / 4);
+  return Math.floor(365.25*(y+4716)) + Math.floor(30.6001*(m+1)) + d + B - 1524;
+}
+
+// 1918~1921 근처 연도 춘절 데이터 (원본)
+const slice = [
+  { year:1917, cm:1, cd:23 },
+  { year:1918, cm:2, cd:11 },
+  { year:1919, cm:2, cd: 1 },
+  { year:1920, cm:2, cd:20 },
+  { year:1921, cm:2, cd: 8 },
+  { year:1922, cm:1, cd:28 },
+];
+
+let out = '=== 1917~1921 실제 갭 분석 ===\n';
+for (let i = 0; i < slice.length - 1; i++) {
+  const cur  = slice[i];
+  const next = slice[i+1];
+  const g = toAbsDay(next.year, next.cm, next.cd) - toAbsDay(cur.year, cur.cm, cur.cd);
+  out += `${cur.year}→${next.year}: 실갭=${g}일  (윤달 ${g>=383?'있음':'없음'})\n`;
+}
+
+// 만약 1919년 갭이 384일이면 윤달 있어야 함
+// 1919년: 2,1 → 1920년: 2,20
+const g1919 = toAbsDay(1920, 2, 20) - toAbsDay(1919, 2, 1);
+out += `\n1919년 실갭 = ${g1919}일\n`;
+out += `→ 윤달 ${g1919 >= 383 ? '있어야 함 ✅' : '없음 ✅'}\n`;
+
+// KASI 공식: 1920년 = 윤7월 → 근데 1919→1920 갭을 확인
+// 실제로 1920년 db는 다음해(1921)와의 갭이 윤달 포함 384일
+const g1920 = toAbsDay(1921, 2, 8) - toAbsDay(1920, 2, 20);
+out += `\n1920년 실갭 = ${g1920}일\n`;
+out += `→ 윤달 ${g1920 >= 383 ? '있어야 함 ✅' : '없음 ✅'}\n`;
+
+// 현재 DB에서 1919년 데이터
+const r1919 = [30,30,29,29,30,29,30,29,30,29,30,29];
+const sum1919 = r1919.reduce((a,b)=>a+b,0);
+out += `\n현재 DB 1919년: 윤달 없음, 월합=${sum1919}\n`;
+out += `diff = ${sum1919} - ${g1919} = ${sum1919 - g1919}\n`;
+
+// 1919년 윤달 추가 시 어떤 월이 적합한가?
+// KASI에 따르면 1919년에는 윤달이 없고 1920년에 윤7월이 있음
+// 그런데 갭이 -30이면 → 1919년에 윤달 추가 필요
+// KASI 재확인: 
+// 己未년(1919) → 윤달 없음 (354일)
+// 庚申년(1920) → 윤7월 (384일)
+// 실갭: 1919→1920 = ?
+out += `\n=== 결론 ===\n`;
+if (g1919 === 384 || g1919 === 385) {
+  out += `1919년 실갭=${g1919}: 윤달 필요\n`;
+  out += `KASI 재확인 필요 - 1919년 윤달 추가\n`;
+} else {
+  out += `1919년 실갭=${g1919}: 윤달 불필요\n`;
+  out += `월 일수 조정으로 해결 가능\n`;
+}
+
+document.getElementById('out').textContent = out;
+console.log('1919 실갭:', g1919, '1920 실갭:', g1920);
+console.log('1919 DB합:', sum1919, 'diff:', sum1919 - g1919);
+</script>
+</body>
+</html>

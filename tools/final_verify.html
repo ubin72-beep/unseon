@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>saju.js 최종 갭 검증</title>
+<style>
+body{font-family:monospace;font-size:13px;padding:20px;background:#111;color:#eee}
+.ok{color:#4f4}.err{color:#f44}.info{color:#8af}
+pre{white-space:pre-wrap}
+</style>
+</head>
+<body>
+<h2 class="info">saju.js LUNAR_DB 최종 갭 검증</h2>
+<pre id="out"></pre>
+<script src="../js/saju.js"></script>
+<script>
+// saju.js 로드 후 LUNAR_DB를 사용해 갭 검증
+function toAbsDay(y, m, d) {
+  if (m <= 2) { y -= 1; m += 12; }
+  const A = Math.floor(y / 100);
+  const B = 2 - A + Math.floor(A / 4);
+  return Math.floor(365.25*(y+4716)) + Math.floor(30.6001*(m+1)) + d + B - 1524;
+}
+
+let ok=0, errs=[];
+for (let yr = 1900; yr <= 2049; yr++) {
+  const cur  = LUNAR_DB[yr];
+  const next = LUNAR_DB[yr+1];
+  if (!cur || !next) continue;
+
+  const absThis = toAbsDay(yr,   cur.chunjol_m,  cur.chunjol_d);
+  const absNext = toAbsDay(yr+1, next.chunjol_m, next.chunjol_d);
+  const realGap = absNext - absThis;
+
+  const dbSum = cur.months.reduce((a,b)=>a+b,0) + (cur.leapMonth>0 ? cur.leapDays : 0);
+  const diff  = dbSum - realGap;
+
+  if (diff !== 0) {
+    errs.push({yr, dbSum, realGap, diff,
+      leapMonth: cur.leapMonth, leapDays: cur.leapDays});
+  } else {
+    ok++;
+  }
+}
+
+let html = '';
+if (errs.length === 0) {
+  html += `<span class="ok">🎉 완벽! 오류 0건 / 총 ${ok}건 전부 정상</span>\n\n`;
+  html += `<span class="ok">✅ KASI 공식 데이터 기준 1900~2050 전구간 갭 검증 통과</span>\n`;
+} else {
+  html += `<span class="err">❌ 오류 ${errs.length}건 / 정상 ${ok}건</span>\n\n`;
+  errs.forEach(e => {
+    html += `<span class="err">❌ ${e.yr} | DB합=${e.dbSum} | 실갭=${e.realGap} | diff=${e.diff} | 윤${e.leapMonth}월(${e.leapDays}일)</span>\n`;
+  });
+}
+
+html += `\n── 윤달 배치 확인 ──\n`;
+for (let yr=1900; yr<=2050; yr++) {
+  const d = LUNAR_DB[yr];
+  if (d && d.leapMonth > 0) {
+    html += `<span class="info">  ${yr}년: 윤${d.leapMonth}월 ${d.leapDays}일</span>\n`;
+  }
+}
+
+document.getElementById('out').innerHTML = html;
+
+// 콘솔 출력
+console.log(`=== saju.js LUNAR_DB 최종 검증 ===`);
+console.log(`정상: ${ok}건 / 오류: ${errs.length}건`);
+errs.forEach(e => console.log(`❌ ${e.yr}: diff=${e.diff}`));
+if (errs.length === 0) console.log('✅ 오류 0건! 완벽한 KASI 데이터');
+
+// 윤달 목록
+const leapList = [];
+for (let yr=1900; yr<=2050; yr++) {
+  const d = LUNAR_DB[yr];
+  if (d && d.leapMonth > 0) leapList.push(`${yr}:${d.leapMonth}월`);
+}
+console.log('윤달 목록:', leapList.join(', '));
+</script>
+</body>
+</html>

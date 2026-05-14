@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>잔여오류 분석</title></head>
+<body>
+<script>
+function _toAbsDay(y, m, d) {
+  const Y = m <= 2 ? y - 1 : y;
+  const M = m <= 2 ? m + 12 : m;
+  const A = Math.floor(Y / 100);
+  const B = 2 - A + Math.floor(A / 4);
+  return Math.floor(365.25*(Y+4716)) + Math.floor(30.6001*(M+1)) + d + B - 1524 - 2415051;
+}
+function absToDate(abs) {
+  const jdn = abs + 2415051;
+  const a = jdn+32044, b=Math.floor((4*a+3)/146097), c=a-Math.floor(146097*b/4);
+  const dd=Math.floor((4*c+3)/1461), e=c-Math.floor(1461*dd/4), mm=Math.floor((5*e+2)/153);
+  return (100*b+dd-4800+Math.floor(mm/10))+'-'+(mm+3-12*Math.floor(mm/10))+'-'+(e-Math.floor((153*mm+2)/5)+1);
+}
+
+// 잔여 오류 연도: 1905, 1906, 1930, 1976, 2022, 2033
+// 이 연도들은 diff = ±28~31 (윤달 이동형)이지만 자동 알고리즘이 처리 못한 것들
+// 수동 분석 필요
+
+// KASI 기준 춘절 날짜 (확인된 것들):
+// 1904: 2/16, 1905: 2/4, 1906: 1/25, 1907: 2/13
+// 1929: 2/10, 1930: 1/30, 1931: 2/17
+// 1975: 2/11, 1976: 1/31, 1977: 2/18
+// 2021: 2/12, 2022: 2/1, 2023: 1/22
+// 2032: 2/11, 2033: 1/31, 2034: 2/19
+
+const years = [1904,1905,1906,1907,1908, 1929,1930,1931,1932, 1974,1975,1976,1977,1978, 2021,2022,2023,2024, 2032,2033,2034,2035];
+
+// 현재 autofix 후 데이터에서 해당 연도들만 확인
+// (자동수정 알고리즘 적용 후 결과 기준)
+// 자동수정 결과에서 잔여오류 연도들:
+// 1905: diff=-28, leap=2(30) → DB초과: 윤달을 다음해로? 1906에는 윤달없음
+//   실갭 계산: 1905(2/4) → 1906(1/25) = ?
+const gap1905 = _toAbsDay(1906,1,25) - _toAbsDay(1905,2,4);
+const gap1906 = _toAbsDay(1907,2,13) - _toAbsDay(1906,1,25);
+console.log('1905 춘절갭: '+gap1905+' (355이면 평년, 384이면 윤년)');
+console.log('1906 춘절갭: '+gap1906);
+
+// 1905: diff=-28 (DB=383, 실갭=355) → DB에 윤달(30)이 있는데 실제로는 없어야 함
+// → 윤달을 1906으로 이동 시도
+// 1906에 윤달 추가하면 1906 갭이 384가 되어야 하는데, 1906 실갭이 384면 가능
+console.log('1906 실갭='+gap1906+', 필요: 354 또는 384');
+
+const gap1930 = _toAbsDay(1931,2,17) - _toAbsDay(1930,1,30);
+const gap1929 = _toAbsDay(1930,1,30) - _toAbsDay(1929,2,10);
+console.log('1929 춘절갭: '+gap1929);
+console.log('1930 춘절갭: '+gap1930);
+
+const gap1975 = _toAbsDay(1976,1,31) - _toAbsDay(1975,2,11);
+const gap1976 = _toAbsDay(1977,2,18) - _toAbsDay(1976,1,31);
+console.log('1975 춘절갭: '+gap1975);
+console.log('1976 춘절갭: '+gap1976);
+
+const gap2022 = _toAbsDay(2023,1,22) - _toAbsDay(2022,2,1);
+const gap2021 = _toAbsDay(2022,2,1) - _toAbsDay(2021,2,12);
+console.log('2021 춘절갭: '+gap2021);
+console.log('2022 춘절갭: '+gap2022);
+
+const gap2033 = _toAbsDay(2034,2,19) - _toAbsDay(2033,1,31);
+const gap2032 = _toAbsDay(2033,1,31) - _toAbsDay(2032,2,11);
+console.log('2032 춘절갭: '+gap2032);
+console.log('2033 춘절갭: '+gap2033);
+
+// 분석:
+// 자동수정 후 현재 상태 시뮬레이션
+// 1905: leap=2(30), 실갭=355, DB=383 → diff=-28
+//   → 1906에 윤달없음이므로 1906으로 이동 불가 (1906 갭도 확인)
+// 결론: 윤달이 1905도 1906도 아닌, 아예 없거나 다른 해인 경우
+// 즉 자동알고리즘에서 1902→1903 이동 후, 1905는 그냥 윤2월있고 1906은 갭384이면
+// 1905→1906 이동이 맞는데 1906 갭이 384인지 확인
+
+console.log('\n=== 잔여오류 요약 ===');
+console.log('1905 갭='+gap1905+': 윤달(30)을 1906으로 이동하려면 1906갭이 384여야함, 실제='+gap1906);
+console.log('1930 갭='+gap1930+': 1929갭='+gap1929);
+console.log('1976 갭='+gap1976+': 1975갭='+gap1975);
+console.log('2022 갭='+gap2022+': 2021갭='+gap2021);
+console.log('2033 갭='+gap2033+': 2032갭='+gap2032);
+</script>
+</body></html>

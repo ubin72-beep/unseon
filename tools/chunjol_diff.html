@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>춘절 vs DB 갭 차이 분석</title>
+<style>body{font-family:monospace;font-size:12px;padding:16px;background:#111;color:#eee}.ok{color:#4f4}.err{color:#f44}.warn{color:#fa4}</style>
+</head>
+<body><pre id="out"></pre>
+<script src="../js/saju.js"></script>
+<script>
+// 문제 분석: 검증 도구 raw배열 vs saju.js LUNAR_DB 춘절 비교
+// 검증 도구는 오류0, saju.js는 70건 → 춘절날짜 불일치 가능성
+
+function toAbsDay(y, m, d) {
+  if (m <= 2) { y -= 1; m += 12; }
+  const A = Math.floor(y / 100);
+  const B = 2 - A + Math.floor(A / 4);
+  return Math.floor(365.25*(y+4716)) + Math.floor(30.6001*(m+1)) + d + B - 1524;
+}
+
+// 교정 도구의 최종 춘절 데이터 (tools/kasi_final_output.html에서 출력된 값)
+// 교정 도구도 동일한 raw를 사용하므로 동일해야 함...
+// 실제로는 saju.js의 춘절이 다를 수 있음
+
+// saju.js LUNAR_DB와 raw배열 춘절 비교
+const rawFixed = [
+  [ 1,31, 8, 30,29,30,29,30,29,30,29,30,30,29,30, 29], // 1900
+  [ 2,19, 0, 30,29,30,29,30,29,30,29,30,29,30,29,  0], // 1901
+  [ 2, 8, 0, 30,29,30,29,30,29,30,29,30,29,30,30,  0], // 1902
+  [ 1,29, 5, 30,29,30,29,29,30,29,30,29,30,30,29, 29], // 1903
+  [ 2,16, 0, 30,30,29,30,29,29,30,29,29,30,29,30,  0], // 1904
+  [ 2, 4, 0, 30,29,30,29,30,29,30,29,30,29,30,30,  0], // 1905
+  [ 1,25, 4, 30,29,30,29,30,29,30,29,29,30,29,29, 30], // 1906
+  [ 2,13, 0, 30,29,30,30,29,30,29,30,29,30,29,29,  0], // 1907
+  [ 2, 2, 0, 30,29,30,29,30,29,30,29,30,29,30,30,  0], // 1908
+  [ 1,22, 2, 30,29,30,29,30,29,30,30,29,30,29,30, 29], // 1909
+  [ 2,10, 0, 29,30,29,29,30,29,30,30,29,30,30,29,  0], // 1910
+  [ 1,30, 6, 30,29,30,29,29,30,29,30,29,30,30,29, 29], // 1911
+  [ 2,18, 0, 30,29,30,29,29,30,29,29,30,30,29,30,  0], // 1912
+  [ 2, 6, 0, 30,29,30,30,29,29,30,29,29,30,29,30,  0], // 1913
+  [ 1,26, 5, 30,29,30,30,29,29,30,29,29,30,29,29, 30], // 1914
+  [ 2,14, 0, 30,29,30,30,29,30,29,30,29,29,30,29,  0], // 1915
+  [ 2, 3, 0, 30,29,30,30,29,30,29,30,29,30,29,30,  0], // 1916
+  [ 1,23, 2, 30,29,29,30,30,29,29,30,30,29,30,29, 29], // 1917
+  [ 2,11, 0, 30,29,29,30,30,29,29,30,29,30,30,29,  0], // 1918
+  [ 2, 1, 7, 30,30,29,29,30,29,30,29,30,29,30,29, 29], // 1919
+  [ 2,20, 0, 29,30,29,29,30,30,29,30,29,30,29,30,  0], // 1920
+  [ 2, 8, 0, 29,30,29,29,30,30,29,30,29,30,30,29,  0], // 1921
+  [ 1,28,12, 30,29,30,29,30,29,30,29,30,30,29,30, 29], // 1922
+  [ 2,16, 0, 29,30,29,30,29,30,29,29,30,29,30,30,  0], // 1923
+  [ 2, 5, 0, 29,30,29,30,29,30,29,29,30,29,30,30,  0], // 1924
+  [ 1,24, 4, 29,30,29,30,30,29,30,29,29,30,29,30, 29], // 1925
+  [ 2,13, 0, 29,30,29,30,29,30,29,29,30,29,30,29,  0], // 1926
+  [ 2, 2, 0, 30,29,30,30,29,30,29,30,29,29,30,29,  0], // 1927
+  [ 1,23, 2, 30,29,30,30,29,30,30,29,30,29,30,29, 29], // 1928
+];
+
+let html = '=== 춘절 비교 (saju.js vs rawFixed 교정본) ===\n';
+html += '연도 | saju_cm/cd | raw_cm/cd | 차이\n';
+html += '──────────────────────────────────────────────\n';
+
+let diffCount = 0;
+for (let yr = 1900; yr <= 1929; yr++) {
+  const db = LUNAR_DB[yr];
+  const ri = yr - 1900;
+  const rf = rawFixed[ri];
+  const same = db.chunjol_m === rf[0] && db.chunjol_d === rf[1];
+  if (!same) {
+    html += `<span class="err">${yr} | ${db.chunjol_m}/${db.chunjol_d} | ${rf[0]}/${rf[1]} | ❌ 불일치</span>\n`;
+    diffCount++;
+  } else {
+    html += `<span class="ok">${yr} | ${db.chunjol_m}/${db.chunjol_d} | ${rf[0]}/${rf[1]} | ✅</span>\n`;
+  }
+}
+html += `\n춘절 불일치: ${diffCount}건\n`;
+
+document.getElementById('out').innerHTML = html;
+
+// 핵심: 갭 검증에서 춘절이 맞는데 월합이 틀리다면
+// → saju.js에 적용된 월배열과 raw 교정본이 다른 것
+// 1906년 구체 비교
+const db1906 = LUNAR_DB[1906];
+html += `\n=== 1906년 상세 비교 ===\n`;
+html += `saju.js: 윤${db1906.leapMonth}월, months=[${db1906.months.join(',')}], leapDays=${db1906.leapDays}\n`;
+html += `rawFixed: 윤4월, months=[30,29,30,29,30,29,30,29,29,30,29,29], leapDays=30\n`;
+
+const db1906next = LUNAR_DB[1907];
+const realGap1906 = toAbsDay(1907, db1906next.chunjol_m, db1906next.chunjol_d) - 
+                    toAbsDay(1906, db1906.chunjol_m, db1906.chunjol_d);
+const dbSum1906 = db1906.months.reduce((a,b)=>a+b,0) + db1906.leapDays;
+html += `실갭: ${realGap1906}, DB합: ${dbSum1906}, diff: ${dbSum1906-realGap1906}\n`;
+
+document.getElementById('out').innerHTML = html;
+
+console.log('=== 1906년 분석 ===');
+console.log('saju 춘절:', LUNAR_DB[1906].chunjol_m, LUNAR_DB[1906].chunjol_d);
+console.log('saju months:', LUNAR_DB[1906].months);
+console.log('saju leap:', LUNAR_DB[1906].leapMonth, LUNAR_DB[1906].leapDays);
+const g = toAbsDay(1907, LUNAR_DB[1907].chunjol_m, LUNAR_DB[1907].chunjol_d) -
+          toAbsDay(1906, LUNAR_DB[1906].chunjol_m, LUNAR_DB[1906].chunjol_d);
+console.log('1906→1907 실갭:', g);
+console.log('DB합:', LUNAR_DB[1906].months.reduce((a,b)=>a+b,0) + LUNAR_DB[1906].leapDays);
+</script>
+</body>
+</html>
