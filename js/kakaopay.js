@@ -1,12 +1,12 @@
 /* =============================================
-   운세ON — js/kakaopay.js  v3.0
-   카카오페이 결제 연동 (카카오페이 1회 최대 50,000원 한도 기준)
+   운세ON — js/kakaopay.js  v4.0
+   카카오페이 결제 연동 (1회 단건 결제 전용)
 
-   ★ 결제 구조 변경 안내 ★
+   ★ 카카오페이 심사 대응 — 분할 결제 제거 ★
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   카카오페이 1회 결제 최대 한도: 50,000원
-   → 모든 플랜을 50,000원 이하로 구성
-   → 고액 충전은 동일 금액 분할 결제 안내
+   카카오페이 정책: 1회 단건 결제만 허용
+   → 분할 결제 상품 전면 제거 (2026-05-14)
+   → plan5 / plan10 / plan20 / plan30 / plan50 만 운영
 
    ★ 실서비스 전환 체크리스트 ★
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -91,46 +91,6 @@ const PLANS = {
     times:  1
   },
 
-  /* ── 분할 결제 플랜 (50,000원 × N회) ── */
-  plan100: {
-    name:   '120,000P 충전',
-    amount: 50000,         // 1회 결제 금액
-    point:  60000,         // 1회 지급 포인트
-    bonus:  10000,         // 1회 보너스
-    totalAmount: 100000,   // 총 결제금액
-    totalPoint:  120000,   // 총 지급 포인트
-    totalBonus:  20000,    // 총 보너스
-    desc:   '50,000원 × 2회 결제 → 120,000P',
-    badge:  '2회 분할',
-    color:  'split',
-    times:  2
-  },
-  plan150: {
-    name:   '187,500P 충전',
-    amount: 50000,
-    point:  62500,
-    bonus:  12500,
-    totalAmount: 150000,
-    totalPoint:  187500,
-    totalBonus:  37500,
-    desc:   '50,000원 × 3회 결제 → 187,500P',
-    badge:  '3회 분할',
-    color:  'split',
-    times:  3
-  },
-  plan200: {
-    name:   '260,000P 충전',
-    amount: 50000,
-    point:  65000,
-    bonus:  15000,
-    totalAmount: 200000,
-    totalPoint:  260000,
-    totalBonus:  60000,
-    desc:   '50,000원 × 4회 결제 → 260,000P',
-    badge:  '4회 분할',
-    color:  'split',
-    times:  4
-  }
 };
 
 /* ──────────────────────────────────────────── */
@@ -149,34 +109,6 @@ function applyAdminPolicy() {
     if (p.plan30Amt !== undefined) { PLANS.plan30.amount = p.plan30Amt; PLANS.plan30.point = p.plan30Pt || PLANS.plan30.point; PLANS.plan30.bonus = p.plan30Bonus ?? PLANS.plan30.bonus; }
     if (p.plan50Amt !== undefined) { PLANS.plan50.amount = p.plan50Amt; PLANS.plan50.point = p.plan50Pt || PLANS.plan50.point; PLANS.plan50.bonus = p.plan50Bonus ?? PLANS.plan50.bonus; }
 
-    // ── 분할 결제 플랜 ──
-    if (p.plan100TotalAmt !== undefined && PLANS.plan100) {
-      PLANS.plan100.totalAmount = p.plan100TotalAmt;
-      PLANS.plan100.totalPoint  = p.plan100TotalPt  || PLANS.plan100.totalPoint;
-      PLANS.plan100.totalBonus  = p.plan100TotalBonus ?? PLANS.plan100.totalBonus;
-      PLANS.plan100.times       = p.plan100Times    || PLANS.plan100.times;
-      PLANS.plan100.amount      = Math.round(PLANS.plan100.totalAmount / PLANS.plan100.times);
-      PLANS.plan100.point       = Math.round(PLANS.plan100.totalPoint  / PLANS.plan100.times);
-      PLANS.plan100.bonus       = Math.round(PLANS.plan100.totalBonus  / PLANS.plan100.times);
-    }
-    if (p.plan150TotalAmt !== undefined && PLANS.plan150) {
-      PLANS.plan150.totalAmount = p.plan150TotalAmt;
-      PLANS.plan150.totalPoint  = p.plan150TotalPt  || PLANS.plan150.totalPoint;
-      PLANS.plan150.totalBonus  = p.plan150TotalBonus ?? PLANS.plan150.totalBonus;
-      PLANS.plan150.times       = p.plan150Times    || PLANS.plan150.times;
-      PLANS.plan150.amount      = Math.round(PLANS.plan150.totalAmount / PLANS.plan150.times);
-      PLANS.plan150.point       = Math.round(PLANS.plan150.totalPoint  / PLANS.plan150.times);
-      PLANS.plan150.bonus       = Math.round(PLANS.plan150.totalBonus  / PLANS.plan150.times);
-    }
-    if (p.plan200TotalAmt !== undefined && PLANS.plan200) {
-      PLANS.plan200.totalAmount = p.plan200TotalAmt;
-      PLANS.plan200.totalPoint  = p.plan200TotalPt  || PLANS.plan200.totalPoint;
-      PLANS.plan200.totalBonus  = p.plan200TotalBonus ?? PLANS.plan200.totalBonus;
-      PLANS.plan200.times       = p.plan200Times    || PLANS.plan200.times;
-      PLANS.plan200.amount      = Math.round(PLANS.plan200.totalAmount / PLANS.plan200.times);
-      PLANS.plan200.point       = Math.round(PLANS.plan200.totalPoint  / PLANS.plan200.times);
-      PLANS.plan200.bonus       = Math.round(PLANS.plan200.totalBonus  / PLANS.plan200.times);
-    }
   } catch(e) {
     console.warn('[kakaopay] applyAdminPolicy 실패:', e);
   }
@@ -186,7 +118,6 @@ function applyAdminPolicy() {
 /*  상태                                        */
 /* ──────────────────────────────────────────── */
 let selectedPlan        = null;
-let splitPayState       = null;  // { plan, totalTimes, doneCount, totalPts }
 
 /* ──────────────────────────────────────────── */
 /*  유틸                                        */
@@ -287,161 +218,7 @@ function startKakaoPay(planKey) {
   if (!requireLoginForPayment()) return;
   selectedPlan = planKey;
 
-  if (plan.times > 1) {
-    /* 분할 결제 안내 모달 먼저 표시 */
-    showSplitInfoModal(plan, planKey);
-  } else {
-    showPaymentModal(plan);
-  }
-}
-
-/* ──────────────────────────────────────────── */
-/*  분할 결제 안내 모달                         */
-/* ──────────────────────────────────────────── */
-
-function showSplitInfoModal(plan, planKey) {
-  let modal = document.getElementById('splitInfoModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'splitInfoModal';
-    modal.className = 'modal-overlay kp-modal-overlay';
-    document.body.appendChild(modal);
-  }
-  modal.innerHTML = `
-    <div style="background:#fff;border-radius:22px;padding:36px 30px;max-width:420px;width:94%;box-shadow:0 20px 60px rgba(0,0,0,0.2);position:relative">
-      <button onclick="document.getElementById('splitInfoModal').style.display='none';document.body.style.overflow=''"
-        style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:1.4rem;color:#aaa;cursor:pointer">×</button>
-      <div style="text-align:center;margin-bottom:20px">
-        <div style="font-size:2.8rem;margin-bottom:10px">💳</div>
-        <div style="font-size:1.1rem;font-weight:800;color:#1a1a2e;margin-bottom:6px">${plan.name}</div>
-        <div style="font-size:0.85rem;color:#888">카카오페이 1회 한도: <strong style="color:#e65100">50,000원</strong></div>
-      </div>
-
-      <div style="background:#fff9f0;border:1.5px solid #ffe0b2;border-radius:14px;padding:18px;margin-bottom:18px">
-        <div style="font-size:0.82rem;color:#e65100;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px">
-          <i class="fas fa-info-circle"></i> 분할 결제 안내
-        </div>
-        <div style="font-size:0.85rem;color:#555;line-height:1.7">
-          카카오페이는 <strong>1회 최대 50,000원</strong> 한도가 있습니다.<br>
-          총 <strong>${plan.times}회 결제</strong>로 나뉘어 진행됩니다.<br>
-          매 결제마다 카카오페이 창이 새로 열립니다.
-        </div>
-      </div>
-
-      <div style="background:#f8f9fa;border-radius:12px;padding:16px;margin-bottom:20px">
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:0.85rem">
-          <span style="color:#888">1회 결제 금액</span>
-          <strong>₩${plan.amount.toLocaleString()}</strong>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:0.85rem">
-          <span style="color:#888">결제 횟수</span>
-          <strong>${plan.times}회</strong>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:0.85rem">
-          <span style="color:#888">총 결제 금액</span>
-          <strong style="color:#1565c0">₩${plan.totalAmount.toLocaleString()}</strong>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:8px 0 2px;font-size:0.95rem">
-          <span style="color:#555;font-weight:600">총 지급 포인트</span>
-          <strong style="color:#2e7d32;font-size:1.05rem">${plan.totalPoint.toLocaleString()}P</strong>
-        </div>
-        ${plan.totalBonus > 0 ? `
-        <div style="display:flex;justify-content:space-between;padding:4px 0 2px;font-size:0.8rem">
-          <span style="color:#888">보너스 포인트</span>
-          <span style="color:#2e7d32;font-weight:600">+${plan.totalBonus.toLocaleString()}P ✨</span>
-        </div>` : ''}
-      </div>
-
-      <button onclick="startSplitPayment('${planKey}')"
-        style="width:100%;padding:15px;background:#fee500;color:#3d2b00;border:none;border-radius:12px;font-size:1rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit">
-        <i class="fas fa-comment"></i> 1회차 결제 시작 (₩${plan.amount.toLocaleString()})
-      </button>
-      <button onclick="document.getElementById('splitInfoModal').style.display='none';document.body.style.overflow=''"
-        style="width:100%;margin-top:8px;padding:10px;background:none;border:none;color:#aaa;font-size:0.82rem;cursor:pointer;font-family:inherit">취소</button>
-    </div>`;
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-
-/* ──────────────────────────────────────────── */
-/*  분할 결제 시작                              */
-/* ──────────────────────────────────────────── */
-
-function startSplitPayment(planKey) {
-  const plan = PLANS[planKey];
-  if (!plan) return;
-
-  /* splitInfoModal 닫기 */
-  const infoModal = document.getElementById('splitInfoModal');
-  if (infoModal) { infoModal.style.display = 'none'; }
-  document.body.style.overflow = '';
-
-  splitPayState = {
-    planKey,
-    plan,
-    totalTimes:  plan.times,
-    doneCount:   0,
-    totalPtsGiven: 0
-  };
-
-  doNextSplitPayment();
-}
-
-function doNextSplitPayment() {
-  if (!splitPayState) return;
-  const { plan, totalTimes, doneCount } = splitPayState;
-  const nextCount = doneCount + 1;
-
-  /* 각 회차용 1회 플랜 객체 생성 */
-  const roundPlan = {
-    name:   `${plan.name} (${nextCount}/${totalTimes}회차)`,
-    amount: plan.amount,
-    point:  plan.point,
-    bonus:  plan.bonus,
-    desc:   `${plan.name} ${nextCount}/${totalTimes}회차`
-  };
-
-  /* 결제 모달 표시 (회차 정보 포함) */
-  showPaymentModalForSplit(roundPlan, nextCount, totalTimes);
-}
-
-function showPaymentModalForSplit(roundPlan, currentRound, totalRounds) {
-  const modal = document.getElementById('kakaoPayModal');
-  if (!modal) return;
-
-  document.getElementById('kp_planName').textContent = roundPlan.name;
-  document.getElementById('kp_amount').textContent   = '₩' + roundPlan.amount.toLocaleString();
-  document.getElementById('kp_point').textContent    = roundPlan.point.toLocaleString() + 'P';
-  document.getElementById('kp_bonus').textContent    = roundPlan.bonus > 0
-    ? `+${roundPlan.bonus.toLocaleString()}P ✨`
-    : '없음';
-
-  const testBadge = document.getElementById('kp_testBadge');
-  if (testBadge) testBadge.style.display = KAKAO_CONFIG.IS_TEST ? 'flex' : 'none';
-
-  /* 분할 회차 진행바 주입 */
-  let progressBar = document.getElementById('kp_splitProgress');
-  if (!progressBar) {
-    progressBar = document.createElement('div');
-    progressBar.id = 'kp_splitProgress';
-    const body = document.querySelector('.kp-modal-body');
-    if (body) body.prepend(progressBar);
-  }
-  progressBar.innerHTML = `
-    <div style="background:#e3f2fd;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:0.82rem;color:#1565c0;font-weight:600;display:flex;align-items:center;gap:8px">
-      <i class="fas fa-layer-group"></i>
-      분할 결제 진행 중: <strong>${currentRound} / ${totalRounds}회차</strong>
-      <div style="flex:1;height:6px;background:#bbdefb;border-radius:3px;overflow:hidden;margin-left:8px">
-        <div style="height:100%;width:${(currentRound/totalRounds)*100}%;background:#1565c0;border-radius:3px;transition:width 0.3s"></div>
-      </div>
-    </div>`;
-
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-
-  /* selectedPlan을 임시 round 플랜으로 */
-  PLANS['__split_round__'] = roundPlan;
-  selectedPlan = '__split_round__';
+  showPaymentModal(plan);
 }
 
 /* ──────────────────────────────────────────── */
@@ -474,17 +251,6 @@ function closeKakaoModal() {
   const modal = document.getElementById('kakaoPayModal');
   if (modal) modal.style.display = 'none';
   document.body.style.overflow = '';
-  /* 분할 결제 중 취소 → 상태 초기화 */
-  if (splitPayState) {
-    const done = splitPayState.doneCount;
-    const total = splitPayState.totalTimes;
-    if (done > 0) {
-      showKakaoToast(`⚠️ ${done}/${total}회 결제 완료. 나머지는 다시 충전해주세요.`, 'warn');
-    }
-    splitPayState = null;
-  }
-  const prev = document.getElementById('kp_splitProgress');
-  if (prev) prev.remove();
 }
 
 /* ──────────────────────────────────────────── */
@@ -539,7 +305,6 @@ function closeTestPopup() {
   if (popup) popup.style.display = 'none';
   document.body.style.overflow = '';
   sessionStorage.removeItem('kakao_pending_plan');
-  splitPayState = null;
 }
 
 function approveTestPayment() {
@@ -607,7 +372,7 @@ function completePayment(plan, orderId, pgToken) {
       body: JSON.stringify({ points: newPts })
     }).catch(e => console.warn('[Payment] DB 포인트 업데이트 실패:', e));
 
-    fetch('tables/points_history', {
+    fetch('tables/point_history', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -643,35 +408,8 @@ function completePayment(plan, orderId, pgToken) {
   const myPt = document.getElementById('myPointVal');
   if (myPt) myPt.textContent = newPts.toLocaleString() + 'P';
 
-  /* ⑤ 분할 결제 처리 */
-  if (splitPayState) {
-    splitPayState.doneCount++;
-    splitPayState.totalPtsGiven += plan.point;
-
-    if (splitPayState.doneCount < splitPayState.totalTimes) {
-      /* 아직 회차 남음 → 다음 회차 진행 */
-      const done  = splitPayState.doneCount;
-      const total = splitPayState.totalTimes;
-      sessionStorage.removeItem('kakao_pending_plan');
-      showKakaoToast(`✅ ${done}/${total}회 결제 완료! 다음 결제를 진행합니다...`, 'success');
-      setTimeout(() => doNextSplitPayment(), 1200);
-      if (typeof renderHistory === 'function') renderHistory();
-      return;  /* 아직 전체 성공 모달 띄우지 않음 */
-    }
-
-    /* 모든 회차 완료 → 최종 성공 모달 */
-    const finalPlan = {
-      ...splitPayState.plan,
-      point:  splitPayState.plan.totalPoint,
-      bonus:  splitPayState.plan.totalBonus,
-      amount: splitPayState.plan.totalAmount
-    };
-    splitPayState = null;
-    showSuccessModal(finalPlan, newPts, orderId, isTest);
-  } else {
-    /* 단일 결제 완료 */
-    showSuccessModal(plan, newPts, orderId, isTest);
-  }
+  /* ⑤ 단건 결제 완료 */
+  showSuccessModal(plan, newPts, orderId, isTest);
 
   /* ⑥ 이용 내역 새로고침 */
   if (typeof renderHistory === 'function') renderHistory();

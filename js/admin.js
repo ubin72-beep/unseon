@@ -531,13 +531,13 @@ function addCat() {
 }
 
 // =========================================
-// 섹션 4: 요금 정책 관리  (kakaopay.js v3.0 플랜 구조 기준)
+// 섹션 4: 요금 정책 관리  (kakaopay.js v4.0 — 1회 단건 결제 전용)
 // =========================================
 function renderPricing(container) {
   let policy = {};
   try { policy = JSON.parse(localStorage.getItem('sajuon_policy') || '{}'); } catch {}
 
-  // ── 기본값 (kakaopay.js v3.0 PLANS 와 동일) ──
+  // ── 기본값 (kakaopay.js v4.0 PLANS 와 동일, 1회 단건 결제만) ──
   const defaults = {
     // ── 1회 결제 플랜 (카카오페이 1회 한도 50,000원) ──
     plan5Amt:   5000,  plan5Pt:   5000,  plan5Bonus:  0,
@@ -545,10 +545,6 @@ function renderPricing(container) {
     plan20Amt: 20000,  plan20Pt: 22000,  plan20Bonus: 2000,
     plan30Amt: 30000,  plan30Pt: 36000,  plan30Bonus: 6000,
     plan50Amt: 50000,  plan50Pt: 60000,  plan50Bonus: 10000,
-    // ── 분할 결제 플랜 (회당 50,000원 × N회) ──
-    plan100TotalAmt: 100000, plan100TotalPt: 120000, plan100TotalBonus: 20000, plan100Times: 2,
-    plan150TotalAmt: 150000, plan150TotalPt: 187500, plan150TotalBonus: 37500, plan150Times: 3,
-    plan200TotalAmt: 200000, plan200TotalPt: 260000, plan200TotalBonus: 60000, plan200Times: 4,
     // ── 상담 차감 & 무료 포인트 ──
     freePt: 500,
     costBasic: 100, costNormal: 200, costAdvanced: 300,
@@ -560,8 +556,8 @@ function renderPricing(container) {
     <div style="background:linear-gradient(135deg,#fff8e1,#fff3cd);border:1px solid #f9c74f;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px">
       <span style="font-size:1.4rem">💳</span>
       <div>
-        <div style="font-weight:700;font-size:0.95rem;color:#7d5800">카카오페이 1회 결제 한도: 50,000원</div>
-        <div style="font-size:0.82rem;color:#a06000;margin-top:2px">단일 플랜은 최대 ₩50,000, 그 이상은 분할 결제(N회 × ₩50,000)로 처리됩니다.</div>
+        <div style="font-weight:700;font-size:0.95rem;color:#7d5800">카카오페이 1회 단건 결제 — 최대 50,000원</div>
+        <div style="font-size:0.82rem;color:#a06000;margin-top:2px">카카오페이 정책에 따라 1회 단건 결제만 지원됩니다. 분할 결제 상품은 제거되었습니다.</div>
       </div>
       <a href="pricing.html" target="_blank" style="margin-left:auto;padding:7px 14px;background:#ffe066;border-radius:8px;font-size:0.82rem;font-weight:700;color:#7d5800;text-decoration:none;white-space:nowrap">
         <i class="fas fa-external-link-alt"></i> 요금 페이지 확인
@@ -625,48 +621,6 @@ function renderPricing(container) {
       <button class="admin-save-btn" onclick="savePricing()"><i class="fas fa-save"></i> 저장하기</button>
     </div>
 
-    <!-- ── 분할 결제 플랜 ── -->
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <div>
-          <div class="admin-card-title">분할 결제 플랜 설정</div>
-          <div class="admin-card-subtitle">₩50,000 초과 금액 → 50,000원 × N회 자동 분할 — kakaopay.js PLANS.plan100 ~ plan200</div>
-        </div>
-      </div>
-
-      <div style="margin-bottom:20px">
-        <h4 style="font-size:0.88rem;font-weight:700;color:#1e40af;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">🔷 plan100 — 120,000P (₩100,000 = 50,000 × 2회)</h4>
-        <div class="admin-form-2col">
-          <div class="admin-form-row"><label>총 결제금액 (원)</label><input class="admin-input" type="number" id="plan100TotalAmt" value="${p.plan100TotalAmt}"/></div>
-          <div class="admin-form-row"><label>총 지급 포인트</label><input class="admin-input" type="number" id="plan100TotalPt" value="${p.plan100TotalPt}"/></div>
-          <div class="admin-form-row"><label>총 보너스 포인트</label><input class="admin-input" type="number" id="plan100TotalBonus" value="${p.plan100TotalBonus}"/></div>
-          <div class="admin-form-row"><label>분할 횟수</label><input class="admin-input" type="number" id="plan100Times" value="${p.plan100Times}" min="2"/></div>
-        </div>
-      </div>
-
-      <div style="margin-bottom:20px">
-        <h4 style="font-size:0.88rem;font-weight:700;color:#1e40af;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">🔷 plan150 — 187,500P (₩150,000 = 50,000 × 3회)</h4>
-        <div class="admin-form-2col">
-          <div class="admin-form-row"><label>총 결제금액 (원)</label><input class="admin-input" type="number" id="plan150TotalAmt" value="${p.plan150TotalAmt}"/></div>
-          <div class="admin-form-row"><label>총 지급 포인트</label><input class="admin-input" type="number" id="plan150TotalPt" value="${p.plan150TotalPt}"/></div>
-          <div class="admin-form-row"><label>총 보너스 포인트</label><input class="admin-input" type="number" id="plan150TotalBonus" value="${p.plan150TotalBonus}"/></div>
-          <div class="admin-form-row"><label>분할 횟수</label><input class="admin-input" type="number" id="plan150Times" value="${p.plan150Times}" min="2"/></div>
-        </div>
-      </div>
-
-      <div style="margin-bottom:8px">
-        <h4 style="font-size:0.88rem;font-weight:700;color:#1e40af;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">🔷 plan200 — 260,000P (₩200,000 = 50,000 × 4회)</h4>
-        <div class="admin-form-2col">
-          <div class="admin-form-row"><label>총 결제금액 (원)</label><input class="admin-input" type="number" id="plan200TotalAmt" value="${p.plan200TotalAmt}"/></div>
-          <div class="admin-form-row"><label>총 지급 포인트</label><input class="admin-input" type="number" id="plan200TotalPt" value="${p.plan200TotalPt}"/></div>
-          <div class="admin-form-row"><label>총 보너스 포인트</label><input class="admin-input" type="number" id="plan200TotalBonus" value="${p.plan200TotalBonus}"/></div>
-          <div class="admin-form-row"><label>분할 횟수</label><input class="admin-input" type="number" id="plan200Times" value="${p.plan200Times}" min="2"/></div>
-        </div>
-      </div>
-
-      <button class="admin-save-btn" onclick="savePricing()"><i class="fas fa-save"></i> 저장하기</button>
-    </div>
-
     <!-- ── 상담 차감 & 무료 포인트 ── -->
     <div class="admin-card">
       <div class="admin-card-header">
@@ -710,11 +664,6 @@ function savePricing() {
   // 단일 결제 한도 초과 방지
   const capSingle = v => Math.min(v, 50000);
 
-  // ── 분할 결제 플랜 ──
-  const plan100Times = g('plan100Times') || 2;
-  const plan150Times = g('plan150Times') || 3;
-  const plan200Times = g('plan200Times') || 4;
-
   const policy = {
     // 1회 결제
     plan5Amt:   capSingle(plan5Amt),   plan5Pt:   g('plan5Pt')   || 5000,   plan5Bonus:   g('plan5Bonus')   || 0,
@@ -722,19 +671,6 @@ function savePricing() {
     plan20Amt:  capSingle(plan20Amt),  plan20Pt:  g('plan20Pt')  || 22000,  plan20Bonus:  g('plan20Bonus')  || 2000,
     plan30Amt:  capSingle(plan30Amt),  plan30Pt:  g('plan30Pt')  || 36000,  plan30Bonus:  g('plan30Bonus')  || 6000,
     plan50Amt:  capSingle(plan50Amt),  plan50Pt:  g('plan50Pt')  || 60000,  plan50Bonus:  g('plan50Bonus')  || 10000,
-    // 분할 결제
-    plan100TotalAmt:   g('plan100TotalAmt')   || 100000,
-    plan100TotalPt:    g('plan100TotalPt')    || 120000,
-    plan100TotalBonus: g('plan100TotalBonus') || 20000,
-    plan100Times:      plan100Times,
-    plan150TotalAmt:   g('plan150TotalAmt')   || 150000,
-    plan150TotalPt:    g('plan150TotalPt')    || 187500,
-    plan150TotalBonus: g('plan150TotalBonus') || 37500,
-    plan150Times:      plan150Times,
-    plan200TotalAmt:   g('plan200TotalAmt')   || 200000,
-    plan200TotalPt:    g('plan200TotalPt')    || 260000,
-    plan200TotalBonus: g('plan200TotalBonus') || 60000,
-    plan200Times:      plan200Times,
     // 상담 & 무료
     freePt:       g('freePt')       || 500,
     costBasic:    g('costBasic')    || 100,
@@ -752,37 +688,9 @@ function savePricing() {
     PLANS.plan20.amount = policy.plan20Amt; PLANS.plan20.point = policy.plan20Pt; PLANS.plan20.bonus = policy.plan20Bonus;
     PLANS.plan30.amount = policy.plan30Amt; PLANS.plan30.point = policy.plan30Pt; PLANS.plan30.bonus = policy.plan30Bonus;
     PLANS.plan50.amount = policy.plan50Amt; PLANS.plan50.point = policy.plan50Pt; PLANS.plan50.bonus = policy.plan50Bonus;
-    // 분할 결제
-    if (PLANS.plan100) {
-      PLANS.plan100.totalAmount = policy.plan100TotalAmt;
-      PLANS.plan100.totalPoint  = policy.plan100TotalPt;
-      PLANS.plan100.totalBonus  = policy.plan100TotalBonus;
-      PLANS.plan100.times       = policy.plan100Times;
-      PLANS.plan100.amount      = Math.round(policy.plan100TotalAmt / policy.plan100Times);
-      PLANS.plan100.point       = Math.round(policy.plan100TotalPt  / policy.plan100Times);
-      PLANS.plan100.bonus       = Math.round(policy.plan100TotalBonus / policy.plan100Times);
-    }
-    if (PLANS.plan150) {
-      PLANS.plan150.totalAmount = policy.plan150TotalAmt;
-      PLANS.plan150.totalPoint  = policy.plan150TotalPt;
-      PLANS.plan150.totalBonus  = policy.plan150TotalBonus;
-      PLANS.plan150.times       = policy.plan150Times;
-      PLANS.plan150.amount      = Math.round(policy.plan150TotalAmt / policy.plan150Times);
-      PLANS.plan150.point       = Math.round(policy.plan150TotalPt  / policy.plan150Times);
-      PLANS.plan150.bonus       = Math.round(policy.plan150TotalBonus / policy.plan150Times);
-    }
-    if (PLANS.plan200) {
-      PLANS.plan200.totalAmount = policy.plan200TotalAmt;
-      PLANS.plan200.totalPoint  = policy.plan200TotalPt;
-      PLANS.plan200.totalBonus  = policy.plan200TotalBonus;
-      PLANS.plan200.times       = policy.plan200Times;
-      PLANS.plan200.amount      = Math.round(policy.plan200TotalAmt / policy.plan200Times);
-      PLANS.plan200.point       = Math.round(policy.plan200TotalPt  / policy.plan200Times);
-      PLANS.plan200.bonus       = Math.round(policy.plan200TotalBonus / policy.plan200Times);
-    }
   }
 
-  showToast('✅ 요금 정책이 저장되었습니다 (kakaopay.js v3.0 플랜 기준)');
+  showToast('✅ 요금 정책이 저장되었습니다');
 }
 
 // =========================================
