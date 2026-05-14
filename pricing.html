@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="css/pricing.css"/>
   <link rel="stylesheet" href="css/payment.css"/>
   <style>
-    /* ===== 플랜 그리드 (5개 + 3개 분할) ===== */
+    /* ===== 플랜 그리드 (5개 단건 결제) ===== */
     .plan-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -42,15 +42,6 @@
     @media(max-width: 1000px) { .plan-grid { grid-template-columns: repeat(3, 1fr); } }
     @media(max-width: 680px)  { .plan-grid { grid-template-columns: 1fr 1fr; } }
     @media(max-width: 420px)  { .plan-grid { grid-template-columns: 1fr; } }
-
-    /* 분할 결제 플랜 그리드 */
-    .plan-grid-vip {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-      margin-bottom: 16px;
-    }
-    @media(max-width: 768px) { .plan-grid-vip { grid-template-columns: 1fr; } }
 
     /* 골드 (단일 최대) */
     .plan-card--gold {
@@ -71,52 +62,6 @@
     .plan-card--gold .plan-point { color: #b8860b; }
     .plan-card--gold .plan-bonus-tag--plus { background: linear-gradient(135deg, #d4af37, #f5c842); color: #3d2b00; font-weight: 800; }
 
-    /* 분할 결제 카드 */
-    .plan-card--split {
-      background: linear-gradient(145deg, #e8f5e9, #f1f8f2);
-      border: 2px solid #66bb6a !important;
-      position: relative;
-      overflow: hidden;
-    }
-    .plan-card--split::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #2e7d32, #81c784, #2e7d32);
-    }
-    .plan-card--split .plan-name { color: #1b5e20; }
-    .plan-card--split .plan-amount { color: #1b5e20; }
-    .plan-card--split .plan-point { color: #2e7d32; }
-    .plan-card--split .plan-bonus-tag--plus { background: linear-gradient(135deg, #2e7d32, #66bb6a); color: #fff; font-weight: 800; }
-    .plan-card--split .plan-badge { background: linear-gradient(135deg, #388e3c, #66bb6a); color: #fff; }
-    .plan-card--split .plan-btn { background: linear-gradient(135deg, #2e7d32, #43a047); }
-
-    /* 분할 횟수 뱃지 */
-    .split-times-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: #e8f5e9;
-      color: #2e7d32;
-      border: 1px solid #a5d6a7;
-      border-radius: 20px;
-      padding: 3px 10px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    .split-total-row {
-      background: #e8f5e9;
-      border-radius: 8px;
-      padding: 8px 10px;
-      margin: 8px 0;
-      font-size: 0.78rem;
-      color: #1b5e20;
-      font-weight: 600;
-      text-align: center;
-    }
-
     /* 카카오페이 한도 안내 배너 */
     .kakao-limit-notice {
       background: linear-gradient(135deg, #fff9e6, #fff3cd);
@@ -133,38 +78,7 @@
     .kakao-limit-notice i { font-size: 1.4rem; color: #f9a825; flex-shrink: 0; }
     .kakao-limit-notice strong { color: #e65100; }
 
-    /* plan-card--vvip 제거됨 (카카오페이 5만원 한도 대응) */
 
-    .vip-section-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 1.1rem;
-      font-weight: 800;
-      color: #1a1a2e;
-      margin: 44px 0 6px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #f0f0f0;
-    }
-    .vip-section-title span { font-size: 1.4rem; }
-    .vip-section-sub { font-size: 0.88rem; color: #888; margin-bottom: 20px; }
-
-    /* 보너스 비율 강조 뱃지 */
-    .bonus-rate-badge {
-      display: inline-block;
-      background: linear-gradient(135deg, #ff6b35, #f7c59f);
-      color: #fff;
-      font-size: 0.72rem;
-      font-weight: 800;
-      padding: 2px 8px;
-      border-radius: 20px;
-      margin-left: 6px;
-      vertical-align: middle;
-    }
-
-    @media (max-width: 768px) {
-      .plan-grid-vip { grid-template-columns: 1fr; }
-    }
   </style>
 </head>
 <body>
@@ -248,7 +162,7 @@
     <!-- 충전 플랜 -->
     <div class="pricing-section-header">
       <h2>포인트 충전</h2>
-      <p>카카오페이 1회 최대 50,000원 · 고액 충전은 분할결제로 진행됩니다</p>
+      <p>카카오페이 1회 단건 결제 · 최대 50,000원</p>
     </div>
 
     <!-- 카카오페이 한도 안내 -->
@@ -256,13 +170,13 @@
       <i class="fas fa-info-circle"></i>
       <div>
         <strong>카카오페이 1회 결제 한도: 50,000원</strong><br>
-        <span style="font-size:0.8rem">50,000원 이하 플랜은 1회 결제 / 그 이상은 50,000원씩 분할 결제로 자동 안내됩니다.</span>
+        <span style="font-size:0.8rem">모든 플랜은 1회 단건 결제로 진행됩니다. 카드·카카오머니·계좌이체 모두 가능합니다.</span>
       </div>
     </div>
 
-    <!-- ① 1회 결제 플랜 (5개) -->
+    <!-- 충전 플랜 (5개) -->
     <div class="pricing-section-header" style="margin-top:0;margin-bottom:16px">
-      <h3 style="font-size:1rem;font-weight:700;color:#1a1a2e">✅ 1회 결제 플랜 <span style="font-size:0.8rem;color:#888;font-weight:400">(최대 50,000원)</span></h3>
+      <h3 style="font-size:1rem;font-weight:700;color:#1a1a2e">✅ 포인트 충전 플랜 <span style="font-size:0.8rem;color:#888;font-weight:400">(최대 50,000원 · 1회 단건 결제)</span></h3>
     </div>
 
     <div class="plan-grid">
@@ -343,69 +257,6 @@
         </ul>
         <button class="plan-btn kakao-pay-btn" style="background:linear-gradient(135deg,#d4af37,#b8962f);color:#fff;border:none;" onclick="event.stopPropagation();startKakaoPay('plan50')">
           <i class="fas fa-comment"></i> 충전하기
-        </button>
-      </div>
-    </div>
-
-    <!-- ② 분할 결제 플랜 (고액) -->
-    <div class="vip-section-title">
-      <span>💳</span> 분할 결제 플랜
-      <span class="bonus-rate-badge">50,000원 × N회</span>
-    </div>
-    <p class="vip-section-sub">카카오페이 한도(50,000원)로 인해 여러 번 나눠 결제합니다 — 동일 혜택 그대로 제공</p>
-
-    <div class="plan-grid-vip">
-      <!-- 2회 분할: 120,000P -->
-      <div class="plan-card plan-card--split" data-plan="plan100" onclick="selectPlan('plan100')">
-        <div class="plan-badge">💳 2회 분할</div>
-        <div class="plan-name">120,000P</div>
-        <div class="plan-amount">₩100,000</div>
-        <div class="plan-point">120,000P</div>
-        <div class="plan-bonus-tag plan-bonus-tag--plus">+20,000P 보너스 20%</div>
-        <div class="split-total-row">50,000원 × <strong>2회</strong> 결제</div>
-        <ul class="plan-features">
-          <li><i class="fas fa-check"></i> 타로 1,200회</li>
-          <li><i class="fas fa-check"></i> 일반 600회</li>
-          <li><i class="fas fa-check"></i> 20% 보너스 🎁</li>
-        </ul>
-        <button class="plan-btn kakao-pay-btn" onclick="event.stopPropagation();startKakaoPay('plan100')">
-          <i class="fas fa-layer-group"></i> 분할 결제 시작
-        </button>
-      </div>
-
-      <!-- 3회 분할: 187,500P -->
-      <div class="plan-card plan-card--split" data-plan="plan150" onclick="selectPlan('plan150')">
-        <div class="plan-badge">💳 3회 분할</div>
-        <div class="plan-name">187,500P</div>
-        <div class="plan-amount">₩150,000</div>
-        <div class="plan-point">187,500P</div>
-        <div class="plan-bonus-tag plan-bonus-tag--plus">+37,500P 보너스 25%</div>
-        <div class="split-total-row">50,000원 × <strong>3회</strong> 결제</div>
-        <ul class="plan-features">
-          <li><i class="fas fa-check"></i> 타로 1,875회</li>
-          <li><i class="fas fa-check"></i> 일반 937회</li>
-          <li><i class="fas fa-check"></i> 25% 보너스 🎁</li>
-        </ul>
-        <button class="plan-btn kakao-pay-btn" onclick="event.stopPropagation();startKakaoPay('plan150')">
-          <i class="fas fa-layer-group"></i> 분할 결제 시작
-        </button>
-      </div>
-
-      <!-- 4회 분할: 260,000P -->
-      <div class="plan-card plan-card--split" data-plan="plan200" onclick="selectPlan('plan200')">
-        <div class="plan-badge">💳 4회 분할</div>
-        <div class="plan-name">260,000P</div>
-        <div class="plan-amount">₩200,000</div>
-        <div class="plan-point">260,000P</div>
-        <div class="plan-bonus-tag plan-bonus-tag--plus">+60,000P 보너스 30%</div>
-        <div class="split-total-row">50,000원 × <strong>4회</strong> 결제</div>
-        <ul class="plan-features">
-          <li><i class="fas fa-check"></i> 타로 2,600회</li>
-          <li><i class="fas fa-check"></i> 일반 1,300회</li>
-          <li><i class="fas fa-check"></i> 30% 보너스 🎁</li>
-        </ul>
-        <button class="plan-btn kakao-pay-btn" onclick="event.stopPropagation();startKakaoPay('plan200')">
-          <i class="fas fa-layer-group"></i> 분할 결제 시작
         </button>
       </div>
     </div>
@@ -688,9 +539,7 @@ function applySavedPolicy() {
       plan20:  { ptId: 'display-pt-plan20',  amtId: 'display-amt-plan20' },
       plan30:  { ptId: 'display-pt-plan30',  amtId: 'display-amt-plan30' },
       plan50:  { ptId: 'display-pt-plan50',  amtId: 'display-amt-plan50' },
-      plan100: { ptId: 'display-pt-plan100', amtId: 'display-amt-plan100' },
-      plan150: { ptId: 'display-pt-plan150', amtId: 'display-amt-plan150' },
-      plan200: { ptId: 'display-pt-plan200', amtId: 'display-amt-plan200' },
+
     };
     if (typeof PLANS === 'undefined') return;
     Object.keys(planMap).forEach(function(key) {
@@ -802,7 +651,7 @@ function renderHistory() {
 
   /* ── DB에서 이용 내역 조회 ── */
   var userId = currentUser.id;
-  fetch('tables/points_history?search=' + encodeURIComponent(userId) + '&limit=50&sort=created_at')
+  fetch('tables/point_history?search=' + encodeURIComponent(userId) + '&limit=50&sort=created_at')
     .then(function(r) { return r.ok ? r.json() : { data: [] }; })
     .then(function(res) {
       var dbHist = (res.data || []).filter(function(h) { return h.user_id === userId; });
