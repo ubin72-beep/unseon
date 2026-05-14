@@ -229,7 +229,7 @@
       <a href="auth.html" class="btn btn-login" id="btnLogin"><i class="fas fa-sign-in-alt"></i> 로그인</a>
       <a href="auth.html?tab=register" class="btn btn-signup" id="btnSignup"><i class="fas fa-user-plus"></i> 회원가입</a>
       <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
-        <button class="user-menu-btn" onclick="toggleUserMenu()">
+        <button class="user-menu-btn" onclick="toggleUserMenu(event)">
           <div class="user-avatar" id="userAvatar">U</div>
           <span class="user-name-label" id="userNameLabel">사용자</span>
           <i class="fas fa-chevron-down" style="font-size:0.7rem"></i>
@@ -238,7 +238,7 @@
           <div class="user-dropdown-header">
             <div class="user-dropdown-name" id="dropdownName"></div>
             <div class="user-dropdown-email" id="dropdownEmail"></div>
-            <div class="user-dropdown-pt"><i class="fas fa-coins"></i> <span id="dropdownPt">0</span>P</div>
+            <div class="user-dropdown-pt"><i class="fas fa-coins"></i> <span id="dropdownPtVal">0</span>P</div>
           </div>
           <div class="user-dropdown-links">
             <a href="pricing.html"><i class="fas fa-coins"></i> 포인트 충전</a>
@@ -559,51 +559,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof initHeader === 'function') initHeader();
   if (typeof initHamburger === 'function') initHamburger();
 
-  /* ── 헤더 로그인 상태 반영 ── */
-  (function() {
-    var user = null;
-    try { user = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); } catch(e) {}
-    // id 없는 구버전 사용자 자동 보정
-    if (user && !user.id) {
-      user.id = 'uid_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-      localStorage.setItem('sajuon_current_user', JSON.stringify(user));
-    }
-
-    var btnLogin     = document.getElementById('btnLogin');
-    var btnSignup    = document.getElementById('btnSignup');
-    var userMenuWrap = document.getElementById('userMenuWrap');
-    var headerPoints = document.getElementById('headerPoints');
-    var headerPointVal = document.getElementById('headerPointVal');
-    var btnCharge    = document.getElementById('btnCharge');
-
-    if (user && user.id) {
-      var pts = parseInt(user.points || localStorage.getItem('sajuon_points') || '0', 10);
-      if (isNaN(pts)) pts = 0;
-      localStorage.setItem('sajuon_points', String(pts));
-
-      if (btnLogin)  btnLogin.style.display  = 'none';
-      if (btnSignup) btnSignup.style.display = 'none';
-      if (userMenuWrap) {
-        userMenuWrap.style.display = 'flex';
-        var av = document.getElementById('userAvatar');
-        var nl = document.getElementById('userNameLabel');
-        if (av) av.textContent  = user.name ? user.name[0] : 'U';
-        if (nl) nl.textContent  = user.name || '사용자';
-      }
-      if (headerPoints)   headerPoints.style.display   = 'flex';
-      if (headerPointVal) headerPointVal.textContent   = pts.toLocaleString();
-      if (btnCharge)      btnCharge.style.display      = 'inline-flex';
-    } else {
-      // 비로그인: 포인트 표시 + 로그인 버튼
-      var pts2 = parseInt(localStorage.getItem('sajuon_points') || '500', 10);
-      if (btnLogin)    btnLogin.style.display    = 'inline-flex';
-      if (btnSignup)   btnSignup.style.display   = 'inline-flex';
-      if (userMenuWrap) userMenuWrap.style.display = 'none';
-      if (headerPoints)   headerPoints.style.display   = 'flex';
-      if (headerPointVal) headerPointVal.textContent   = pts2.toLocaleString();
-      if (btnCharge)   btnCharge.style.display    = 'inline-flex';
-    }
-  })();
+  /* ── 헤더 로그인 상태 반영 — auth.js initAuthHeader()에 위임 ── */
+  if (typeof initAuthHeader === 'function') initAuthHeader();
 
   renderHeroStars();
   renderHeroCards();

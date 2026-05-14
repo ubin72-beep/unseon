@@ -55,7 +55,7 @@
       <a href="auth.html" class="btn btn-login" id="btnLogin"><i class="fas fa-sign-in-alt"></i> 로그인</a>
       <a href="auth.html?tab=register" class="btn btn-signup" id="btnSignup"><i class="fas fa-user-plus"></i> 회원가입</a>
       <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
-        <button class="user-menu-btn" onclick="toggleUserMenu()">
+        <button class="user-menu-btn" onclick="toggleUserMenu(event)">
           <div class="user-avatar" id="userAvatar">U</div>
           <span class="user-name-label" id="userNameLabel">사용자</span>
           <i class="fas fa-chevron-down" style="font-size:0.7rem"></i>
@@ -64,7 +64,7 @@
           <div class="user-dropdown-header">
             <div class="user-dropdown-name" id="dropdownName"></div>
             <div class="user-dropdown-email" id="dropdownEmail"></div>
-            <div class="user-dropdown-pt"><i class="fas fa-coins"></i> <span id="dropdownPt">0</span>P</div>
+            <div class="user-dropdown-pt"><i class="fas fa-coins"></i> <span id="dropdownPtVal">0</span>P</div>
           </div>
           <div class="user-dropdown-links">
             <a href="pricing.html"><i class="fas fa-coins"></i> 포인트 충전</a>
@@ -259,47 +259,9 @@
 <script>
 /* chat.html 헤더 인증 초기화 */
 document.addEventListener('DOMContentLoaded', function() {
-  var user = null;
-  try { user = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); } catch(e) {}
-  // id 없는 구버전 사용자 자동 보정
-  if (user && !user.id) {
-    user.id = 'uid_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-    localStorage.setItem('sajuon_current_user', JSON.stringify(user));
-  }
-
-  var btnLogin      = document.getElementById('btnLogin');
-  var btnSignup     = document.getElementById('btnSignup');
-  var btnCharge     = document.getElementById('btnCharge');
-  var userMenuWrap  = document.getElementById('userMenuWrap');
-  var headerPoints  = document.getElementById('headerPoints');
-  var headerPointVal= document.getElementById('headerPointVal');
-
-  if (user && user.id) {
-    var pts = parseInt(localStorage.getItem('sajuon_points') || user.points || '0', 10);
-    if (isNaN(pts)) pts = 0;
-    localStorage.setItem('sajuon_points', String(pts));
-    if (btnLogin)  btnLogin.style.display  = 'none';
-    if (btnSignup) btnSignup.style.display = 'none';
-    if (btnCharge) btnCharge.style.display = 'none';
-    if (userMenuWrap) {
-      userMenuWrap.style.display = 'flex';
-      var avEl  = document.getElementById('userAvatar');    if (avEl)  avEl.textContent  = user.name ? user.name[0].toUpperCase() : 'U';
-      var nlEl  = document.getElementById('userNameLabel'); if (nlEl)  nlEl.textContent  = user.name || '사용자';
-      var dnEl  = document.getElementById('dropdownName');  if (dnEl)  dnEl.textContent  = user.name  || '';
-      var deEl  = document.getElementById('dropdownEmail'); if (deEl)  deEl.textContent  = user.email || '';
-      var dpEl  = document.getElementById('dropdownPt');
-      if (dpEl) { if (dpEl.tagName==='SPAN') dpEl.textContent=pts.toLocaleString(); else { var s=dpEl.querySelector('span'); if(s) s.textContent=pts.toLocaleString(); else dpEl.textContent=pts.toLocaleString(); } }
-    }
-    if (headerPoints)    headerPoints.style.display    = 'flex';
-    if (headerPointVal)  headerPointVal.textContent    = pts.toLocaleString();
-  } else {
-    if (btnLogin)     btnLogin.style.display     = 'inline-flex';
-    if (btnSignup)    btnSignup.style.display    = 'inline-flex';
-    if (btnCharge)    btnCharge.style.display    = 'inline-flex';
-    if (userMenuWrap) userMenuWrap.style.display = 'none';
-    if (headerPoints) headerPoints.style.display = 'none';
-  }
-
+  // auth.js initAuthHeader()에 헤더 상태 처리 위임
+  // (getCurrentUser, syncPointsFromDB, toggleUserMenu, logout 통합 처리)
+  if (typeof initAuthHeader === 'function') initAuthHeader();
   if (typeof initHeader    === 'function') initHeader();
   if (typeof initHamburger === 'function') initHamburger();
 });

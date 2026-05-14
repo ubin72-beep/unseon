@@ -100,7 +100,7 @@
       <a href="auth.html" class="btn btn-login" id="btnLogin"><i class="fas fa-sign-in-alt"></i> 로그인</a>
       <a href="auth.html?tab=register" class="btn btn-signup" id="btnSignup"><i class="fas fa-user-plus"></i> 회원가입</a>
       <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
-        <button class="user-menu-btn" onclick="toggleUserMenu()">
+        <button class="user-menu-btn" onclick="toggleUserMenu(event)">
           <div class="user-avatar" id="userAvatar">U</div>
           <span class="user-name-label" id="userNameLabel">사용자</span>
           <i class="fas fa-chevron-down" style="font-size:0.7rem"></i>
@@ -109,7 +109,7 @@
           <div class="user-dropdown-header">
             <div class="user-dropdown-name" id="dropdownName"></div>
             <div class="user-dropdown-email" id="dropdownEmail"></div>
-            <div class="user-dropdown-pt"><i class="fas fa-coins"></i> <span id="dropdownPt">0</span>P</div>
+            <div class="user-dropdown-pt"><i class="fas fa-coins"></i> <span id="dropdownPtVal">0</span>P</div>
           </div>
           <div class="user-dropdown-links">
             <a href="pricing.html"><i class="fas fa-coins"></i> 포인트 충전</a>
@@ -561,62 +561,33 @@ document.addEventListener('DOMContentLoaded', function() {
   /* ── 0. 관리자 정책 동기화 ── */
   applySavedPolicy();
 
-  /* ── 1. 헤더 로그인 상태 ── */
-  var user = null;
-  try { user = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); } catch(e) {}
-
-  var btnLogin     = document.getElementById('btnLogin');
-  var btnSignup    = document.getElementById('btnSignup');
-  var btnCharge2   = document.getElementById('btnCharge'); // pricing 페이지엔 별도 충전 UI 있음
-  var userMenuWrap = document.getElementById('userMenuWrap');
-  var headerPoints = document.getElementById('headerPoints');
-  var headerPointVal = document.getElementById('headerPointVal');
-
-  if (user && user.id) {
-    var pts = parseInt(localStorage.getItem('sajuon_points') || user.points || '0', 10);
-    if (isNaN(pts)) pts = 0;
-    localStorage.setItem('sajuon_points', String(pts));
-    if (btnLogin)  btnLogin.style.display  = 'none';
-    if (btnSignup) btnSignup.style.display = 'none';
-    if (btnCharge2) btnCharge2.style.display = 'none';
-    if (userMenuWrap) {
-      userMenuWrap.style.display = 'flex';
-      var avEl  = document.getElementById('userAvatar');    if (avEl)  avEl.textContent  = user.name ? user.name[0].toUpperCase() : 'U';
-      var nlEl  = document.getElementById('userNameLabel'); if (nlEl)  nlEl.textContent  = user.name || '사용자';
-      var dnEl  = document.getElementById('dropdownName');  if (dnEl)  dnEl.textContent  = user.name  || '';
-      var deEl  = document.getElementById('dropdownEmail'); if (deEl)  deEl.textContent  = user.email || '';
-      var dpEl  = document.getElementById('dropdownPt');
-      if (dpEl) { if (dpEl.tagName==='SPAN') dpEl.textContent=pts.toLocaleString(); else { var s=dpEl.querySelector('span'); if(s) s.textContent=pts.toLocaleString(); else dpEl.textContent=pts.toLocaleString(); } }
-    }
-    if (headerPoints)   headerPoints.style.display   = 'flex';
-    if (headerPointVal) headerPointVal.textContent   = pts.toLocaleString();
-
-    /* 포인트 카드 표시 */
-    var myPointVal = document.getElementById('myPointVal');
-    if (myPointVal) myPointVal.textContent = pts.toLocaleString() + 'P';
-
-  } else {
-    if (btnLogin)     btnLogin.style.display     = 'inline-flex';
-    if (btnSignup)    btnSignup.style.display    = 'inline-flex';
-    if (btnCharge2)   btnCharge2.style.display   = 'inline-flex';
-    if (userMenuWrap) userMenuWrap.style.display = 'none';
-    if (headerPoints) headerPoints.style.display = 'none';
-
-    /* 비로그인 안내 배너 */
-    var pricingMain = document.querySelector('.pricing-page .container');
-    if (pricingMain && !document.getElementById('loginNudgeBanner')) {
-      var banner = document.createElement('div');
-      banner.id = 'loginNudgeBanner';
-      banner.style.cssText = 'background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border-radius:16px;padding:24px 28px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;box-shadow:0 4px 20px rgba(27,94,32,0.25)';
-      banner.innerHTML = '<div style="display:flex;align-items:center;gap:14px"><span style="font-size:2rem">🔐</span><div><div style="font-weight:700;font-size:1.05rem;margin-bottom:4px">로그인 후 충전하세요</div><div style="font-size:0.85rem;opacity:0.85">충전 내역이 계정에 저장됩니다 · 가입 즉시 <strong>500P 무료</strong> 지급!</div></div></div><div style="display:flex;gap:10px"><a href="auth.html?tab=register" style="padding:10px 20px;background:#fff;color:#1b5e20;border-radius:10px;text-decoration:none;font-weight:700;font-size:0.88rem;white-space:nowrap"><i class="fas fa-user-plus"></i> 무료 가입</a><a href="auth.html" style="padding:10px 20px;background:rgba(255,255,255,0.18);color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.88rem;white-space:nowrap;border:1.5px solid rgba(255,255,255,0.4)"><i class="fas fa-sign-in-alt"></i> 로그인</a></div>';
-      pricingMain.prepend(banner);
-    }
-    var myPointVal = document.getElementById('myPointVal');
-    if (myPointVal) myPointVal.textContent = '0P';
-  }
-
+  /* ── 1. 헤더 로그인 상태 — auth.js initAuthHeader()에 위임 ── */
+  if (typeof initAuthHeader === 'function') initAuthHeader();
   if (typeof initHeader    === 'function') initHeader();
   if (typeof initHamburger === 'function') initHamburger();
+
+  /* ── 1-1. pricing 페이지 전용: 보유 포인트 카드 표시 ── */
+  (function() {
+    var user = null;
+    try { user = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null'); } catch(e) {}
+    var myPointVal = document.getElementById('myPointVal');
+    if (user && user.id) {
+      var pts = parseInt(localStorage.getItem('sajuon_points') || user.points || '0', 10);
+      if (isNaN(pts)) pts = 0;
+      if (myPointVal) myPointVal.textContent = pts.toLocaleString() + 'P';
+    } else {
+      if (myPointVal) myPointVal.textContent = '0P';
+      /* 비로그인 안내 배너 */
+      var pricingMain = document.querySelector('.pricing-page .container');
+      if (pricingMain && !document.getElementById('loginNudgeBanner')) {
+        var banner = document.createElement('div');
+        banner.id = 'loginNudgeBanner';
+        banner.style.cssText = 'background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border-radius:16px;padding:24px 28px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;box-shadow:0 4px 20px rgba(27,94,32,0.25)';
+        banner.innerHTML = '<div style="display:flex;align-items:center;gap:14px"><span style="font-size:2rem">🔐</span><div><div style="font-weight:700;font-size:1.05rem;margin-bottom:4px">로그인 후 충전하세요</div><div style="font-size:0.85rem;opacity:0.85">충전 내역이 계정에 저장됩니다 · 가입 즉시 <strong>500P 무료</strong> 지급!</div></div></div><div style="display:flex;gap:10px"><a href="auth.html?tab=register" style="padding:10px 20px;background:#fff;color:#1b5e20;border-radius:10px;text-decoration:none;font-weight:700;font-size:0.88rem;white-space:nowrap"><i class="fas fa-user-plus"></i> 무료 가입</a><a href="auth.html" style="padding:10px 20px;background:rgba(255,255,255,0.18);color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.88rem;white-space:nowrap;border:1.5px solid rgba(255,255,255,0.4)"><i class="fas fa-sign-in-alt"></i> 로그인</a></div>';
+        pricingMain.prepend(banner);
+      }
+    }
+  })();
 
   /* ── 2. 이용 내역 렌더링 (로그인 유저만) ── */
   renderHistory();
