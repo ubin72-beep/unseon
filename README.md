@@ -8,31 +8,35 @@
 
 ---
 
-## ✅ 최근 수정 내역 (2026-05-14) — 로그아웃/재로그인 버그 수정
+## ✅ 최근 수정 내역 (2026-05-14 최종) — 헤더 로그아웃 드롭다운 완전 수정
 
-### 🔴 헤더 로그아웃 버튼 작동 불가 (전 페이지 수정)
+### 🔴 헤더 로그아웃 버튼 작동 불가 → ✅ 19/19 자동 테스트 통과
 
-**증상:** 헤더의 사용자 메뉴(김미화 드롭다운)에서 로그아웃 버튼 클릭 시 아무 반응 없음
+**증상:** 헤더의 "김미화 ∨" 버튼 클릭 시 드롭다운이 열리지 않아 로그아웃 버튼에 접근 불가
 
-**원인 (3가지 복합 버그):**
+**최종 확인된 근본 원인 (총 4가지):**
 
-| # | 원인 | 영향 파일 |
+| # | 원인 | 수정 파일 |
 |---|------|-----------|
-| 1 | `onclick="toggleUserMenu()"` — 인자 없이 호출 → auth.js의 `toggleUserMenu(e)`에서 `e.stopPropagation()` 실행 시 `e`가 undefined → 드롭다운이 열리자마자 document click 이벤트에 의해 즉시 닫힘 | index.html, chat.html, pricing.html, tarot.html, astrology.html |
-| 2 | HTML에 `id="dropdownPt"` 사용, auth.js의 `syncPointsFromDB()`는 `#dropdownPtVal` 선택자로 포인트 업데이트 → ID 불일치로 드롭다운 포인트가 항상 0으로 표시 | index.html, chat.html, pricing.html, tarot.html, fortune.html |
-| 3 | `index.html` 인라인 스크립트가 헤더를 직접 조작하고 `initAuthHeader()`를 호출하지 않음 → `syncPointsFromDB()` 미실행, DB 포인트 동기화 안 됨 | index.html, chat.html, pricing.html, tarot.html, astrology.html |
+| 1 | `onclick="toggleUserMenu()"` — 인자 없이 호출 → `e.stopPropagation()` 에서 `e=undefined` 오류 → 드롭다운이 열리자마자 document click 핸들러가 즉시 닫아버림 | index.html 외 5개 HTML |
+| 2 | `id="dropdownPt"` vs `#dropdownPtVal` ID 불일치 → `syncPointsFromDB()` 포인트 업데이트 실패 | index.html 외 4개 HTML |
+| 3 | 각 페이지 인라인 스크립트가 `initAuthHeader()` 미호출 → 버튼 이벤트 바인딩 자체가 안 됨 | index.html, chat.html 외 3개 |
+| 4 | **[진짜 원인] `css/style.css` `.header-inner { overflow: hidden }`** — 드롭다운이 헤더 높이(64px) 밖으로 나오는 순간 CSS 클리핑으로 잘려 클릭 불가. **이것이 화면에서 버튼이 눌리지 않던 직접 원인** | css/style.css |
 
-**수정 내용:**
+**수정 파일 목록:**
 
 | 파일 | 수정 내용 |
 |------|-----------|
-| `index.html` | ① `onclick="toggleUserMenu()"` → `onclick="toggleUserMenu(event)"` ② `id="dropdownPt"` → `id="dropdownPtVal"` ③ 인라인 헤더 초기화 코드 전체 제거 → `initAuthHeader()` 단일 호출로 교체 |
-| `chat.html` | 동일 ①②③ 수정. 구버전 userId 자동보정 코드도 함께 제거 |
-| `pricing.html` | 동일 ①②③ 수정. 비로그인 안내 배너·보유 포인트 카드는 pricing 전용 IIFE로 분리 유지 |
-| `tarot.html` | 동일 ①②③ 수정 |
-| `astrology.html` | 동일 ①②③ 수정. astrology 드롭다운 링크도 표준 구조(dropdownName/Email/PtVal + 내정보 링크)로 통일 |
-| `fortune.html` | `id="dropdownPt"` → `id="dropdownPtVal"` 수정 |
-| `js/main.js` | `skipPages` 배열에 `pricing.html`, `tarot.html`, `astrology.html`, `fortune.html` 추가 — main.js 자동 초기화와 인라인 스크립트의 이중 `initAuthHeader()` 호출 방지 |
+| **`css/style.css`** | `.header-inner { overflow: hidden }` → `overflow: visible` 변경. `.user-menu-wrap { overflow: visible }` 명시 추가 |
+| **`js/auth.js`** | `initAuthHeader()` — `cloneNode(true)` 제거 → `data-bound` 플래그 방식으로 단순화. `_openUserMenu/_closeUserMenu` — `getElementById` 대신 `wrap.querySelector()` 로 변경(더 안전). `window._openUserMenu / window._closeUserMenu` 전역 노출 추가 |
+| `index.html` | 버튼 `onclick` 제거+`id` 추가, `dropdownPt→PtVal`, 인라인 헤더코드→`initAuthHeader()` |
+| `chat.html` | 동일 수정 |
+| `pricing.html` | 동일 수정, pricing 전용 IIFE 분리 유지 |
+| `tarot.html` | 동일 수정 (40줄 인라인 블록 → 3줄) |
+| `astrology.html` | 동일 수정 + 드롭다운 구조 표준화 |
+| `fortune.html` | `dropdownPt→PtVal` 수정 |
+| `js/main.js` | `skipPages`에 pricing/tarot/astrology/fortune 추가 |
+| `tools/auto-test.html` | 19개 항목 자동 검증 테스트 (19/19 PASS 확인) |
 
 ### ✅ 로그아웃 후 재로그인 시 계정 연결 확인
 

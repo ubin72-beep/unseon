@@ -55,7 +55,7 @@
       <a href="auth.html" class="btn btn-login" id="btnLogin"><i class="fas fa-sign-in-alt"></i> 로그인</a>
       <a href="auth.html?tab=register" class="btn btn-signup" id="btnSignup"><i class="fas fa-user-plus"></i> 회원가입</a>
       <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
-        <button class="user-menu-btn" onclick="toggleUserMenu(event)">
+        <button class="user-menu-btn" id="userMenuBtn">
           <div class="user-avatar" id="userAvatar">U</div>
           <span class="user-name-label" id="userNameLabel">사용자</span>
           <i class="fas fa-chevron-down" style="font-size:0.7rem"></i>
@@ -71,7 +71,7 @@
             <a href="pricing.html#history"><i class="fas fa-history"></i> 이용 내역</a>
             <a href="mypage.html"><i class="fas fa-user-cog"></i> 내 정보</a>
           </div>
-          <button class="user-logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
+          <button class="user-logout-btn" id="userLogoutBtn"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
         </div>
       </div>
       <a href="pricing.html" class="btn btn-charge" id="btnCharge">충전하기</a>
@@ -253,7 +253,7 @@
   </div>
 </div>
 
-<script src="js/auth.js?v=20260412d"></script>
+<script src="js/auth.js?v=20260514a"></script>
 <script src="js/main.js?v=20260407"></script>
 <script src="js/share.js?v=20260405"></script>
 <script>
