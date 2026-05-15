@@ -684,16 +684,41 @@ function initAuthHeader() {
       if (dropName)  dropName.textContent  = user.name || '';
       if (dropEmail) dropEmail.textContent = user.email || '';
       if (dropPt)    dropPt.textContent    = pts.toLocaleString();
+
+      /* ── 버튼 이벤트 바인딩 (data-bound 플래그로 중복 방지) ── */
+      const menuBtn   = wrap.querySelector('.user-menu-btn');
+      const logoutBtn = wrap.querySelector('.user-logout-btn');
+      if (menuBtn && !menuBtn.dataset.bound) {
+        menuBtn.dataset.bound = '1';
+        menuBtn.onclick = null;
+        menuBtn.removeAttribute('onclick');
+        menuBtn.addEventListener('click', function(ev) {
+          ev.stopPropagation();
+          ev.preventDefault();
+          const isOpen = wrap.classList.contains('menu-open');
+          if (isOpen) { _closeUserMenu(); } else { _openUserMenu(); }
+        });
+      }
+      if (logoutBtn && !logoutBtn.dataset.bound) {
+        logoutBtn.dataset.bound = '1';
+        logoutBtn.onclick = null;
+        logoutBtn.removeAttribute('onclick');
+        logoutBtn.addEventListener('click', function(ev) {
+          ev.stopPropagation();
+          ev.preventDefault();
+          handleLogout();
+        });
+      }
     } else {
       wrap = document.createElement('div');
       wrap.className = 'user-menu-wrap';
       wrap.id = 'userMenuWrap';
       wrap.style.display = 'flex';
       wrap.innerHTML = `
-        <button class="user-menu-btn" onclick="toggleUserMenu(event)" aria-label="사용자 메뉴">
+        <button class="user-menu-btn" aria-label="사용자 메뉴">
           <span class="user-avatar">${(user.name||'?')[0].toUpperCase()}</span>
           <span class="user-name-label">${user.name||''}</span>
-          <i class="fas fa-chevron-down user-menu-arrow" style="font-size:0.7rem"></i>
+          <i class="fas fa-chevron-down" style="font-size:0.7rem"></i>
         </button>
         <div class="user-dropdown" id="userDropdown" style="display:none">
           <div class="user-dropdown-header">
@@ -705,9 +730,24 @@ function initAuthHeader() {
             <a href="pricing.html" style="display:flex;align-items:center;gap:8px;padding:10px 16px;color:#333;text-decoration:none;font-size:0.88rem"><i class="fas fa-bolt"></i> 포인트 충전</a>
             <a href="pricing.html#history" style="display:flex;align-items:center;gap:8px;padding:10px 16px;color:#333;text-decoration:none;font-size:0.88rem"><i class="fas fa-history"></i> 이용내역</a>
           </div>
-          <button onclick="logout()" style="width:100%;padding:10px 16px;background:none;border:none;border-top:1px solid #eee;color:#c62828;font-size:0.88rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
+          <button class="user-logout-btn" style="width:100%;padding:10px 16px;background:none;border:none;border-top:1px solid #eee;color:#c62828;font-size:0.88rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;font-family:inherit"><i class="fas fa-sign-out-alt"></i> 로그아웃</button>
         </div>`;
       headerActions.appendChild(wrap);
+
+      /* 동적 생성된 버튼도 addEventListener로 바인딩 */
+      wrap.querySelector('.user-menu-btn').addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        const dd = document.getElementById('userDropdown');
+        const w  = document.getElementById('userMenuWrap');
+        if (!dd || !w) return;
+        const isOpen = w.classList.contains('menu-open');
+        if (isOpen) { _closeUserMenu(); } else { _openUserMenu(); }
+      });
+      wrap.querySelector('.user-logout-btn').addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        handleLogout();
+      });
     }
   } else {
     if (btnLogin)  btnLogin.style.display  = '';
@@ -721,22 +761,34 @@ function initAuthHeader() {
   if (user) syncPointsFromDB();
 }
 
-function toggleUserMenu(e) {
-  if (e) e.stopPropagation();
-  const dd = document.getElementById('userDropdown');
-  if (!dd) return;
-  const visible = dd.style.display !== 'none' && dd.style.display !== '';
-  dd.style.display = visible ? 'none' : 'block';
-  dd.classList.toggle('show', !visible);
+function _openUserMenu() {
+  const wrap = document.getElementById('userMenuWrap');
+  const dd   = wrap ? wrap.querySelector('.user-dropdown, #userDropdown') : null;
+  if (!wrap || !dd) return;
+  dd.style.display = 'block';
+  wrap.classList.add('menu-open');
 }
-document.addEventListener('click', (e) => {
-  const dd   = document.getElementById('userDropdown');
-  const wrap = document.querySelector('.user-menu-wrap, #userMenuWrap');
-  if (dd && wrap && !wrap.contains(e.target)) {
-    dd.style.display = 'none';
-    dd.classList.remove('show');
-  }
+function _closeUserMenu() {
+  const wrap = document.getElementById('userMenuWrap');
+  const dd   = wrap ? wrap.querySelector('.user-dropdown, #userDropdown') : null;
+  if (wrap) wrap.classList.remove('menu-open');
+  if (dd)   dd.style.display = 'none';
+}
+function toggleUserMenu(e) {
+  if (e) { e.stopPropagation(); e.preventDefault(); }
+  const wrap = document.getElementById('userMenuWrap');
+  if (!wrap) return;
+  if (wrap.classList.contains('menu-open')) { _closeUserMenu(); } else { _openUserMenu(); }
+}
+/* 외부 클릭 시 닫기 — capture:false(기본), stopPropagation 이후엔 실행 안 됨 */
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('userMenuWrap');
+  if (!wrap) return;
+  if (!wrap.contains(e.target)) { _closeUserMenu(); }
 });
+window.toggleUserMenu  = toggleUserMenu;
+window._openUserMenu   = _openUserMenu;
+window._closeUserMenu  = _closeUserMenu;
 
 /* ════════════════════════════════════════
    auth.html 초기화

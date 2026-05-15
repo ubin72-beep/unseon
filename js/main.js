@@ -275,8 +275,8 @@ function goChatCategory(cat) {
 // (pricing.html, terms.html 등 단순 페이지에서만 아래 코드가 동작)
 (function() {
   var p = location.pathname;
-  // index.html, chat.html — 해당 페이지 전용 인라인 스크립트가 초기화를 담당
-  var skipPages = ['/', '/index.html', '/chat.html'];
+  // 각 페이지 인라인 스크립트가 initAuthHeader()를 직접 호출하는 페이지 — main.js 자동 초기화 제외
+  var skipPages = ['/', '/index.html', '/chat.html', '/pricing.html', '/tarot.html', '/astrology.html', '/fortune.html'];
   var skip = skipPages.some(function(s) { return p === s || p.endsWith(s); });
   if (skip) return;
 
