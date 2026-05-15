@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>로그아웃 버튼 디버그 테스트</title>
+<style>
+body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
+.log { background: #1a1a1a; color: #0f0; padding: 16px; border-radius: 8px; font-size: 0.85rem; line-height: 1.8; margin-top: 20px; height: 300px; overflow-y: auto; }
+.log .err { color: #ff5252; }
+.log .ok  { color: #69f0ae; }
+.log .warn{ color: #ffd740; }
+button { padding: 10px 20px; margin: 6px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.9rem; }
+.btn-primary { background: #2c5f4f; color: #fff; }
+.btn-danger  { background: #c62828; color: #fff; }
+.result-box  { background: #fff; border: 2px solid #ddd; border-radius: 10px; padding: 16px; margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<h2>🔧 로그아웃 버튼 디버그</h2>
+
+<div class="result-box">
+  <h3>1. localStorage 상태</h3>
+  <div id="lsStatus">확인 중...</div>
+</div>
+
+<div class="result-box">
+  <h3>2. 버튼 직접 테스트</h3>
+  <button class="btn-primary" onclick="testMenuOpen()">▶ 드롭다운 열기 (_openUserMenu)</button>
+  <button class="btn-primary" onclick="testToggle()">▶ toggleUserMenu() 호출</button>
+  <button class="btn-danger"  onclick="testLogout()">▶ handleLogout() 직접 호출</button>
+  <button onclick="testWindowLogout()">▶ window.logout() 호출</button>
+</div>
+
+<div class="result-box">
+  <h3>3. DOM 상태</h3>
+  <div id="domStatus">확인 중...</div>
+</div>
+
+<div class="result-box">
+  <h3>4. 이벤트 리스너 확인</h3>
+  <div id="listenerStatus">확인 중...</div>
+</div>
+
+<div class="log" id="logBox">로그 시작...<br/></div>
+
+<script src="../js/auth.js?v=20260514a"></script>
+<script>
+const logBox = document.getElementById('logBox');
+function log(msg, type='') {
+  const d = document.createElement('div');
+  d.className = type;
+  d.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  logBox.appendChild(d);
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+// 1. localStorage 상태 확인
+function checkLS() {
+  const user = localStorage.getItem('sajuon_current_user');
+  const pts  = localStorage.getItem('sajuon_points');
+  console.log('[logout-test] localStorage user:', user ? JSON.parse(user).name : 'null');
+  const el   = document.getElementById('lsStatus');
+  if (user) {
+    try {
+      const u = JSON.parse(user);
+      el.innerHTML = `<span style="color:green">✅ 로그인 상태</span><br>
+        이름: <b>${u.name || '없음'}</b><br>
+        이메일: <b>${u.email || '없음'}</b><br>
+        ID: <b>${u.id || '없음'}</b><br>
+        포인트: <b>${pts || '0'}P</b>`;
+      log('로그인 사용자: ' + u.name + ' / ' + u.email, 'ok');
+    } catch(e) {
+      el.innerHTML = '<span style="color:red">❌ localStorage 파싱 오류: ' + e.message + '</span>';
+      log('localStorage 파싱 오류: ' + e.message, 'err');
+    }
+  } else {
+    el.innerHTML = '<span style="color:orange">⚠️ 비로그인 상태 (localStorage에 사용자 없음)</span>';
+    log('비로그인 상태', 'warn');
+  }
+}
+
+// 3. DOM 상태 확인
+function checkDOM() {
+  const wrap    = document.getElementById('userMenuWrap');
+  const dd      = document.getElementById('userDropdown');
+  const menuBtn = document.querySelector('.user-menu-btn, #userMenuBtn');
+  const logBtn  = document.querySelector('.user-logout-btn, #userLogoutBtn');
+  const el      = document.getElementById('domStatus');
+
+  let html = '';
+  html += wrap    ? `✅ #userMenuWrap 존재 (display: ${wrap.style.display || 'css기본'})<br>` 
+                  : `❌ #userMenuWrap <b>없음</b><br>`;
+  html += dd      ? `✅ #userDropdown 존재 (display: ${dd.style.display || 'css기본'})<br>`
+                  : `❌ #userDropdown <b>없음</b><br>`;
+  html += menuBtn ? `✅ .user-menu-btn 존재<br>` : `❌ .user-menu-btn <b>없음</b><br>`;
+  html += logBtn  ? `✅ .user-logout-btn 존재<br>` : `❌ .user-logout-btn <b>없음</b><br>`;
+  el.innerHTML = html;
+
+  log('DOM: wrap=' + !!wrap + ', dropdown=' + !!dd + ', menuBtn=' + !!menuBtn + ', logoutBtn=' + !!logBtn);
+}
+
+// 4. 이벤트 리스너 / 전역 함수 확인
+function checkListeners() {
+  const el = document.getElementById('listenerStatus');
+  let html = '';
+  html += typeof window.logout        === 'function' ? '✅ window.logout 정의됨<br>'       : '❌ window.logout <b>없음</b><br>';
+  html += typeof window.handleLogout  === 'function' ? '✅ window.handleLogout 정의됨<br>' : '❌ handleLogout <b>없음</b><br>';
+  html += typeof window.toggleUserMenu=== 'function' ? '✅ window.toggleUserMenu 정의됨<br>': '❌ toggleUserMenu <b>없음</b><br>';
+  html += typeof window._openUserMenu === 'function' ? '✅ window._openUserMenu 정의됨<br>' : '❌ _openUserMenu <b>없음</b><br>';
+  html += typeof window.initAuthHeader=== 'function' ? '✅ window.initAuthHeader 정의됨<br>': '❌ initAuthHeader <b>없음</b><br>';
+  el.innerHTML = html;
+  console.log('[logout-test] window.logout:', typeof window.logout);
+  console.log('[logout-test] window.toggleUserMenu:', typeof window.toggleUserMenu);
+  console.log('[logout-test] window._openUserMenu:', typeof window._openUserMenu);
+  console.log('[logout-test] window.initAuthHeader:', typeof window.initAuthHeader);
+  log('전역함수: logout=' + typeof window.logout + ', toggleUserMenu=' + typeof window.toggleUserMenu);
+}
+
+// 테스트 함수들
+function testMenuOpen() {
+  log('▶ _openUserMenu() 호출 시도');
+  if (typeof _openUserMenu === 'function') {
+    _openUserMenu();
+    log('✅ _openUserMenu() 호출 완료', 'ok');
+  } else {
+    log('❌ _openUserMenu 함수 없음', 'err');
+  }
+  checkDOM();
+}
+function testToggle() {
+  log('▶ toggleUserMenu() 호출 시도');
+  if (typeof toggleUserMenu === 'function') {
+    toggleUserMenu(null);
+    log('✅ toggleUserMenu() 호출 완료', 'ok');
+  } else {
+    log('❌ toggleUserMenu 함수 없음', 'err');
+  }
+  checkDOM();
+}
+function testLogout() {
+  log('▶ handleLogout() 직접 호출 시도');
+  if (typeof handleLogout === 'function') {
+    log('✅ handleLogout 정의됨 — 3초 후 실행 (취소하려면 새로고침)', 'ok');
+    setTimeout(() => { handleLogout(); }, 3000);
+  } else {
+    log('❌ handleLogout 함수 없음. logout() 시도', 'err');
+    if (typeof logout === 'function') { logout(); }
+    else if (typeof window.logout === 'function') { window.logout(); }
+    else { log('❌ logout도 없음!', 'err'); }
+  }
+}
+function testWindowLogout() {
+  log('▶ window.logout() 호출');
+  if (typeof window.logout === 'function') {
+    log('✅ window.logout 있음 — 3초 후 실행', 'ok');
+    setTimeout(() => { window.logout(); }, 3000);
+  } else {
+    log('❌ window.logout 없음!', 'err');
+  }
+}
+
+// 페이지 로드 시 확인
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('[logout-test] DOMContentLoaded');
+  log('DOMContentLoaded 실행');
+  checkLS();
+  checkDOM();
+  checkListeners();
+
+  // initAuthHeader 호출
+  if (typeof initAuthHeader === 'function') {
+    initAuthHeader();
+    log('✅ initAuthHeader() 호출 완료', 'ok');
+    checkDOM();
+    checkListeners();
+  } else {
+    log('❌ initAuthHeader 없음!', 'err');
+  }
+
+  // 1초 후 재확인
+  setTimeout(function() {
+    log('--- 1초 후 재확인 ---');
+    checkDOM();
+    checkListeners();
+  }, 1000);
+});
+</script>
+</body>
+</html>
