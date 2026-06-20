@@ -4,7 +4,62 @@
 > **운영사:** 큐브박스 | 대표 김미화  
 > **사업자등록번호:** 537-08-03349  
 > **문의:** sajuon@gmail.com · 0502-1909-7788  
-> **최종 점검일:** 2026-06-19
+> **최종 점검일:** 2026-06-20
+
+---
+
+## ✅ 전체 시스템 점검 완료 (2026-06-20)
+
+### 점검 범위 및 결과
+
+| 파일 | 점검 항목 | 결과 |
+|------|-----------|------|
+| `admin.html` | auth.js 버전 `v=20260412d` → `v=20260619b` 수정 | ✅ 수정 완료 |
+| `js/admin.js` | Gemini API 테스트 모델 우선순위 목록 최신화 | ✅ 업데이트 완료 |
+| `js/admin.js` | Gemini 비용 안내 2.5-flash 기준으로 업데이트 | ✅ 업데이트 완료 |
+| `js/gemini.js` | 폴백 모델 목록에 gemini-2.5-flash-preview, 2.5-flash-lite, 2.0-flash 추가 | ✅ 업데이트 완료 |
+| `js/kakaopay.js` | v4.0 단건결제 5개 플랜, IS_TEST=true, TC0ONETIME | ✅ 이상 없음 |
+| `pricing.html` | 결제 모달·테스트 팝업 ID 정합성 확인 | ✅ 이상 없음 |
+| `js/chat.js` | sendMessage → callGeminiStream, 포인트 차감 로직 | ✅ 이상 없음 |
+| `admin.html` | Playwright 로드 오류 검증 | ✅ 콘솔 오류 0건 |
+| `pricing.html` | Playwright 로드 오류 검증 | ✅ 콘솔 오류 0건 |
+| `chat.html` | Playwright 로드 오류 검증 | ✅ 콘솔 오류 0건 |
+
+### Gemini API 연결 현황
+
+- **기본 모델:** `gemini-2.5-flash` (localStorage `sajuon_gemini_model` 동적 관리)
+- **API 버전:** `v1beta`
+- **연결 테스트 자동화:** admin.html → AI 설정 → "🔌 연결 테스트" 버튼으로 최신 가용 모델 자동 선택
+- **모델 우선순위:** gemini-2.5-flash → gemini-2.5-flash-preview-05-20 → gemini-2.5-flash-lite → gemini-2.0-flash → gemini-2.0-flash-lite → gemini-2.0-flash-001 → gemini-1.5-flash
+- **폴백 로직:** 스트리밍 실패 시 non-streaming generateContent 방식으로 자동 재시도
+- **스트리밍 폴백 모델:** gemini-2.5-flash → gemini-2.5-flash-preview → gemini-2.5-flash-lite → gemini-2.0-flash → ...
+
+### 관리자 페이지 기능 목록
+
+| 섹션 | 기능 |
+|------|------|
+| 대시보드 | 통계 카드, 회원 수, 상담 수, 포인트 현황 |
+| 배너·카피 관리 | 메인 배너 문구, 서브 카피 편집 |
+| 카테고리 관리 | 상담 카테고리 ON/OFF, 순서 변경 |
+| 요금 정책 관리 | 플랜별 금액·포인트·보너스 설정 |
+| 후기 관리 | 사용자 후기 조회, 노출 ON/OFF |
+| FAQ 관리 | FAQ 추가·수정·삭제 |
+| 이용 내역 조회 | point_history 테이블 조회 |
+| 회원 관리 | users 테이블 조회, 상태 변경 |
+| 포인트 조작 | 특정 회원 포인트 직접 지급/차감 |
+| AI 설정 | Gemini API 키 입력·저장·연결 테스트 |
+| 보안·계정 설정 | 관리자 비밀번호 변경 |
+
+### 결제 시스템 현황
+
+| 항목 | 값 |
+|------|-----|
+| 결제 방식 | 카카오페이 1회 단건 결제 |
+| 테스트 모드 | `IS_TEST = true` (심사용) |
+| 테스트 CID | `TC0ONETIME` |
+| 플랜 | plan5(5천) / plan10(1만) / plan20(2만+2천보너스) / plan30(3만+6천보너스) / plan50(5만+1만보너스) |
+| 결제 완료 처리 | `payment-complete.html` |
+| 실서비스 전환 | `KAKAO_CONFIG.IS_TEST = false` + 실제 CID 입력 필요 |
 
 ---
 

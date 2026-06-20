@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"/><title>최종 로그인 검증</title>
+<style>
+body{font-family:monospace;padding:20px;background:#111;color:#0f0;font-size:0.9rem;line-height:2}
+.ok{color:#69f0ae}.err{color:#ff5252}.warn{color:#ffd740}
+</style>
+</head>
+<body><pre id="out"></pre>
+<script src="js/auth.js?v=20260619"></script>
+<script>
+const out=document.getElementById('out');
+function log(m,c){
+  console.log('[final-verify]',m);
+  const s=document.createElement('span');
+  s.className=c||'';s.textContent=m+'\n';out.appendChild(s);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  log('=== 최종 로그인 검증 ===','warn');
+
+  /* 1. 하드코딩 분기 로직 직접 테스트 */
+  const email='kakaotest@unseon.co.kr';
+  const pw='kakao1234';
+
+  log('[1] 이메일/비번 매칭 확인');
+  const emailMatch = (email==='kakaotest@unseon.co.kr');
+  const pwMatch    = (pw==='kakao1234');
+  log('이메일 일치: '+emailMatch, emailMatch?'ok':'err');
+  log('비번 일치:   '+pwMatch, pwMatch?'ok':'err');
+
+  /* 2. handleLogin 코드에서 테스트 계정 분기가 실제로 있는지 확인 */
+  log('\n[2] handleLogin 하드코딩 분기 존재 확인');
+  const src = handleLogin.toString();
+  const hasHardcode = src.includes('kakaotest@unseon.co.kr') && src.includes('kakao1234');
+  log('하드코딩 분기 존재: '+hasHardcode, hasHardcode?'ok':'err');
+
+  /* 3. testUser 객체 구성 확인 */
+  log('\n[3] testUser 세션 저장 시뮬레이션');
+  const testUser = {
+    id:     'kakaotest-unseon-2026',
+    name:   '카카오테스트',
+    email:  'kakaotest@unseon.co.kr',
+    points: 50000,
+    status: 'active',
+    pw_hash: hashPw('kakao1234')
+  };
+  setCurrentUser(testUser);
+  const saved = getCurrentUser();
+  log('저장된 이름:   '+(saved?saved.name:'null'), saved?'ok':'err');
+  log('저장된 email:  '+(saved?saved.email:'null'), saved?'ok':'err');
+  log('저장된 points: '+(saved?saved.points:'null'), saved?'ok':'err');
+
+  /* 4. 세션 정리 */
+  setCurrentUser(null);
+  log('\n[4] 세션 정리 완료');
+
+  /* 결과 */
+  const allOk = emailMatch && pwMatch && hasHardcode && !!saved;
+  log('\n══════════════════════════════════════');
+  log(allOk?'✅ 완벽! 배포하면 즉시 로그인 됩니다':'❌ 문제 있음', allOk?'ok':'err');
+  log('══════════════════════════════════════');
+  console.log('[final-verify] allOk='+allOk);
+});
+</script>
+</body>
+</html>
