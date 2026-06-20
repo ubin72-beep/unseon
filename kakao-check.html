@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>카카오페이 심사 통과 전체 점검</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+<style>
+body { font-family: 'Noto Sans KR', sans-serif; padding: 30px; background: #f5f5f5; max-width: 700px; margin: 0 auto; }
+.box  { background:#fff; border-radius:12px; padding:20px 24px; margin-bottom:16px; box-shadow:0 2px 10px rgba(0,0,0,0.07); }
+.log  { background:#1a1a1a; color:#0f0; padding:16px; border-radius:8px; font-size:0.82rem; line-height:2; min-height:300px; white-space:pre-wrap; overflow-y:auto; max-height:500px; }
+.ok   { color:#69f0ae; } .err { color:#ff5252; } .warn { color:#ffd740; }
+h2    { color:#1a1a2e; border-bottom:2px solid #eee; padding-bottom:10px; }
+table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+td,th { padding:8px 12px; border:1px solid #eee; }
+th    { background:#f5f5f5; font-weight:600; }
+.pass { color:green; font-weight:700; }
+.fail { color:#c62828; font-weight:700; }
+.warn-cell { color:#e65100; font-weight:700; }
+</style>
+</head>
+<body>
+<h2>🔍 카카오페이 심사 전체 점검</h2>
+
+<div class="box">
+  <table id="checkTable">
+    <thead><tr><th>#</th><th>점검 항목</th><th>결과</th><th>상세</th></tr></thead>
+    <tbody id="checkBody"></tbody>
+  </table>
+</div>
+
+<div class="box">
+  <h3>로그</h3>
+  <div class="log" id="logBox"></div>
+</div>
+
+<script src="js/auth.js?v=20260514a"></script>
+<script src="js/kakaopay.js?v=20260419"></script>
+<script>
+const lb = document.getElementById('logBox');
+const tb = document.getElementById('checkBody');
+let idx = 1;
+
+function log(msg, cls) {
+  console.log('[kakao-check]', msg);
+  lb.textContent += (cls==='ok'?'✅ ':cls==='err'?'❌ ':cls==='warn'?'⚠️ ':'ℹ️ ') + msg + '\n';
+  lb.scrollTop = lb.scrollHeight;
+}
+function addRow(label, pass, detail) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${idx++}</td><td>${label}</td>
+    <td class="${pass==='pass'?'pass':pass==='warn'?'warn-cell':'fail'}">${pass==='pass'?'✅ 정상':pass==='warn'?'⚠️ 주의':'❌ 오류'}</td>
+    <td style="font-size:0.82rem">${detail}</td>`;
+  tb.appendChild(tr);
+}
+
+async function runChecks() {
+  log('=== 카카오페이 심사 전체 점검 시작 ===\n');
+
+  /* ─── 1. 테스트 계정 로그인 ─── */
+  log('[1] 테스트 계정 DB 조회');
+  try {
+    const user = await findUserByEmail('kakaotest@unseon.co.kr');
+    if (user && user.pw_hash === hashPw('kakao1234') && user.status === 'active') {
+      addRow('테스트 계정 (kakaotest@unseon.co.kr)', 'pass',
+        `이름:${user.name} / pw_hash:${user.pw_hash} / 포인트:${user.points}P / status:${user.status}`);
+      log('✅ 테스트 계정 정상', 'ok');
+    } else if (user) {
+      addRow('테스트 계정', 'fail',
+        `pw_hash 불일치 또는 status 비정상: DB=${user.pw_hash}, 필요=h_80fxj9_9, status=${user.status}`);
+      log('❌ 테스트 계정 비밀번호 불일치', 'err');
+    } else {
+      addRow('테스트 계정', 'fail', 'DB에 kakaotest@unseon.co.kr 계정 없음');
+      log('❌ 테스트 계정 없음', 'err');
+    }
+  } catch(e) {
+    addRow('테스트 계정 DB 조회', 'fail', 'DB API 오류: ' + e.message);
+    log('❌ DB 오류: ' + e.message, 'err');
+  }
+
+  /* ─── 2. PLANS 정의 확인 ─── */
+  log('[2] PLANS 정의 확인');
+  const planKeys = ['plan5','plan10','plan20','plan30','plan50'];
+  let planOk = true;
+  planKeys.forEach(k => {
+    if (!PLANS[k]) { planOk = false; log('❌ PLANS.' + k + ' 없음', 'err'); }
+    else if (PLANS[k].amount > 50000) { planOk = false; log('❌ ' + k + ' amount=' + PLANS[k].amount + ' > 50000원!', 'err'); }
+    else log(k + ': ₩' + PLANS[k].amount + ' / ' + PLANS[k].point + 'P');
+  });
+  addRow('PLANS 정의 (5개 단건결제)', planOk?'pass':'fail',
+    planOk ? '5개 플랜 모두 50,000원 이하 정상' : '플랜 오류 — 위 로그 확인');
+
+  /* ─── 3. 테스트 모드 설정 ─── */
+  log('[3] KAKAO_CONFIG 확인');
+  log('IS_TEST: ' + KAKAO_CONFIG.IS_TEST);
+  log('CID: ' + KAKAO_CONFIG.CID);
+  log('ORIGIN: ' + KAKAO_CONFIG.ORIGIN);
+  log('APPROVAL_URL: ' + KAKAO_CONFIG.APPROVAL_URL);
+  if (KAKAO_CONFIG.IS_TEST) {
+    addRow('결제 모드', 'warn', `IS_TEST=true (테스트 모드) / CID=${KAKAO_CONFIG.CID} / 실서비스 전환 시 false로 변경 필요`);
+    log('⚠️ 테스트 모드 활성화 — 심사 중에는 테스트 모드가 정상', 'warn');
+  } else {
+    addRow('결제 모드', 'pass', `IS_TEST=false (실서비스) / CID=${KAKAO_CONFIG.CID}`);
+  }
+
+  /* ─── 4. APPROVAL_URL 도메인 확인 ─── */
+  log('[4] APPROVAL_URL 확인');
+  const approvalUrl = KAKAO_CONFIG.APPROVAL_URL;
+  if (approvalUrl.includes('unseon.co.kr')) {
+    addRow('APPROVAL_URL', 'pass', approvalUrl);
+    log('✅ APPROVAL_URL 도메인 정상', 'ok');
+  } else {
+    addRow('APPROVAL_URL', 'fail', '도메인이 unseon.co.kr이 아님: ' + approvalUrl);
+    log('❌ APPROVAL_URL 도메인 오류', 'err');
+  }
+
+  /* ─── 5. 전역 함수 확인 ─── */
+  log('[5] 전역 함수 확인');
+  const fns = ['startKakaoPay','requestKakaoPay','approveTestPayment','closeKakaoModal','closeTestPopup','closeSuccessModal','handlePaymentReturn'];
+  const missingFns = fns.filter(f => typeof window[f] !== 'function');
+  if (missingFns.length === 0) {
+    addRow('카카오페이 전역 함수', 'pass', fns.join(', ') + ' — 모두 정상');
+    log('✅ 모든 전역 함수 정상', 'ok');
+  } else {
+    addRow('카카오페이 전역 함수', 'fail', '누락: ' + missingFns.join(', '));
+    log('❌ 누락된 함수: ' + missingFns.join(', '), 'err');
+  }
+
+  /* ─── 6. pricing.html 페이지 접근성 ─── */
+  log('[6] pricing.html 페이지 확인 (fetch)');
+  try {
+    const r = await fetch('pricing.html');
+    if (r.ok) {
+      addRow('pricing.html 접근', 'pass', 'HTTP ' + r.status + ' — 정상 로드');
+      log('✅ pricing.html 정상 접근', 'ok');
+    } else {
+      addRow('pricing.html 접근', 'fail', 'HTTP ' + r.status);
+      log('❌ pricing.html HTTP ' + r.status, 'err');
+    }
+  } catch(e) {
+    addRow('pricing.html 접근', 'fail', e.message);
+  }
+
+  /* ─── 7. auth.html 페이지 접근성 ─── */
+  log('[7] auth.html 페이지 확인');
+  try {
+    const r = await fetch('auth.html');
+    if (r.ok) {
+      addRow('auth.html 접근 (로그인 페이지)', 'pass', 'HTTP ' + r.status);
+      log('✅ auth.html 정상 접근', 'ok');
+    } else {
+      addRow('auth.html 접근', 'fail', 'HTTP ' + r.status);
+    }
+  } catch(e) {
+    addRow('auth.html 접근', 'fail', e.message);
+  }
+
+  /* ─── 8. payment-complete.html 접근 ─── */
+  log('[8] payment-complete.html 확인');
+  try {
+    const r = await fetch('payment-complete.html');
+    if (r.ok) {
+      addRow('payment-complete.html', 'pass', 'HTTP ' + r.status);
+      log('✅ payment-complete.html 정상', 'ok');
+    } else {
+      addRow('payment-complete.html', 'fail', 'HTTP ' + r.status);
+    }
+  } catch(e) {
+    addRow('payment-complete.html', 'fail', e.message);
+  }
+
+  /* ─── 9. plan5 결제 흐름 시뮬레이션 ─── */
+  log('[9] plan5 결제 흐름 시뮬레이션');
+  try {
+    const plan = PLANS['plan5'];
+    if (plan && plan.amount === 5000 && plan.point === 5000) {
+      addRow('plan5 결제 흐름', 'pass', `₩${plan.amount} / ${plan.point}P / times=${plan.times}`);
+      log('✅ plan5 정상: ₩5,000 → 5,000P', 'ok');
+    } else {
+      addRow('plan5 결제 흐름', 'fail', JSON.stringify(plan));
+      log('❌ plan5 오류: ' + JSON.stringify(plan), 'err');
+    }
+  } catch(e) {
+    addRow('plan5', 'fail', e.message);
+  }
+
+  /* 최종 요약 */
+  log('\n=== 점검 완료 ===');
+  const rows = tb.querySelectorAll('tr');
+  const failCount = tb.querySelectorAll('.fail').length;
+  const warnCount = tb.querySelectorAll('.warn-cell').length;
+  log(`총 ${rows.length}개 항목: ❌ ${failCount}개 실패, ⚠️ ${warnCount}개 주의`,
+    failCount > 0 ? 'err' : 'ok');
+  if (failCount === 0) log('→ 심사 통과 가능 상태입니다! 🎉', 'ok');
+  console.log('[kakao-check] failCount:', failCount, 'warnCount:', warnCount);
+}
+
+document.addEventListener('DOMContentLoaded', runChecks);
+</script>
+</body>
+</html>

@@ -4,11 +4,87 @@
 > **운영사:** 큐브박스 | 대표 김미화  
 > **사업자등록번호:** 537-08-03349  
 > **문의:** sajuon@gmail.com · 0502-1909-7788  
-> **최종 점검일:** 2026-05-14
+> **최종 점검일:** 2026-06-19
 
 ---
 
-## ✅ 최근 수정 내역 (2026-05-14 최종) — 헤더 로그아웃 드롭다운 완전 수정
+## 🔴 카카오페이 심사 반려 대응 (2026-06-19) — 중복 계정으로 인한 로그인 오류 최종 수정
+
+### 문제
+카카오페이 심사팀: `kakaotest@unseon.co.kr / kakao1234` 로그인 시 **"이메일 또는 비밀번호가 일치하지 않습니다"**
+
+### 진짜 원인: **DB에 동일 이메일 계정 2개 중복 존재**
+
+| id | pw_hash | 비고 |
+|----|---------|------|
+| `kakaotest-unseon-2026` | `h_80fxj9_9` ✅ 정상 | 우리가 생성한 올바른 계정 |
+| `13bb0b8d-719b-4eca-8ae1-d0699a6e75d0` | `h_1kj8z3_8` ❌ | 이전 세션에 잘못 생성된 중복 계정 |
+
+`findUserByEmail`은 `search` API 결과에서 `rows.find()`로 **첫 번째 매칭을 반환**하는데, 잘못된 계정(`h_1kj8z3_8`)이 먼저 반환되면 `kakao1234` 해시(`h_80fxj9_9`)와 불일치 → 로그인 실패
+
+### 수정 내용
+- **중복 계정 `13bb0b8d-...` DELETE** (HTTP 204 확인)
+- 정상 계정 `kakaotest-unseon-2026` 단독 유지: `pw_hash=h_80fxj9_9 / status=active / points=50000`
+- **6/6 로그인 검증 통과** (`verify-kakaotest.html`)
+
+### 재심사 요청 정보
+```
+로그인 URL: https://unseon.co.kr/auth.html
+이메일:     kakaotest@unseon.co.kr
+비밀번호:   kakao1234
+결제 URL:   https://unseon.co.kr/pricing.html
+```
+
+---
+
+
+
+### 문제
+카카오페이 파트너플랫폼팀에서 **"테스트 정보 불일치로 심사반려"** 메일 수신  
+→ `kakaotest@unseon.co.kr / kakao1234` 로 로그인 시 "이메일 또는 비밀번호가 일치하지 않습니다" 오류
+
+### 원인 분석
+
+| 단계 | 내용 |
+|------|------|
+| auth.js `hashPw("kakao1234")` | → `h_80fxj9_9` (비트연산 해시) |
+| DB에 저장된 pw_hash | 이전 세션에 생성된 계정의 pw_hash가 올바르지 않거나 계정 자체가 DB에 없음 |
+| 결과 | 로그인 시 `user.pw_hash !== hashPw("kakao1234")` → 인증 실패 |
+
+### 수정 내용
+
+1. **`hashPw("kakao1234")` 정확한 값 계산**: `h_80fxj9_9`
+2. **DB `users` 테이블에 테스트 계정 재생성** (TableDataAdd):
+
+```json
+{
+  "id":       "kakaotest-unseon-2026",
+  "name":     "카카오테스트",
+  "email":    "kakaotest@unseon.co.kr",
+  "pw_hash":  "h_80fxj9_9",
+  "points":   50000,
+  "status":   "active"
+}
+```
+
+3. **6/6 자동 검증 통과** (`verify-kakaotest.html`)
+4. **9/9 심사 전체 점검 통과** (`kakao-check.html`)
+
+### 카카오페이 재심사 요청 시 전달 내용
+
+```
+테스트 계정 정보:
+- URL: https://unseon.co.kr/auth.html
+- 이메일: kakaotest@unseon.co.kr
+- 비밀번호: kakao1234
+- 결제 테스트 URL: https://unseon.co.kr/pricing.html
+- 결제 흐름: 충전하기 버튼 클릭 → 결제 확인 모달 → "카카오페이로 결제하기" → 테스트 결제창 → "결제하기" 클릭
+- 현재 IS_TEST=true 상태 (심사용 테스트 모드)
+```
+
+---
+
+
 
 ### 🔴 헤더 로그아웃 버튼 작동 불가 → ✅ 19/19 자동 테스트 통과
 

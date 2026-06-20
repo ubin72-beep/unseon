@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>로그인 오류 정밀 진단</title>
+<style>
+body { font-family: monospace; padding: 20px; background: #111; color: #0f0; }
+.section { border: 1px solid #333; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.ok  { color: #69f0ae; }
+.err { color: #ff5252; }
+.warn{ color: #ffd740; }
+.white { color: #fff; }
+pre { white-space: pre-wrap; word-break: break-all; font-size: 0.82rem; }
+button { padding: 10px 20px; margin: 4px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.88rem; font-weight: 700; }
+.btn-g { background: #2e7d32; color: #fff; }
+.btn-r { background: #c62828; color: #fff; }
+.btn-y { background: #f57f17; color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="section">
+  <span class="white">🔧 kakaotest 로그인 정밀 진단</span><br><br>
+  <button class="btn-g" onclick="step1_rawDB()">1. DB RAW 조회 (테이블 전체)</button>
+  <button class="btn-g" onclick="step2_hashCheck()">2. 해시값 계산 확인</button>
+  <button class="btn-g" onclick="step3_fullLogin()">3. 전체 로그인 흐름</button>
+  <button class="btn-r" onclick="step4_forceUpdate()">4. pw_hash 강제 PATCH</button>
+  <button class="btn-y" onclick="step5_deleteAndCreate()">5. 삭제 후 재생성</button>
+</div>
+
+<div class="section">
+  <pre id="out">버튼을 눌러 진단을 시작하세요...</pre>
+</div>
+
+<script src="js/auth.js?v=20260514a"></script>
+<script>
+const out = document.getElementById('out');
+function log(msg, cls) {
+  console.log('[debug-login]', msg);
+  const span = document.createElement('span');
+  span.className = cls || '';
+  span.textContent = msg + '\n';
+  out.appendChild(span);
+  out.scrollTop = out.scrollHeight;
+}
+function clr() { out.textContent = ''; }
+
+/* ── 1. DB 전체 RAW 조회 ── */
+async function step1_rawDB() {
+  clr();
+  log('=== STEP 1: DB RAW 조회 ===');
+  log('GET tables/users?limit=50 ...');
+
+  try {
+    const r = await fetch('tables/users?limit=50');
+    log('HTTP Status: ' + r.status, r.ok ? 'ok' : 'err');
+    const d = await r.json();
+    log('total rows: ' + d.total);
+    log('returned rows: ' + (d.data||[]).length);
+    log('');
+
+    const rows = d.data || [];
+    // kakaotest 계정 찾기
+    const kt = rows.filter(u => (u.email||'').toLowerCase().includes('kakaotest'));
+    log('kakaotest 포함 계정: ' + kt.length + '개');
+    kt.forEach((u, i) => {
+      log('--- 계정 #' + (i+1) + ' ---', 'warn');
+      log('  id:       ' + u.id);
+      log('  email:    ' + u.email, u.email === 'kakaotest@unseon.co.kr' ? 'ok' : 'err');
+      log('  name:     ' + u.name);
+      log('  pw_hash:  ' + u.pw_hash, 'warn');
+      log('  status:   ' + u.status);
+      log('  points:   ' + u.points);
+      log('  created:  ' + (u.created_at_str || u.created_at || '?'));
+    });
+
+    if (kt.length === 0) {
+      log('❌ kakaotest 계정이 DB에 없습니다!', 'err');
+      log('→ STEP 5 (삭제 후 재생성)를 실행하세요', 'warn');
+    }
+
+    // 전체 목록 출력
+    log('');
+    log('=== 전체 사용자 목록 (' + rows.length + '명) ===', 'warn');
+    rows.forEach((u, i) => {
+      log('[' + (i+1) + '] ' + u.email + ' | pw_hash=' + u.pw_hash + ' | status=' + u.status + ' | id=' + u.id);
+    });
+
+  } catch(e) {
+    log('❌ 오류: ' + e.message, 'err');
+  }
+}
+
+/* ── 2. 해시값 계산 ── */
+function step2_hashCheck() {
+  clr();
+  log('=== STEP 2: 해시값 계산 ===');
+  const tests = ['kakao1234', 'kakao1234 ', ' kakao1234', 'Kakao1234', 'KAKAO1234'];
+  tests.forEach(pw => {
+    log('hashPw("' + pw + '") = ' + hashPw(pw), 'warn');
+  });
+  log('');
+  const target = hashPw('kakao1234');
+  log('★ DB에 저장되어야 할 pw_hash: ' + target, 'ok');
+  log('  (kakao1234 → ' + target + ')');
+}
+
+/* ── 3. 전체 로그인 흐름 ── */
+async function step3_fullLogin() {
+  clr();
+  log('=== STEP 3: 전체 로그인 흐름 시뮬레이션 ===');
+
+  const email = 'kakaotest@unseon.co.kr';
+  const pw    = 'kakao1234';
+  const expectedHash = hashPw(pw);
+  log('입력 이메일: ' + email);
+  log('입력 비번:   ' + pw);
+  log('기대 해시:   ' + expectedHash, 'warn');
+  log('');
+
+  // findUserByEmail 직접 호출
+  log('→ findUserByEmail("' + email + '") 호출 중...');
+  const user = await findUserByEmail(email);
+  if (!user) {
+    log('❌ 결과: null — 계정 없음 또는 search API 실패', 'err');
+    // search 파라미터 원본 API 직접 테스트
+    log('');
+    log('→ search API 직접 테스트...');
+    try {
+      const r = await fetch('tables/users?search=' + encodeURIComponent(email) + '&limit=10');
+      const d = await r.json();
+      log('search 결과 total: ' + d.total);
+      log('search 결과 rows: ' + JSON.stringify((d.data||[]).map(u => ({email: u.email, id: u.id}))));
+    } catch(e) {
+      log('❌ search API 오류: ' + e.message, 'err');
+    }
+    return;
+  }
+
+  log('✅ findUserByEmail 성공: ' + user.name + ' (' + user.email + ')', 'ok');
+  log('DB  pw_hash: ' + user.pw_hash, 'warn');
+  log('기대 pw_hash: ' + expectedHash, 'warn');
+
+  const match = user.pw_hash === expectedHash;
+  if (match) {
+    log('✅ pw_hash 일치! 로그인 가능 상태', 'ok');
+  } else {
+    log('❌ pw_hash 불일치! 이것이 로그인 실패 원인', 'err');
+    log('  DB값:  [' + user.pw_hash + ']');
+    log('  계산값: [' + expectedHash + ']');
+    // 공백/특수문자 체크
+    log('  DB 길이: ' + (user.pw_hash||'').length);
+    log('  계산 길이: ' + expectedHash.length);
+    const dbChars = (user.pw_hash||'').split('').map(c => c.charCodeAt(0));
+    const calChars = expectedHash.split('').map(c => c.charCodeAt(0));
+    log('  DB charCodes:  ' + JSON.stringify(dbChars));
+    log('  Cal charCodes: ' + JSON.stringify(calChars));
+    log('');
+    log('→ STEP 4 (강제 PATCH)를 실행하세요', 'warn');
+  }
+
+  if (user.status === 'suspended') {
+    log('❌ 계정 정지 상태 (suspended)', 'err');
+  }
+}
+
+/* ── 4. pw_hash 강제 PATCH ── */
+async function step4_forceUpdate() {
+  clr();
+  log('=== STEP 4: pw_hash 강제 PATCH ===');
+
+  const email = 'kakaotest@unseon.co.kr';
+  const newHash = hashPw('kakao1234');
+  log('목표 pw_hash: ' + newHash, 'warn');
+
+  // 먼저 계정 조회
+  let user = null;
+  try {
+    const r = await fetch('tables/users?search=' + encodeURIComponent(email) + '&limit=20');
+    const d = await r.json();
+    const rows = d.data || [];
+    user = rows.find(u => u.email === email) || null;
+    log('조회된 계정: ' + (user ? user.id : '없음'));
+  } catch(e) {
+    log('❌ 조회 실패: ' + e.message, 'err');
+    return;
+  }
+
+  if (!user) {
+    log('❌ 계정 없음 — STEP 5를 실행하세요', 'err');
+    return;
+  }
+
+  log('계정 ID: ' + user.id);
+  log('현재 pw_hash: ' + user.pw_hash);
+  log('PATCH 실행 중...');
+
+  try {
+    const r = await fetch('tables/users/' + user.id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pw_hash: newHash,
+        status: 'active',
+        points: Math.max(user.points || 0, 50000)
+      })
+    });
+    log('PATCH HTTP: ' + r.status, r.ok ? 'ok' : 'err');
+    const updated = await r.json();
+    log('업데이트된 pw_hash: ' + updated.pw_hash, updated.pw_hash === newHash ? 'ok' : 'err');
+    log('업데이트된 status:  ' + updated.status);
+    log('업데이트된 points:  ' + updated.points);
+
+    if (updated.pw_hash === newHash) {
+      log('');
+      log('✅ PATCH 완료! 이제 로그인 가능합니다', 'ok');
+      log('  이메일: kakaotest@unseon.co.kr');
+      log('  비번:   kakao1234');
+      log('  → STEP 3으로 검증하세요');
+    } else {
+      log('❌ pw_hash가 업데이트되지 않음!', 'err');
+      log('→ STEP 5 (삭제 후 재생성)를 실행하세요', 'warn');
+    }
+  } catch(e) {
+    log('❌ PATCH 오류: ' + e.message, 'err');
+  }
+}
+
+/* ── 5. 삭제 후 재생성 ── */
+async function step5_deleteAndCreate() {
+  clr();
+  log('=== STEP 5: 기존 계정 삭제 후 재생성 ===');
+
+  const email = 'kakaotest@unseon.co.kr';
+  const newHash = hashPw('kakao1234');
+  log('신규 pw_hash: ' + newHash, 'warn');
+
+  // 1. 기존 계정 모두 찾아서 삭제
+  try {
+    const r = await fetch('tables/users?limit=50');
+    const d = await r.json();
+    const rows = d.data || [];
+    const ktRows = rows.filter(u => (u.email||'').toLowerCase().includes('kakaotest'));
+    log('삭제 대상: ' + ktRows.length + '개');
+
+    for (const u of ktRows) {
+      log('삭제 중: ' + u.id + ' (' + u.email + ')');
+      const dr = await fetch('tables/users/' + u.id, { method: 'DELETE' });
+      log('DELETE HTTP: ' + dr.status, dr.status === 204 ? 'ok' : 'err');
+    }
+  } catch(e) {
+    log('삭제 오류: ' + e.message, 'warn');
+  }
+
+  // 2. 새로 생성 — id를 timestamp 기반으로
+  const newId = 'kt-' + Date.now();
+  log('');
+  log('신규 생성: id=' + newId);
+
+  try {
+    const r = await fetch('tables/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id:             newId,
+        name:           '카카오테스트',
+        email:          'kakaotest@unseon.co.kr',
+        pw_hash:        newHash,
+        phone:          '010-0000-0000',
+        birth:          '19900101',
+        gender:         'none',
+        points:         50000,
+        status:         'active',
+        social_provider:'',
+        social_id:      '',
+        agree_marketing: false,
+        created_at_str: new Date().toLocaleString('ko-KR'),
+        last_login:     ''
+      })
+    });
+    log('POST HTTP: ' + r.status, r.ok ? 'ok' : 'err');
+    const created = await r.json();
+    log('생성된 id:      ' + created.id);
+    log('생성된 email:   ' + created.email);
+    log('생성된 pw_hash: ' + created.pw_hash, created.pw_hash === newHash ? 'ok' : 'err');
+    log('생성된 status:  ' + created.status);
+    log('생성된 points:  ' + created.points);
+
+    if (created.pw_hash === newHash) {
+      log('');
+      log('✅ 재생성 완료! auth.html에서 로그인 테스트하세요', 'ok');
+      log('  이메일: kakaotest@unseon.co.kr', 'ok');
+      log('  비번:   kakao1234', 'ok');
+    } else {
+      log('❌ 생성된 pw_hash 불일치!', 'err');
+      log('DB에 저장된 pw_hash: ' + created.pw_hash, 'err');
+      log('기대값:              ' + newHash, 'err');
+    }
+  } catch(e) {
+    log('❌ 생성 오류: ' + e.message, 'err');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  log('디버그 도구 로드 완료. 버튼 1 → 2 → 3 순으로 실행하세요.', 'warn');
+  log('문제 발생 시 4번(PATCH) 또는 5번(재생성) 실행', 'warn');
+});
+</script>
+</body>
+</html>
