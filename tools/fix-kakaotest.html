@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>kakaotest 계정 수정 도구</title>
+<style>
+body { font-family: sans-serif; padding: 30px; background: #f5f5f5; max-width: 700px; margin: 0 auto; }
+.box { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.log { background: #1a1a1a; color: #0f0; padding: 16px; border-radius: 8px; font-size: 0.85rem; line-height: 2; min-height: 120px; white-space: pre-wrap; }
+.err { color: #ff5252; } .ok { color: #69f0ae; } .warn { color: #ffd740; }
+button { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.95rem; font-weight: 700; margin: 6px 4px; }
+.btn-primary { background: #2c5f4f; color: #fff; }
+.btn-danger  { background: #c62828; color: #fff; }
+.btn-kakao   { background: #FFE812; color: #3A1D1D; }
+h2 { color: #1a1a2e; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+.result { font-size: 1rem; padding: 10px; border-radius: 6px; margin-top: 10px; }
+.result.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+.result.fail    { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+</style>
+</head>
+<body>
+<h2>🔧 kakaotest 계정 DB 수정 도구</h2>
+
+<div class="box">
+  <h3>1단계: 비밀번호 해시 계산</h3>
+  <p>auth.js의 <code>hashPw("kakao1234")</code> 결과값을 계산합니다.</p>
+  <div id="hashResult" class="result">버튼을 눌러 계산하세요</div>
+  <button class="btn-primary" onclick="calcHash()">▶ hashPw("kakao1234") 계산</button>
+</div>
+
+<div class="box">
+  <h3>2단계: DB에서 계정 조회</h3>
+  <p><code>kakaotest@unseon.co.kr</code> 계정이 DB에 존재하는지 확인합니다.</p>
+  <div id="searchResult" class="result">버튼을 눌러 조회하세요</div>
+  <button class="btn-primary" onclick="searchUser()">▶ DB 조회</button>
+</div>
+
+<div class="box">
+  <h3>3단계: 계정 생성/수정</h3>
+  <p>계정이 없으면 새로 생성, 있으면 비밀번호를 올바른 해시로 업데이트합니다.</p>
+  <div id="fixResult" class="result">2단계 완료 후 실행하세요</div>
+  <button class="btn-kakao" onclick="fixUser()">▶ 계정 생성/수정 실행</button>
+</div>
+
+<div class="box">
+  <h3>4단계: 로그인 검증</h3>
+  <p>kakao1234 로 실제 로그인이 되는지 최종 검증합니다.</p>
+  <div id="verifyResult" class="result">3단계 완료 후 실행하세요</div>
+  <button class="btn-primary" onclick="verifyLogin()">▶ 로그인 검증</button>
+  <button class="btn-danger" onclick="window.open('../auth.html','_blank')">▶ auth.html에서 직접 로그인 테스트</button>
+</div>
+
+<div class="box">
+  <h3>로그</h3>
+  <div class="log" id="logBox"></div>
+</div>
+
+<script src="../js/auth.js?v=20260514a"></script>
+<script>
+const logBox = document.getElementById('logBox');
+let foundUser = null;
+let computedHash = null;
+
+function log(msg, cls='') {
+  console.log('[fix-kakaotest]', msg);
+  logBox.textContent += (cls === 'err' ? '❌ ' : cls === 'ok' ? '✅ ' : cls === 'warn' ? '⚠️ ' : 'ℹ️ ') + msg + '\n';
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+/* ─── Step 1: 해시 계산 ─── */
+function calcHash() {
+  const pw = 'kakao1234';
+  computedHash = hashPw(pw);
+  log('hashPw("kakao1234") = ' + computedHash, 'ok');
+
+  const el = document.getElementById('hashResult');
+  el.className = 'result success';
+  el.innerHTML = `<strong>hashPw("kakao1234")</strong> = <code style="font-size:1.1rem;font-weight:700;color:#c62828">${computedHash}</code>`;
+
+  // 추가 검증: 다른 비밀번호도 테스트
+  ['kakao1234', 'KAKAO1234', 'kakao12345'].forEach(p => {
+    log(`hashPw("${p}") = ${hashPw(p)}`);
+  });
+}
+
+/* ─── Step 2: DB 조회 ─── */
+async function searchUser() {
+  const el = document.getElementById('searchResult');
+  el.className = 'result';
+  el.textContent = '조회 중...';
+  log('DB 조회: kakaotest@unseon.co.kr');
+
+  try {
+    const res = await fetch('tables/users?search=kakaotest%40unseon.co.kr&limit=10');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const rows = data.data || [];
+    log('전체 검색 결과 수: ' + rows.length);
+
+    // 정확한 이메일 매칭
+    foundUser = rows.find(u => u.email === 'kakaotest@unseon.co.kr') || null;
+
+    if (foundUser) {
+      log('계정 발견! id=' + foundUser.id, 'ok');
+      log('이름: ' + foundUser.name);
+      log('현재 pw_hash: ' + foundUser.pw_hash);
+      log('포인트: ' + foundUser.points);
+      log('status: ' + (foundUser.status || 'active'));
+
+      if (!computedHash) calcHash();
+      const match = foundUser.pw_hash === computedHash;
+      log('pw_hash 일치 여부: ' + (match ? '✅ 일치' : '❌ 불일치 → 수정 필요!'), match ? 'ok' : 'err');
+
+      el.className = 'result ' + (match ? 'success' : 'fail');
+      el.innerHTML = `계정 존재: <strong>${foundUser.name}</strong> (${foundUser.email})<br>
+        pw_hash: <code>${foundUser.pw_hash}</code><br>
+        필요한 pw_hash: <code>${computedHash || '(1단계 먼저 실행)'}</code><br>
+        <strong>${match ? '✅ 비밀번호 일치 — 다른 원인 조사 필요' : '❌ 비밀번호 불일치 → 3단계에서 수정'}</strong>`;
+    } else {
+      log('❌ 계정 없음 — 생성 필요', 'err');
+      el.className = 'result fail';
+      el.textContent = '❌ 계정 없음 (DB에 kakaotest@unseon.co.kr 없음) → 3단계에서 생성';
+    }
+  } catch(e) {
+    log('DB 조회 오류: ' + e.message, 'err');
+    el.className = 'result fail';
+    el.textContent = '❌ DB 조회 실패: ' + e.message;
+  }
+}
+
+/* ─── Step 3: 계정 생성/수정 ─── */
+async function fixUser() {
+  if (!computedHash) calcHash();
+  const el = document.getElementById('fixResult');
+  el.className = 'result';
+  el.textContent = '처리 중...';
+
+  const TARGET_EMAIL = 'kakaotest@unseon.co.kr';
+  const TARGET_PW    = 'kakao1234';
+  const TARGET_HASH  = computedHash;
+  const TARGET_NAME  = '카카오테스트';
+  const TARGET_POINTS = 50000; // 충분한 포인트
+
+  try {
+    if (foundUser) {
+      /* 기존 계정 → pw_hash + points 업데이트 */
+      log('기존 계정 업데이트: ' + foundUser.id);
+      const res = await fetch('tables/users/' + foundUser.id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pw_hash: TARGET_HASH,
+          points:  TARGET_POINTS,
+          name:    TARGET_NAME,
+          status:  'active'
+        })
+      });
+      if (!res.ok) throw new Error('PATCH HTTP ' + res.status);
+      const updated = await res.json();
+      log('업데이트 완료: pw_hash=' + updated.pw_hash, 'ok');
+      log('업데이트 완료: points=' + updated.points, 'ok');
+      foundUser = updated;
+
+      el.className = 'result success';
+      el.innerHTML = `✅ 계정 업데이트 완료<br>
+        이름: ${updated.name}<br>
+        pw_hash: <code>${updated.pw_hash}</code><br>
+        포인트: ${updated.points}P`;
+
+    } else {
+      /* 신규 계정 생성 */
+      log('신규 계정 생성: ' + TARGET_EMAIL);
+      const newId = 'kakaotest-' + Date.now();
+      const res = await fetch('tables/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id:        newId,
+          name:      TARGET_NAME,
+          email:     TARGET_EMAIL,
+          pw_hash:   TARGET_HASH,
+          phone:     '',
+          birth:     '',
+          gender:    'none',
+          points:    TARGET_POINTS,
+          status:    'active',
+          marketing: false,
+          created_at: new Date().toISOString()
+        })
+      });
+      if (!res.ok) throw new Error('POST HTTP ' + res.status);
+      foundUser = await res.json();
+      log('신규 생성 완료: id=' + foundUser.id, 'ok');
+      log('pw_hash=' + foundUser.pw_hash, 'ok');
+
+      el.className = 'result success';
+      el.innerHTML = `✅ 계정 생성 완료<br>
+        ID: <code>${foundUser.id}</code><br>
+        이름: ${foundUser.name}<br>
+        pw_hash: <code>${foundUser.pw_hash}</code><br>
+        포인트: ${foundUser.points}P`;
+    }
+  } catch(e) {
+    log('처리 오류: ' + e.message, 'err');
+    el.className = 'result fail';
+    el.textContent = '❌ 실패: ' + e.message;
+  }
+}
+
+/* ─── Step 4: 로그인 검증 ─── */
+async function verifyLogin() {
+  if (!computedHash) calcHash();
+  const el = document.getElementById('verifyResult');
+  el.className = 'result';
+  el.textContent = '검증 중...';
+  log('로그인 검증 시작');
+
+  try {
+    // findUserByEmail 직접 호출
+    const user = await findUserByEmail('kakaotest@unseon.co.kr');
+    if (!user) {
+      log('❌ findUserByEmail 결과: null', 'err');
+      el.className = 'result fail';
+      el.textContent = '❌ findUserByEmail("kakaotest@unseon.co.kr") → null → 계정 없음';
+      return;
+    }
+
+    log('findUserByEmail 성공: ' + user.name + ' / ' + user.email, 'ok');
+    log('DB pw_hash: ' + user.pw_hash);
+    log('kakao1234 hash: ' + computedHash);
+
+    const match = user.pw_hash === hashPw('kakao1234');
+    if (match) {
+      log('✅ 비밀번호 일치 — 로그인 성공 가능!', 'ok');
+      el.className = 'result success';
+      el.innerHTML = `<strong>✅ 로그인 검증 통과!</strong><br>
+        이메일: kakaotest@unseon.co.kr<br>
+        비밀번호: kakao1234<br>
+        이름: ${user.name}<br>
+        포인트: ${user.points}P<br>
+        <br>→ <a href="../auth.html" target="_blank">auth.html에서 실제 로그인 테스트</a>`;
+    } else {
+      log('❌ 비밀번호 불일치!', 'err');
+      log('DB: ' + user.pw_hash, 'err');
+      log('계산: ' + hashPw('kakao1234'), 'err');
+      el.className = 'result fail';
+      el.innerHTML = `❌ 비밀번호 불일치<br>DB pw_hash: <code>${user.pw_hash}</code><br>필요: <code>${computedHash}</code>`;
+    }
+  } catch(e) {
+    log('검증 오류: ' + e.message, 'err');
+    el.className = 'result fail';
+    el.textContent = '❌ 검증 실패: ' + e.message;
+  }
+}
+
+// 자동 시작
+window.addEventListener('DOMContentLoaded', function() {
+  log('도구 로드 완료');
+  calcHash(); // 해시값 즉시 계산
+});
+</script>
+</body>
+</html>

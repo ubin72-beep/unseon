@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>kakaotest 로그인 자동 검증</title>
+<style>
+body { font-family: sans-serif; padding: 30px; background: #f5f5f5; max-width: 600px; margin: 0 auto; }
+.log { background: #1a1a1a; color: #0f0; padding: 16px; border-radius: 8px; font-size: 0.88rem; line-height: 2; min-height: 200px; white-space: pre-wrap; }
+.ok   { color: #69f0ae; }
+.err  { color: #ff5252; }
+.warn { color: #ffd740; }
+h2 { color: #1a1a2e; }
+</style>
+</head>
+<body>
+<h2>🔐 kakaotest 로그인 자동 검증</h2>
+<div class="log" id="logBox">검증 시작 중...\n</div>
+
+<script src="../js/auth.js?v=20260514a"></script>
+<script>
+const lb = document.getElementById('logBox');
+let pass = 0, fail = 0;
+
+function log(msg, cls) {
+  console.log('[kakaotest-verify]', msg);
+  lb.textContent += (cls==='ok'?'✅ ':cls==='err'?'❌ ':cls==='warn'?'⚠️ ':'ℹ️ ') + msg + '\n';
+  lb.scrollTop = lb.scrollHeight;
+}
+function p(msg) { pass++; log('PASS: ' + msg, 'ok'); }
+function f(msg) { fail++; log('FAIL: ' + msg, 'err'); }
+
+async function runAll() {
+  log('=== kakaotest 계정 로그인 검증 시작 ===');
+
+  /* 1. 해시 확인 */
+  const hash = hashPw('kakao1234');
+  log('hashPw("kakao1234") = ' + hash);
+  if (hash === 'h_80fxj9_9') p('해시값 일치: h_80fxj9_9');
+  else f('해시값 불일치: 기대=h_80fxj9_9, 실제=' + hash);
+
+  /* 2. DB 조회 */
+  log('DB에서 kakaotest@unseon.co.kr 조회 중...');
+  const user = await findUserByEmail('kakaotest@unseon.co.kr');
+  if (!user) {
+    f('findUserByEmail → null (계정 없음)');
+    log('⇒ 결론: DB에 계정이 없음. TableDataAdd 실패 가능성');
+    summary(); return;
+  }
+  p('findUserByEmail 성공: ' + user.name + ' (' + user.email + ')');
+  log('DB pw_hash: ' + user.pw_hash);
+  log('DB points:  ' + user.points);
+  log('DB status:  ' + user.status);
+  log('DB id:      ' + user.id);
+
+  /* 3. 비밀번호 일치 확인 */
+  if (user.pw_hash === hash) {
+    p('비밀번호 일치: kakao1234 → h_80fxj9_9 ✓');
+  } else {
+    f('비밀번호 불일치! DB=' + user.pw_hash + ' vs 계산=' + hash);
+  }
+
+  /* 4. 상태 확인 */
+  if (!user.status || user.status === 'active') {
+    p('계정 상태 정상: ' + (user.status || 'active'));
+  } else {
+    f('계정 정지됨: status=' + user.status);
+  }
+
+  /* 5. 포인트 확인 */
+  if ((user.points || 0) >= 500) {
+    p('포인트 충분: ' + user.points + 'P');
+  } else {
+    log('포인트 부족: ' + user.points + 'P (충전 권장)', 'warn');
+  }
+
+  /* 6. 실제 로그인 흐름 시뮬레이션 */
+  log('로그인 흐름 시뮬레이션...');
+  if (user && user.pw_hash === hash && (!user.status || user.status === 'active')) {
+    p('로그인 시뮬레이션 통과 — auth.html에서 실제 로그인 가능');
+  } else {
+    f('로그인 시뮬레이션 실패');
+  }
+
+  summary();
+}
+
+function summary() {
+  log('');
+  log('══════════════════════════════════════════');
+  log('결과: ' + pass + '/' + (pass+fail) + ' 통과' + (fail===0 ? ' — 완벽! 🎉' : ' — ' + fail + '개 실패'), fail===0?'ok':'err');
+  log('══════════════════════════════════════════');
+  if (fail === 0) {
+    log('→ auth.html에서 kakaotest@unseon.co.kr / kakao1234 로그인 가능합니다!', 'ok');
+    log('→ 카카오페이 심사팀에 재심사 요청하세요.', 'ok');
+  }
+  console.log('[kakaotest-verify] RESULT:', pass+'/'+(pass+fail), 'PASS,', fail, 'FAIL');
+}
+
+document.addEventListener('DOMContentLoaded', runAll);
+</script>
+</body>
+</html>
