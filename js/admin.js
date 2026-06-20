@@ -1427,9 +1427,9 @@ function renderAISettings(container) {
         '<div style="background:#fffde7;border:1px solid #f9a825;border-radius:10px;padding:14px 18px">' +
           '<strong>💰 비용 안내</strong><br>' +
           '<span style="font-size:0.85rem;color:#555;line-height:2;display:block;margin-top:4px">' +
-            '• Gemini 2.0 Flash: <strong>무료 티어</strong> — 분당 15회, 일 1,500회 무료<br>' +
-            '• 무료 초과 시: 입력 1M 토큰당 $0.075 (약 100원)<br>' +
-            '• 상담 1건 ≈ 500~800 토큰 → 약 0.07원/건' +
+            '• Gemini 2.5 Flash: <strong>무료 티어</strong> — 분당 10회, 일 500회 무료<br>' +
+            '• 무료 초과 시: 입력 1M 토큰당 $0.15 (약 210원), 출력 1M 토큰당 $0.60 (약 840원)<br>' +
+            '• 상담 1건 ≈ 500~800 토큰 → 약 0.15~0.25원/건' +
           '</span>' +
         '</div>' +
       '</div>' +
@@ -1554,6 +1554,8 @@ async function testGeminiKey() {
   // 신규 계정은 gemini-2.0-flash 사용 불가 → 목록에서 실제 있는 것 우선
   var PRIORITY = [
     'gemini-2.5-flash',
+    'gemini-2.5-flash-preview-05-20',
+    'gemini-2.5-flash-lite',
     'gemini-2.0-flash',
     'gemini-2.0-flash-lite',
     'gemini-2.0-flash-001',

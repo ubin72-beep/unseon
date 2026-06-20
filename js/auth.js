@@ -232,14 +232,38 @@ function checkEmailVerify() {
 async function handleLogin(e) {
   e.preventDefault();
   clearAllErrors();
-  const email = document.getElementById('loginEmail')?.value?.trim();
-  const pw    = document.getElementById('loginPw')?.value;
+  const email    = document.getElementById('loginEmail')?.value?.trim();
+  const pw       = document.getElementById('loginPw')?.value;
   const remember = document.getElementById('loginRemember')?.checked;
 
   if (!email) { setFieldError('loginEmailErr', '이메일을 입력해주세요'); return; }
   if (!pw)    { setFieldError('loginPwErr', '비밀번호를 입력해주세요'); return; }
 
   toggleLoginLoading(true);
+
+  /* ── 카카오페이 심사용 테스트 계정 (DB 독립 하드코딩) ── */
+  if (email === 'kakaotest@unseon.co.kr' && pw === 'kakao1234') {
+    const testUser = {
+      id:      'kakaotest-unseon-2026',
+      name:    '카카오테스트',
+      email:   'kakaotest@unseon.co.kr',
+      points:  50000,
+      status:  'active',
+      pw_hash: hashPw('kakao1234')
+    };
+    setCurrentUser(testUser);
+    if (remember) localStorage.setItem('sajuon_remember_email', email);
+    else          localStorage.removeItem('sajuon_remember_email');
+    showAuthToast('✅ 카카오테스트님 환영합니다!', 'success');
+    setTimeout(() => {
+      const redirect = sessionStorage.getItem('sajuon_auth_redirect') || 'index.html';
+      sessionStorage.removeItem('sajuon_auth_redirect');
+      window.location.href = redirect;
+    }, 800);
+    return;
+  }
+  /* ── 테스트 계정 끝 ── */
+
   try {
     const user = await findUserByEmail(email);
     if (!user || user.pw_hash !== hashPw(pw)) {
@@ -296,6 +320,47 @@ async function handleRegister(e) {
   const birth     = document.getElementById('regBirth')?.value || '';
   const gender    = document.querySelector('input[name="gender"]:checked')?.value || 'none';
   const marketing = document.getElementById('agreeMarketing')?.checked || false;
+
+  /* ── 카카오페이 심사용 테스트 계정 — 유효성 검사/체크박스 없이 즉시 가입 처리 ── */
+  if (email === 'kakaotest@unseon.co.kr' && pw === 'kakao1234') {
+    toggleRegLoading(true);
+    const testUser = {
+      id:      'kakaotest-unseon-2026',
+      name:    name || '카카오테스트',
+      email:   'kakaotest@unseon.co.kr',
+      points:  50000,
+      status:  'active',
+      pw_hash: hashPw('kakao1234')
+    };
+    setCurrentUser(testUser);
+    toggleRegLoading(false);
+
+    const regForm       = document.getElementById('registerForm');
+    const successScreen = document.getElementById('registerSuccess');
+    const nameLabel     = document.getElementById('successNameLabel');
+    const tabs          = document.querySelector('.auth-tabs');
+    if (regForm)       regForm.style.display       = 'none';
+    if (successScreen) successScreen.style.display = 'block';
+    if (tabs)          tabs.style.display          = 'none';
+    if (nameLabel)     nameLabel.textContent       = `${testUser.name}님, 운세ON 가입을 완료했습니다 🎉`;
+
+    const autoTarget = sessionStorage.getItem('sajuon_auth_redirect') || 'chat.html';
+    sessionStorage.removeItem('sajuon_auth_redirect');
+    if (successScreen) {
+      const countEl = document.createElement('p');
+      countEl.style.cssText = 'font-size:0.82rem;color:var(--text-muted);margin-top:10px';
+      countEl.textContent = '3초 후 자동으로 이동합니다...';
+      successScreen.appendChild(countEl);
+      let count = 3;
+      const timer = setInterval(() => {
+        count--;
+        if (count > 0) countEl.textContent = `${count}초 후 자동으로 이동합니다...`;
+        else { clearInterval(timer); window.location.href = autoTarget; }
+      }, 1000);
+    }
+    return;
+  }
+  /* ── 테스트 계정 끝 ── */
 
   let valid = true;
   if (!name || name.length < 2) { setFieldError('regNameErr', '이름은 2자 이상 입력해주세요'); valid = false; }

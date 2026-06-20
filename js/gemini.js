@@ -968,6 +968,9 @@ async function _callGeminiNonStream(model, ver, key, requestBody, onChunk, onDon
 async function _retryWithFallback(category, userMessage, requestBody, key, onChunk, onDone, onError, failedModel) {
   var FALLBACK_MODELS = [
     'gemini-2.5-flash',
+    'gemini-2.5-flash-preview-05-20',
+    'gemini-2.5-flash-lite',
+    'gemini-2.0-flash',
     'gemini-2.0-flash-lite',
     'gemini-1.5-flash',
     'gemini-1.5-flash-001',
