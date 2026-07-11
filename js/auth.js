@@ -34,7 +34,11 @@ async function apiPost(table, body) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
-  if (!res.ok) throw new Error('POST ' + table + ' ' + res.status);
+  if (!res.ok) {
+    let detail = '';
+    try { const d = await res.json(); detail = d && d.message ? (' - ' + d.message) : ''; } catch(_) {}
+    throw new Error('POST ' + table + ' ' + res.status + detail);
+  }
   return res.json();
 }
 async function apiPatch(table, id, body) {
@@ -390,8 +394,13 @@ async function handleRegister(e) {
 
   toggleRegLoading(true);
   try {
-    // 이메일 중복 확인
-    const existing = await findUserByEmail(email);
+    // 이메일 중복 확인 (빠른 search만 사용 — fallback은 로그인에서만 필요)
+    let existing = null;
+    try {
+      const chk = await apiGet('users', { search: email, limit: 50 });
+      existing = (chk.data || []).find(u => u.email === email) || null;
+    } catch(_) { existing = null; }
+
     if (existing) {
       setFieldError('regEmailErr', '이미 사용 중인 이메일입니다');
       toggleRegLoading(false); return;
@@ -415,20 +424,24 @@ async function handleRegister(e) {
       last_login:      new Date().toISOString(),
     };
 
-    // DB에 저장
+    // DB에 저장 (핵심 — 실패 시 즉시 오류 표시)
     const saved = await apiPost('users', newUser);
 
-    // 포인트 이력 저장
-    await apiPost('point_history', {
-      id:          genId(),
-      user_id:     saved.id,
-      email:       email,
-      type:        'charge',
-      amount:      FREE_PT,
-      balance:     FREE_PT,
-      description: '신규 가입 무료 포인트',
-      category:    'welcome',
-    });
+    // 포인트 이력 저장 (실패해도 가입 자체는 성공 처리)
+    try {
+      await apiPost('point_history', {
+        id:          genId(),
+        user_id:     saved.id,
+        email:       email,
+        type:        'charge',
+        amount:      FREE_PT,
+        balance:     FREE_PT,
+        description: '신규 가입 무료 포인트',
+        category:    'welcome',
+      });
+    } catch(ptErr) {
+      console.warn('[회원가입] 포인트 이력 저장 실패 (가입은 성공):', ptErr);
+    }
 
     setCurrentUser(saved);
     toggleRegLoading(false);
@@ -459,7 +472,17 @@ async function handleRegister(e) {
     }
   } catch (err) {
     console.error('[회원가입]', err);
-    showAuthToast('❌ 회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요', 'error');
+    const errMsg = err && err.message ? err.message : String(err);
+    // 이미 가입된 이메일 (중복 키 오류)
+    if (errMsg.includes('409') || errMsg.includes('duplicate') || errMsg.includes('conflict')) {
+      setFieldError('regEmailErr', '이미 사용 중인 이메일입니다. 로그인을 시도해주세요');
+    } else if (errMsg.includes('400')) {
+      showAuthToast('❌ 입력 정보를 확인해주세요', 'error');
+    } else if (errMsg.includes('500') || errMsg.includes('503')) {
+      showAuthToast('❌ 서버 오류입니다. 잠시 후 다시 시도해주세요', 'error');
+    } else {
+      showAuthToast('❌ 회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요', 'error');
+    }
     toggleRegLoading(false);
   }
 }
