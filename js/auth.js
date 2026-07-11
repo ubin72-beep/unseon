@@ -50,9 +50,23 @@ async function apiPatch(table, id, body) {
 /* ─── 이메일로 사용자 조회 ─── */
 async function findUserByEmail(email) {
   try {
-    const data = await apiGet('users', { search: email, limit: 10 });
+    // 1차: search 파라미터로 빠른 조회
+    const data = await apiGet('users', { search: email, limit: 50 });
     const rows = data.data || [];
-    return rows.find(u => u.email === email) || null;
+    const found = rows.find(u => u.email === email);
+    if (found) return found;
+
+    // 2차: search가 정확히 안 될 경우 전체 조회 후 클라이언트 필터 (배포DB 검색 딜레이 대응)
+    const total = data.total || 0;
+    const pageSize = 200;
+    const pages = Math.ceil(total / pageSize) || 1;
+    for (let p = 1; p <= Math.min(pages, 5); p++) {
+      const d2 = await apiGet('users', { page: p, limit: pageSize });
+      const r2 = d2.data || [];
+      const f2 = r2.find(u => u.email === email);
+      if (f2) return f2;
+    }
+    return null;
   } catch { return null; }
 }
 
