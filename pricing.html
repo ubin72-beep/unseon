@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
   <!-- ===== 기본 SEO ===== -->
-  <!-- 카카오페이 JS SDK (실서비스 전환 시 아래 주석 해제 + YOUR_APP_KEY 교체) -->
-  <!-- <script src="https://t1.kakaocdn.net/kakaojs/sdk/2.7.4/kakao.min.js"></script> -->
+  <!-- 카카오페이 JS SDK ✅ 실서비스 활성화 -->
+  <script src="https://t1.kakaocdn.net/kakaojs/sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
   <title>포인트 충전 — 운세ON | 운세 상담 포인트 충전</title>
   <meta name="description" content="운세ON AI 운세 상담 포인트 충전. 10,000원 = 10,000P. 최대 30% 보너스. 구가 시 500P 무료 지급. 연애운·사업운·사주상담 등 38가지 AI 상담 운세 서비스 이용." />
   <meta name="keywords" content="운세포인트충전,AI운세충전,운세ON충전,사주상담충전" />
@@ -524,9 +524,9 @@
   </div>
 </div>
 
-<script src="js/auth.js?v=20260620b"></script>
+<script src="js/auth.js?v=20260826"></script>
 <script src="js/main.js?v=20260407"></script>
-<script src="js/kakaopay.js?v=20260419"></script>
+<script src="js/kakaopay.js?v=20260620c"></script>
 <script>
 /* ── 관리자 정책(sajuon_policy) 반영 → 플랜 카드 UI 동기화 ── */
 function applySavedPolicy() {
@@ -560,6 +560,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
   /* ── 0. 관리자 정책 동기화 ── */
   applySavedPolicy();
+
+  /* ── 0-1. 테스트 모드 배너 제어 ── */
+  var testBanner = document.getElementById('testModeBanner');
+  if (testBanner) {
+    // IS_TEST=false면 배너 완전 숨김
+    var isTestMode = (typeof KAKAO_CONFIG !== 'undefined') && KAKAO_CONFIG.IS_TEST === true;
+    testBanner.style.display = isTestMode ? '' : 'none';
+  }
 
   /* ── 1. 헤더 로그인 상태 — auth.js initAuthHeader()에 위임 ── */
   if (typeof initAuthHeader === 'function') initAuthHeader();

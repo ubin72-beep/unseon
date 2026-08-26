@@ -613,9 +613,9 @@
 </footer>
 
 <!-- ===== 스크립트 ===== -->
-<script src="js/auth.js?v=20260620b"></script>
-<script src="js/main.js?v=20260411"></script>
-<script src="js/gemini.js?v=20260411"></script>
+<script src="js/auth.js?v=20260826"></script>
+<script src="js/main.js?v=20260407"></script>
+<script src="js/gemini.js?v=20260826"></script>
 <script src="js/saju.js?v=20260411"></script>
 
 <script>
@@ -692,6 +692,24 @@ function initParticles() {
   }
 }
 
+// 토스트 메시지
+function showFortuneToast(msg, type = 'info') {
+  const colors = { info: '#2c5f4f', error: '#c62828', success: '#2e7d32', warn: '#e65100' };
+  let t = document.getElementById('fortuneToastEl');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'fortuneToastEl';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#2c5f4f;color:#fff;padding:12px 24px;border-radius:12px;font-size:0.88rem;font-weight:600;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;max-width:90vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.background = colors[type] || colors.info;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(20px)'; }, 3000);
+}
+
 // 포인트 표시 갱신
 function updateAllPointDisplays() {
   const pts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
@@ -725,29 +743,15 @@ function selectMonth(m) {
 function checkAuth(type) {
   let cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
   if (!cu) {
-    if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-      sessionStorage.setItem('sajuon_auth_redirect', 'fortune.html');
-      window.location.href = 'auth.html';
-    }
+    sessionStorage.setItem('sajuon_auth_redirect', 'fortune.html');
+    window.location.href = 'auth.html';
     return false;
-  }
-  // id 없으면 자동 생성 (구버전 호환)
-  if (!cu.id) {
-    cu.id = 'uid_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-    localStorage.setItem('sajuon_current_user', JSON.stringify(cu));
-    // 사용자 목록에도 id 반영
-    try {
-      const users = JSON.parse(localStorage.getItem('sajuon_users') || '[]');
-      const idx = users.findIndex(u => u.email === cu.email);
-      if (idx >= 0) { users[idx].id = cu.id; localStorage.setItem('sajuon_users', JSON.stringify(users)); }
-      else { users.push(cu); localStorage.setItem('sajuon_users', JSON.stringify(users)); }
-    } catch(e) {}
   }
   const pts = parseInt(localStorage.getItem('sajuon_points') || cu.points || '0', 10);
   const cost = FORTUNE_COSTS[type];
   if (pts < cost) {
-    alert(`포인트가 부족합니다.\n필요 포인트: ${cost}P / 현재 보유: ${pts}P\n\n포인트 충전 페이지로 이동합니다.`);
-    window.location.href = 'pricing.html';
+    showFortuneToast(`포인트가 부족합니다. 필요: ${cost}P / 보유: ${pts}P — 충전 페이지로 이동합니다.`, 'error');
+    setTimeout(() => { window.location.href = 'pricing.html'; }, 1800);
     return false;
   }
   return true;
@@ -804,9 +808,10 @@ async function deductFortunePoints(cost, desc, category) {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ points: next })
     });
-    await fetch('tables/points_history', {
+    await fetch('tables/point_history', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        id: 'fortune_' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
         user_id: cu.id, email: cu.email || '', type: 'use',
         amount: -cost, balance: next, description: desc, category
       })

@@ -522,12 +522,12 @@
   </div>
 </div>
 
-<script src="js/auth.js?v=20260620b"></script>
+<script src="js/auth.js?v=20260826"></script>
 <script src="js/main.js?v=20260407"></script>
 <script src="js/share.js?v=20260405"></script>
 <script src="js/welcome-popup.js?v=20260405"></script>
 <script src="js/tarot.js?v=20260502"></script>
-<script src="js/gemini.js?v=20260502"></script>
+<script src="js/gemini.js?v=20260826"></script>
 <script>
 /* =====================================================
    타로 페이지 — 메인 스크립트
@@ -616,6 +616,24 @@ function renderHeroCards() {
     el.innerHTML = `<span style="font-size:1.4rem">${theme.symbol||'🃏'}</span><div class="hero-float-name">${card.kr}</div>`;
     container.appendChild(el);
   });
+}
+
+/* ── 토스트 메시지 ── */
+function showTarotToast(msg, type = 'info') {
+  const colors = { info: '#5a4b8a', error: '#c62828', success: '#2e7d32' };
+  let t = document.getElementById('tarotToastEl');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'tarotToastEl';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);color:#fff;padding:12px 24px;border-radius:12px;font-size:0.88rem;font-weight:600;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;max-width:90vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.background = colors[type] || colors.info;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(20px)'; }, 3000);
 }
 
 /* ── 포인트 업데이트 ── */
@@ -713,11 +731,19 @@ function scrollToInput() {
 function startTarotReading() {
   const question = document.getElementById('tarotQuestion').value.trim();
 
+  /* 로그인 체크 */
+  const cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+  if (!cu) {
+    sessionStorage.setItem('sajuon_auth_redirect', 'tarot.html');
+    window.location.href = 'auth.html';
+    return;
+  }
+
   /* 포인트 체크 */
   const pts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
   if (pts < 100) {
-    alert('포인트가 부족합니다.\n타로 상담은 100P가 필요합니다.\n충전 페이지로 이동합니다.');
-    window.location.href = 'pricing.html';
+    showTarotToast('포인트가 부족합니다. 타로 상담은 100P가 필요합니다. 충전 페이지로 이동합니다.', 'error');
+    setTimeout(() => { window.location.href = 'pricing.html'; }, 1800);
     return;
   }
 
@@ -839,8 +865,13 @@ function closeCardPicker() {
 function runReading(question, selectedCardIds) {
   /* 포인트 차감 */
   const pts = parseInt(localStorage.getItem('sajuon_points') || '0', 10);
-  const newPts = pts - 100;
+  const newPts = Math.max(0, pts - 100);
   localStorage.setItem('sajuon_points', String(newPts));
+  /* current_user 포인트 동기화 */
+  try {
+    const cu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+    if (cu) { cu.points = newPts; localStorage.setItem('sajuon_current_user', JSON.stringify(cu)); }
+  } catch(_) {}
   saveHistoryEntry('타로 상담', -100, question || '오늘의 타로');
   updatePointDisplay();
 
@@ -1110,7 +1141,7 @@ async function requestAIInterpretation(reading, question) {
 
   try {
     const apiKey = localStorage.getItem('sajuon_gemini_key') || localStorage.getItem('gemini_api_key') || '';
-    const geminiModel = localStorage.getItem('sajuon_gemini_model') || 'gemini-2.0-flash';
+    const geminiModel = localStorage.getItem('sajuon_gemini_model') || 'gemini-2.5-flash';
     const geminiVer   = localStorage.getItem('sajuon_gemini_ver')   || 'v1beta';
     if (!apiKey) {
       clearInterval(stepInterval);
@@ -1297,10 +1328,11 @@ function saveHistoryEntry(type, point, memo) {
         body: JSON.stringify({ points: newPts })
       }).catch(function(e) { console.warn('[Tarot] DB 포인트 업데이트 실패:', e); });
       // DB 이력 저장
-      fetch('tables/points_history', {
+      fetch('tables/point_history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id: 'tarot_' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
           user_id: userId,
           email: userEmail || '',
           type: 'use',

@@ -4,11 +4,77 @@
 > **운영사:** 큐브박스 | 대표 김미화  
 > **사업자등록번호:** 537-08-03349  
 > **문의:** sajuon@gmail.com · 0502-1909-7788  
-> **최종 점검일:** 2026-06-20
+> **최종 점검일:** 2026-08-26
 
 ---
 
-## ✅ 전체 시스템 점검 완료 (2026-06-20)
+## ✅ 타로·점성술·운세 전체 점검 완료 (2026-08-26 2차)
+
+### 🔍 발견 및 수정된 버그 목록
+
+| 파일 | 버그 유형 | 내용 | 수정 결과 |
+|------|-----------|------|-----------|
+| `tarot.html` | **DB 테이블명 오타** | `tables/points_history` → `tables/point_history` | ✅ 수정 |
+| `tarot.html` | **Gemini 기본 모델 구버전** | `gemini-2.0-flash` → `gemini-2.5-flash` | ✅ 수정 |
+| `tarot.html` | **gemini.js 구버전** | `v=20260502` → `v=20260826` | ✅ 수정 |
+| `tarot.html` | **포인트 음수 허용** | `pts - 100` → `Math.max(0, pts - 100)` | ✅ 수정 |
+| `tarot.html` | **current_user 포인트 미동기화** | runReading 포인트 차감 후 current_user 업데이트 추가 | ✅ 수정 |
+| `tarot.html` | **비로그인 체크 누락** | startTarotReading에 로그인 체크 추가 | ✅ 수정 |
+| `tarot.html` | **alert() 사용** | 포인트 부족 시 alert → 토스트 메시지로 교체 | ✅ 수정 |
+| `tarot.html` | **point_history id 누락** | POST body에 uuid id 필드 추가 | ✅ 수정 |
+| `astrology.html` | **DB 테이블명 오타** | `tables/points_history` → `tables/point_history` | ✅ 수정 |
+| `astrology.html` | **Gemini 기본 모델 구버전** | `gemini-2.0-flash` → `gemini-2.5-flash` | ✅ 수정 |
+| `astrology.html` | **gemini.js 구버전** | `v=20260502` → `v=20260826` | ✅ 수정 |
+| `astrology.html` | **API 키 없을 때 prompt() 팝업** | → 관리자 링크 안내 메시지로 교체 (UX 개선) | ✅ 수정 |
+| `astrology.html` | **confirm() 포인트 부족 팝업** | → 토스트 + 자동 이동으로 교체 | ✅ 수정 |
+| `astrology.html` | **비로그인 체크 누락** | 출생 차트 계산 시 로그인 체크 추가 | ✅ 수정 |
+| `astrology.html` | **point_history id 누락** | POST body에 uuid id 필드 추가 | ✅ 수정 |
+| `fortune.html` | **DB 테이블명 오타** | `tables/points_history` → `tables/point_history` | ✅ 수정 |
+| `fortune.html` | **gemini.js/main.js 구버전** | `v=20260411` → `v=20260826/v=20260407` | ✅ 수정 |
+| `fortune.html` | **confirm() 비로그인 처리** | → 자동 auth.html 이동으로 교체 | ✅ 수정 |
+| `fortune.html` | **alert() 포인트 부족 처리** | → 토스트 + 자동 이동으로 교체 | ✅ 수정 |
+| `fortune.html` | **point_history id 누락** | POST body에 uuid id 필드 추가 | ✅ 수정 |
+
+### Playwright 오류 검증 결과 (2026-08-26 2차)
+
+| 페이지 | 콘솔 오류 | 결과 |
+|--------|-----------|------|
+| `tarot.html` | 0건 | ✅ 정상 |
+| `astrology.html` | 0건 | ✅ 정상 |
+| `fortune.html` | 0건 | ✅ 정상 |
+
+---
+
+## ✅ 회원가입/로그인 점검 완료 (2026-08-26 1차)
+
+### 🆕 변경사항
+
+| 파일 | 변경 내용 | 결과 |
+|------|-----------|------|
+| `js/auth.js` | **v6.0** — 이메일 인증 시뮬레이션 코드 완전 제거 | ✅ |
+| `js/auth.js` | `handleRegister`: `finalUser = {...newUser, ...saved}` 병합으로 points 보존 | ✅ |
+| `js/auth.js` | `findUserByEmail`: limit=50 + 전체 페이지 조회 2단계 fallback | ✅ |
+| `js/auth.js` | `apiPost`: 400/409/500 오류 상세 메시지 분기 | ✅ |
+| `js/auth.js` | `point_history` 저장 별도 try/catch 격리 (이력 실패해도 가입 성공) | ✅ |
+| `auth.html` | **이메일 인증 버튼("인증 발송") 및 인증코드 필드 완전 제거** | ✅ |
+| `js/admin.js` | `renderMembersAdmin` 오늘 가입 계산 로직 버그 수정 | ✅ |
+| `js/kakaopay.js` | `runRealKakaoPay` 완성 (SDK + 리다이렉트 폴백) | ✅ |
+| 전체 10개 HTML | auth.js 버전 `v=20260826` 일괄 업데이트 | ✅ |
+
+### Playwright 오류 검증 결과 (2026-08-26 1차)
+
+| 페이지 | 콘솔 오류 | 결과 |
+|--------|-----------|------|
+| `auth.html` | 0건 | ✅ 정상 |
+| `admin.html` | 0건 | ✅ 정상 |
+| `pricing.html` | 403 (외부 리소스, auth 무관) | ✅ 무시 가능 |
+
+---
+| `auth.html` | 0건 | ✅ 정상 |
+| `admin.html` | 0건 | ✅ 정상 |
+| `pricing.html` | 403 (외부 리소스, auth 무관) | ✅ 무시 가능 |
+
+---
 
 ### 점검 범위 및 결과
 

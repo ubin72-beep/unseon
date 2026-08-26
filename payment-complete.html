@@ -4,6 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>결제 처리 중 — 운세ON</title>
+  <!-- 카카오페이 JS SDK -->
+  <script src="https://t1.kakaocdn.net/kakaojs/sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
@@ -85,8 +87,8 @@
   </div>
 </div>
 
-<script src="js/auth.js?v=20260620b"></script>
-<script src="js/kakaopay.js?v=20260407"></script>
+<script src="js/auth.js?v=20260826"></script>
+<script src="js/kakaopay.js?v=20260620c"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   // 헤더 포인트 표시
@@ -149,8 +151,8 @@ function renderSuccess(pgToken) {
       }).catch(e => console.warn('[PaymentComplete] DB 포인트 업데이트 실패:', e));
 
       // ★ DB에 이용내역 저장 (POST)
-      const isTest = !pgToken || String(pgToken).startsWith('KAKAO_TEST');
-      fetch('tables/points_history', {
+      const isTest = !pgToken || String(pgToken).startsWith('KAKAO_TEST_');
+      fetch('tables/point_history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -178,7 +180,7 @@ function renderSuccess(pgToken) {
     orderId: pending.orderId,
     amount: pending.plan.amount,
     pgToken: pgToken || 'test',
-    status: isTest ? '테스트완료' : '결제완료'
+    status: (!pgToken || String(pgToken).startsWith('KAKAO_TEST_')) ? '테스트완료' : '결제완료'
   });
   localStorage.setItem('sajuon_history', JSON.stringify(hist));
 

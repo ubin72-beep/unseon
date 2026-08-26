@@ -549,12 +549,12 @@
 </footer>
 
 <!-- ===== SCRIPTS ===== -->
-<script src="js/auth.js?v=20260620b"></script>
+<script src="js/auth.js?v=20260826"></script>
 <script src="js/main.js?v=20260407"></script>
 <script src="js/share.js?v=20260405"></script>
 <script src="js/welcome-popup.js?v=20260405"></script>
 <script src="js/astrology.js?v=20260502"></script>
-<script src="js/gemini.js?v=20260502"></script>
+<script src="js/gemini.js?v=20260826"></script>
 
 <script>
 /* ============================================================
@@ -616,6 +616,24 @@ document.addEventListener('DOMContentLoaded', () => {
   updatePointDisplay();
   renderZodiacGallery();
 });
+
+/* ---------- 토스트 메시지 ---------- */
+function showAstroToast(msg, type = 'info') {
+  const colors = { info: '#3d1e8f', error: '#c62828', success: '#2e7d32', warn: '#e65100' };
+  let t = document.getElementById('astroToastEl');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'astroToastEl';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);color:#fff;padding:12px 24px;border-radius:12px;font-size:0.88rem;font-weight:600;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;max-width:90vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.background = colors[type] || colors.info;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(20px)'; }, 3500);
+}
 
 /* ---------- 별 파티클 ---------- */
 function createStars() {
@@ -778,24 +796,27 @@ function startAstrologyCalc() {
   const city   = document.getElementById('birthCity').value;
 
   if (!year || year < 1900 || year > 2024) {
-    alert('올바른 생년을 입력해 주세요 (1900~2024)'); return;
+    showAstroToast('올바른 생년을 입력해 주세요 (1900~2024)', 'error'); return;
   }
   if (!month || !day) {
-    alert('생년월일을 모두 입력해 주세요'); return;
+    showAstroToast('생년월일을 모두 입력해 주세요', 'error'); return;
   }
 
-  // 포인트 확인 — initPoints()가 아직 안 됐을 수 있으므로 여기서도 보장
-  if (!localStorage.getItem('sajuon_initialized')) {
-    if (typeof initPoints === 'function') initPoints();
-    else {
-      localStorage.setItem('sajuon_points', '500');
-      localStorage.setItem('sajuon_initialized', 'true');
-    }
+  // 로그인 체크
+  const astCu = JSON.parse(localStorage.getItem('sajuon_current_user') || 'null');
+  if (!astCu) {
+    sessionStorage.setItem('sajuon_auth_redirect', 'astrology.html');
+    window.location.href = 'auth.html';
+    return;
   }
+
+  // 포인트 확인
+  if (typeof initPoints === 'function' && !localStorage.getItem('sajuon_initialized')) initPoints();
   const points = getPoints();
   if (points < 100) {
-    if (!confirm('포인트가 부족합니다.\n\n현재: ' + points + 'P / 필요: 100P\n\n포인트 충전 페이지로 이동하시겠습니까?')) return;
-    location.href = 'pricing.html'; return;
+    showAstroToast(`포인트가 부족합니다. 현재: ${points}P / 필요: 100P — 충전 페이지로 이동합니다.`, 'error');
+    setTimeout(() => { location.href = 'pricing.html'; }, 1800);
+    return;
   }
 
   const hour = hourV !== '' ? parseInt(hourV) : null;
@@ -1367,13 +1388,17 @@ async function requestAIAstrology() {
   if (!currentChart) { alert('먼저 출생 차트를 계산해 주세요'); return; }
 
   let apiKey = localStorage.getItem('sajuon_gemini_key') || localStorage.getItem('gemini_api_key') || '';
-  const geminiModel = localStorage.getItem('sajuon_gemini_model') || 'gemini-2.0-flash';
+  const geminiModel = localStorage.getItem('sajuon_gemini_model') || 'gemini-2.5-flash';
   const geminiVer   = localStorage.getItem('sajuon_gemini_ver')   || 'v1beta';
   if (!apiKey) {
-    apiKey = prompt('🤖 Gemini AI API 키를 입력해 주세요\n\n관리자 페이지 → AI 설정에서도 등록 가능합니다:');
-    if (!apiKey) return;
-    localStorage.setItem('sajuon_gemini_key', apiKey.trim());
-    apiKey = apiKey.trim();
+    const res_el  = document.getElementById('aiAstroResult');
+    const load_el = document.getElementById('aiAstroLoading');
+    if (res_el) {
+      res_el.innerHTML = '<div style="color:#f5c842;font-size:0.9rem;padding:16px;background:rgba(245,200,66,0.1);border-radius:12px;border:1px solid rgba(245,200,66,0.3)">🔑 AI 심층 해석을 받으려면 Gemini API 키가 필요합니다.<br/>📋 <a href="admin.html" style="color:#f5c842;font-weight:700">관리자 페이지 → AI 설정</a>에서 API 키를 등록해 주세요.</div>';
+      res_el.classList.add('show');
+    }
+    if (load_el) load_el.classList.remove('show');
+    return;
   }
 
   const btn  = document.getElementById('aiAstroBtn');
@@ -1490,10 +1515,11 @@ function deductPoints(amount, memo) {
           body: JSON.stringify({ points: next })
         }).catch(function(e) { console.warn('[Astro] DB 포인트 업데이트 실패:', e); });
         // DB 이력 저장
-        fetch('tables/points_history', {
+        fetch('tables/point_history', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            id: 'astro_' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
             user_id: user.id,
             email: user.email || '',
             type: 'use',
