@@ -1,7 +1,11 @@
 /* =========================================
-   운세ON — js/auth.js  v6.0  (2026-08-26)
+   운세ON — js/auth.js  v6.1  (2026-08-26b)
    회원가입 / 로그인 — Table API 서버 DB 기반
    localStorage는 세션(현재 로그인 상태)만 저장
+   v6.1 변경사항 (2026-08-26b):
+     - apiPost: rawText 전체 로깅, HTTP 상태+메시지 상세화
+     - handleRegister catch: 실제 오류 메시지 토스트 표시 (400/409/422/5xx 분기)
+     - 테스트 완료: tables/users POST 201 정상 확인
    v6.0 변경사항:
      - 이메일 인증 시뮬레이션 코드 완전 제거
      - handleRegister: point_history 별도 try/catch 격리
@@ -41,8 +45,14 @@ async function apiPost(table, body) {
     body: JSON.stringify(body)
   });
   if (!res.ok) {
-    let detail = '';
-    try { const d = await res.json(); detail = d && d.message ? (' - ' + d.message) : ''; } catch(_) {}
+    let rawText = '';
+    let detail  = '';
+    try {
+      rawText = await res.text();
+      const d = JSON.parse(rawText);
+      detail  = d && d.message ? (' - ' + d.message) : (rawText ? ' - ' + rawText.slice(0, 120) : '');
+    } catch(_) { if (rawText) detail = ' - ' + rawText.slice(0, 120); }
+    console.error('[apiPost] ' + table + ' ' + res.status + detail);
     throw new Error('POST ' + table + ' ' + res.status + detail);
   }
   return res.json();
@@ -440,17 +450,19 @@ async function handleRegister(e) {
       }, 1000);
     }
   } catch (err) {
-    console.error('[회원가입]', err);
+    console.error('[회원가입 오류 전체]', err);
     const errMsg = err && err.message ? err.message : String(err);
     // 이미 가입된 이메일 (중복 키 오류)
-    if (errMsg.includes('409') || errMsg.includes('duplicate') || errMsg.includes('conflict')) {
+    if (errMsg.includes('409') || errMsg.toLowerCase().includes('duplicate') || errMsg.toLowerCase().includes('conflict') || errMsg.toLowerCase().includes('unique')) {
       setFieldError('regEmailErr', '이미 사용 중인 이메일입니다. 로그인을 시도해주세요');
     } else if (errMsg.includes('400')) {
-      showAuthToast('❌ 입력 정보를 확인해주세요', 'error');
+      showAuthToast('❌ 입력 오류 (400): ' + errMsg.slice(0, 80), 'error');
+    } else if (errMsg.includes('422')) {
+      showAuthToast('❌ 필드 형식 오류 (422): ' + errMsg.slice(0, 80), 'error');
     } else if (errMsg.includes('500') || errMsg.includes('503')) {
-      showAuthToast('❌ 서버 오류입니다. 잠시 후 다시 시도해주세요', 'error');
+      showAuthToast('❌ 서버 오류 (5xx): ' + errMsg.slice(0, 80), 'error');
     } else {
-      showAuthToast('❌ 회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요', 'error');
+      showAuthToast('❌ ' + errMsg.slice(0, 100), 'error');
     }
     toggleRegLoading(false);
   }
