@@ -1321,17 +1321,18 @@ async function sendMessage() {
         body: JSON.stringify({ points: newPts })
       }).catch(e => console.warn('[Chat] DB 포인트 업데이트 실패:', e));
       // DB 이력 저장
-      fetch('tables/points_history', {
+      fetch('tables/point_history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: _u.id,
-          email: _u.email || '',
-          type: 'use',
-          amount: -cost,
-          balance: newPts,
+          id:          'chat_' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
+          user_id:     _u.id,
+          email:       _u.email || '',
+          type:        'use',
+          amount:      -cost,
+          balance:     newPts,
           description: 'AI 상담 — ' + (CAT_KR_MAP[currentCat] || currentCat),
-          category: currentCat
+          category:    currentCat
         })
       }).catch(e => console.warn('[Chat] DB 이력 저장 실패:', e));
       // localStorage 현재 사용자 포인트 동기화
