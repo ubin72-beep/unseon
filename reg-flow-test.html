@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>회원가입 전체 흐름 자동 테스트</title>
+</head>
+<body>
+<div id="result" style="font-family:monospace;padding:20px;white-space:pre-wrap">테스트 실행 중...</div>
+<script src="js/auth.js?v=20260826b"></script>
+<script>
+// auth.js 로드 확인
+window.addEventListener('DOMContentLoaded', async () => {
+  const logs = [];
+  function L(msg) { logs.push(msg); console.log(msg); document.getElementById('result').textContent = logs.join('\n'); }
+
+  // 1. auth.js 함수 존재 확인
+  L('=== auth.js 함수 존재 확인 ===');
+  ['genId','hashPw','handleRegister','handleLogin','findUserByEmail','apiPost','apiGet','showAuthToast','setCurrentUser'].forEach(fn => {
+    const exists = typeof window[fn] === 'function';
+    L((exists ? '✅' : '❌') + ' window.' + fn + ' = ' + typeof window[fn]);
+  });
+
+  // 2. genId 동작 확인
+  L('\n=== genId / hashPw 동작 확인 ===');
+  try {
+    const id = genId();
+    L('✅ genId() = ' + id);
+    const hash = hashPw('test1234!');
+    L('✅ hashPw("test1234!") = ' + hash);
+  } catch(e) {
+    L('❌ genId/hashPw 오류: ' + e.message);
+  }
+
+  // 3. API 연결 확인
+  L('\n=== API 연결 확인 ===');
+  try {
+    const d = await apiGet('users', { limit: 1 });
+    L('✅ apiGet(users) OK — total=' + d.total);
+  } catch(e) {
+    L('❌ apiGet 오류: ' + e.message);
+  }
+
+  // 4. 실제 POST (auth.js apiPost 사용)
+  L('\n=== 실제 POST via apiPost() ===');
+  const testEmail = 'flow_test_' + Date.now() + '@autotest.com';
+  const testId = genId();
+  const testUser = {
+    id:              testId,
+    name:            'flow테스트',
+    email:           testEmail,
+    pw_hash:         hashPw('Test1234!'),
+    phone:           '010-1234-5678',
+    birth:           '1990-01-01',
+    gender:          'none',
+    agree_marketing: false,
+    points:          500,
+    status:          'active',
+    social_provider: '',
+    social_id:       '',
+    created_at_str:  new Date().toLocaleString('ko-KR'),
+    last_login:      new Date().toISOString(),
+  };
+  try {
+    const saved = await apiPost('users', testUser);
+    L('✅ apiPost(users) 성공! saved.id=' + saved.id + ', saved.points=' + saved.points);
+    
+    // finalUser 병합 테스트
+    const FREE_PT = 500;
+    const finalUser = { ...testUser, ...saved, points: saved.points ?? FREE_PT };
+    L('✅ finalUser.points = ' + finalUser.points + ' (기대값: 500)');
+
+    // 5. point_history 저장
+    try {
+      const ph = await apiPost('point_history', {
+        id:          genId(),
+        user_id:     finalUser.id,
+        email:       testEmail,
+        type:        'charge',
+        amount:      500,
+        balance:     500,
+        description: '신규 가입 무료 포인트',
+        category:    'welcome',
+      });
+      L('✅ point_history 저장 성공! id=' + ph.id);
+    } catch(ptErr) {
+      L('⚠️ point_history 저장 실패 (가입은 성공): ' + ptErr.message);
+    }
+
+    // 6. 조회 확인
+    const found = await findUserByEmail(testEmail);
+    L(found ? '✅ findUserByEmail 조회 성공: ' + found.name : '⚠️ findUserByEmail 조회 못 찾음 (DB 지연 가능)');
+
+    // 7. 정리
+    const delRes = await fetch('tables/users/' + (saved.id || testId), { method: 'DELETE' });
+    L('🗑️ 테스트 유저 삭제: ' + delRes.status);
+
+  } catch(err) {
+    L('❌ apiPost 오류: ' + err.message);
+  }
+
+  L('\n=== 테스트 완료 ===');
+});
+</script>
+</body>
+</html>

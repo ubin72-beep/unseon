@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>회원가입 폼 직접 렌더</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+<link rel="stylesheet" href="css/style.css"/>
+<link rel="stylesheet" href="css/auth.css"/>
+</head>
+<body class="auth-body">
+<div class="auth-wrapper" style="min-height:100vh">
+  <div class="auth-form-panel" style="flex:1">
+    <div class="auth-form-inner">
+      <div class="auth-tabs">
+        <button class="auth-tab" id="tabLogin">로그인</button>
+        <button class="auth-tab active" id="tabRegister">회원가입</button>
+      </div>
+      <!-- 회원가입 폼 (display:block 강제) -->
+      <form class="auth-form" id="registerForm" style="display:block" onsubmit="handleRegister(event)">
+        <h2 class="auth-form-title">운세ON과 함께해요 🔮</h2>
+        <p class="auth-form-sub">가입 즉시 <strong>500P 무료</strong> 드립니다!</p>
+        <div class="auth-form-2col">
+          <div class="auth-field">
+            <label><i class="fas fa-user"></i> 이름 (닉네임)</label>
+            <input type="text" id="regName" class="auth-input" placeholder="홍길동" required maxlength="20"/>
+            <span class="auth-field-error" id="regNameErr"></span>
+          </div>
+          <div class="auth-field">
+            <label><i class="fas fa-birthday-cake"></i> 생년월일 <span class="label-opt">(선택)</span></label>
+            <input type="date" id="regBirth" class="auth-input"/>
+          </div>
+        </div>
+        <div class="auth-field">
+          <label><i class="fas fa-envelope"></i> 이메일</label>
+          <input type="email" id="regEmail" class="auth-input" placeholder="example@email.com" required/>
+          <span class="auth-field-error" id="regEmailErr"></span>
+        </div>
+        <div class="auth-field">
+          <label><i class="fas fa-lock"></i> 비밀번호</label>
+          <div class="auth-input-wrap">
+            <input type="password" id="regPw" class="auth-input" placeholder="8자 이상, 영문+숫자 조합" required minlength="8"/>
+            <button type="button" class="pw-toggle"><i class="fas fa-eye"></i></button>
+          </div>
+          <div class="pw-strength-bar"><div class="pw-strength-fill" id="pwStrengthFill"></div></div>
+          <span class="pw-strength-label" id="pwStrengthLabel"></span>
+          <span class="auth-field-error" id="regPwErr"></span>
+        </div>
+        <div class="auth-field">
+          <label><i class="fas fa-lock"></i> 비밀번호 확인</label>
+          <div class="auth-input-wrap">
+            <input type="password" id="regPwConfirm" class="auth-input" placeholder="비밀번호 재입력" required/>
+            <button type="button" class="pw-toggle"><i class="fas fa-eye"></i></button>
+          </div>
+          <span class="auth-field-error" id="regPwConfirmErr"></span>
+        </div>
+        <div class="auth-field">
+          <label><i class="fas fa-phone"></i> 휴대폰 번호 <span class="label-opt">(선택)</span></label>
+          <input type="tel" id="regPhone" class="auth-input" placeholder="010-0000-0000"/>
+        </div>
+        <div class="auth-field">
+          <label><i class="fas fa-venus-mars"></i> 성별 <span class="label-opt">(선택)</span></label>
+          <div class="gender-group">
+            <label class="gender-opt"><input type="radio" name="gender" value="female"/> <span>여성</span></label>
+            <label class="gender-opt"><input type="radio" name="gender" value="male"/> <span>남성</span></label>
+            <label class="gender-opt"><input type="radio" name="gender" value="none" checked/> <span>선택 안 함</span></label>
+          </div>
+        </div>
+        <div class="auth-agree-wrap">
+          <label class="agree-all-label">
+            <input type="checkbox" id="agreeAll"/><span class="agree-all-text">전체 동의</span>
+          </label>
+          <div class="agree-list">
+            <label class="agree-item"><input type="checkbox" id="agreeTerms"/><span>[필수] 이용약관 동의</span></label>
+            <label class="agree-item"><input type="checkbox" id="agreePrivacy"/><span>[필수] 개인정보 처리방침 동의</span></label>
+            <label class="agree-item"><input type="checkbox" id="agreeAge"/><span>[필수] 만 14세 이상입니다</span></label>
+            <label class="agree-item"><input type="checkbox" id="agreeMarketing"/><span>[선택] 마케팅 정보 수신 동의</span></label>
+            <label class="agree-item"><input type="checkbox" id="agreeRefund"/><span>[필수] 환불 정책 확인 및 동의</span></label>
+          </div>
+        </div>
+        <button type="submit" class="auth-submit-btn" id="regSubmitBtn">
+          <span id="regBtnText"><i class="fas fa-user-plus"></i> 회원가입 완료</span>
+          <span id="regBtnLoading" style="display:none"><i class="fas fa-spinner fa-spin"></i> 처리 중...</span>
+        </button>
+        <p class="auth-switch">이미 계정이 있으신가요? <a href="#" class="auth-link">로그인</a></p>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="auth-toast" id="authToast"></div>
+<script src="js/auth.js?v=20260826b"></script>
+</body>
+</html>

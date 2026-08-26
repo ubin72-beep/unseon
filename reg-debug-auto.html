@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<title>회원가입 자동 진단</title>
+</head>
+<body>
+<div id="result">진단 중...</div>
+<script>
+function genId() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+function hashPw(pw) {
+  let hash = 0;
+  for (let i = 0; i < pw.length; i++) {
+    const c = pw.charCodeAt(i);
+    hash = ((hash << 5) - hash) + c;
+    hash = hash & hash;
+  }
+  return 'h_' + Math.abs(hash).toString(36) + '_' + pw.length;
+}
+
+async function runDiag() {
+  const results = [];
+
+  // STEP 1: GET /tables/users
+  try {
+    const r = await fetch('tables/users?limit=1');
+    const d = await r.json();
+    console.log('[STEP1-GET] status=' + r.status + ' total=' + d.total);
+    results.push('STEP1 GET: ' + r.status + ' total=' + (d.total||0));
+  } catch(e) {
+    console.error('[STEP1-GET] ERROR: ' + e.message);
+    results.push('STEP1 GET ERROR: ' + e.message);
+  }
+
+  // STEP 2: POST minimal
+  const minId = genId();
+  const minEmail = 'autotest_min_' + Date.now() + '@debug.com';
+  try {
+    const res = await fetch('tables/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: minId, name: '최소테스트', email: minEmail })
+    });
+    const txt = await res.text();
+    console.log('[STEP2-MIN-POST] status=' + res.status + ' body=' + txt.slice(0,300));
+    results.push('STEP2 MIN POST: ' + res.status + ' | ' + txt.slice(0,200));
+    // cleanup
+    if (res.ok) {
+      let pid = minId;
+      try { pid = JSON.parse(txt).id || minId; } catch(_) {}
+      await fetch('tables/users/' + pid, { method: 'DELETE' });
+      console.log('[STEP2-MIN-POST] cleanup done, id=' + pid);
+    }
+  } catch(e) {
+    console.error('[STEP2-MIN-POST] ERROR: ' + e.message);
+    results.push('STEP2 MIN POST ERROR: ' + e.message);
+  }
+
+  // STEP 3: POST full (same as auth.js handleRegister)
+  const fullId = genId();
+  const fullEmail = 'autotest_full_' + Date.now() + '@debug.com';
+  const newUser = {
+    id:              fullId,
+    name:            '풀테스트유저',
+    email:           fullEmail,
+    pw_hash:         hashPw('test1234!'),
+    phone:           '010-1234-5678',
+    birth:           '1990-01-01',
+    gender:          'none',
+    agree_marketing: false,
+    points:          500,
+    status:          'active',
+    social_provider: '',
+    social_id:       '',
+    created_at_str:  new Date().toLocaleString('ko-KR'),
+    last_login:      new Date().toISOString(),
+  };
+  console.log('[STEP3-FULL-POST] sending fields: ' + Object.keys(newUser).join(', '));
+  try {
+    const res = await fetch('tables/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newUser)
+    });
+    const txt = await res.text();
+    console.log('[STEP3-FULL-POST] status=' + res.status);
+    console.log('[STEP3-FULL-POST] response=' + txt.slice(0, 500));
+    results.push('STEP3 FULL POST: ' + res.status + ' | ' + txt.slice(0,300));
+    // cleanup
+    if (res.ok) {
+      let pid = fullId;
+      try { pid = JSON.parse(txt).id || fullId; } catch(_) {}
+      await fetch('tables/users/' + pid, { method: 'DELETE' });
+      console.log('[STEP3-FULL-POST] cleanup done');
+    }
+  } catch(e) {
+    console.error('[STEP3-FULL-POST] ERROR: ' + e.message);
+    results.push('STEP3 FULL POST ERROR: ' + e.message);
+  }
+
+  // STEP 4: point_history POST
+  const phId = genId();
+  try {
+    const res = await fetch('tables/point_history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id:          phId,
+        user_id:     'test-user-id',
+        email:       'test@test.com',
+        type:        'charge',
+        amount:      500,
+        balance:     500,
+        description: '테스트',
+        category:    'welcome',
+      })
+    });
+    const txt = await res.text();
+    console.log('[STEP4-POINT_HIST] status=' + res.status + ' body=' + txt.slice(0,200));
+    results.push('STEP4 POINT_HISTORY: ' + res.status + ' | ' + txt.slice(0,200));
+    if (res.ok) {
+      let pid = phId;
+      try { pid = JSON.parse(txt).id || phId; } catch(_) {}
+      await fetch('tables/point_history/' + pid, { method: 'DELETE' });
+    }
+  } catch(e) {
+    console.error('[STEP4-POINT_HIST] ERROR: ' + e.message);
+    results.push('STEP4 POINT_HISTORY ERROR: ' + e.message);
+  }
+
+  // Display results
+  document.getElementById('result').innerHTML = '<pre>' + results.join('\n') + '</pre>';
+  console.log('[DIAG-COMPLETE] All steps done');
+}
+
+runDiag().catch(e => {
+  console.error('[DIAG-FATAL] ' + e.message);
+  document.getElementById('result').textContent = 'FATAL: ' + e.message;
+});
+</script>
+</body>
+</html>

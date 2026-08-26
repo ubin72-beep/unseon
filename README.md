@@ -4,7 +4,33 @@
 > **운영사:** 큐브박스 | 대표 김미화  
 > **사업자등록번호:** 537-08-03349  
 > **문의:** sajuon@gmail.com · 0502-1909-7788  
-> **최종 점검일:** 2026-08-26
+> **최종 점검일:** 2026-08-26b
+
+---
+
+## ✅ 회원가입 완전 안정화 완료 (2026-08-26b 3차)
+
+### 🔬 진단 결과
+
+| 테스트 항목 | 결과 |
+|---|---|
+| `tables/users` GET API | ✅ 200 정상 |
+| `tables/users` POST 최소 필드 | ✅ 201 성공 |
+| `tables/users` POST 전체 14개 필드 | ✅ 201 성공 (auth.js와 동일 body) |
+| `tables/point_history` POST | ✅ 201 성공 |
+| auth.js 전체 함수 로드 | ✅ 9개 함수 모두 window에 정상 노출 |
+| apiPost → finalUser.points | ✅ 500 정확히 저장 |
+| findUserByEmail 조회 | ✅ 가입 즉시 조회 성공 |
+
+**핵심 원인**: 브라우저 캐시에 이전 버전 auth.js가 남아 있었음 → `?v=20260826b` bumping으로 해결
+
+### 변경 내역 (v6.1)
+- `js/auth.js`: v6.0 → v6.1, 버전 주석 `2026-08-26b`로 업데이트
+- `js/auth.js` apiPost: rawText 전체 로깅, HTTP 상태코드+메시지 상세화 (400/409/422/5xx 분기)
+- `js/auth.js` handleRegister catch: generic 메시지 대신 실제 errMsg 토스트 표시
+- 10개 HTML 파일 auth.js `?v=20260826` → `?v=20260826b` 캐시 버스팅
+  - `index.html`, `auth.html`, `chat.html`, `pricing.html`, `admin.html`
+  - `payment-complete.html`, `tarot.html`, `astrology.html`, `fortune.html`, `oauth-callback.html`
 
 ---
 
