@@ -1,7 +1,13 @@
 /* =========================================
-   운세ON — js/auth.js  v5.0
+   운세ON — js/auth.js  v6.0  (2026-08-26)
    회원가입 / 로그인 — Table API 서버 DB 기반
    localStorage는 세션(현재 로그인 상태)만 저장
+   v6.0 변경사항:
+     - 이메일 인증 시뮬레이션 코드 완전 제거
+     - handleRegister: point_history 별도 try/catch 격리
+     - findUserByEmail: limit=50 + 전체 페이지 조회 fallback
+     - apiPost: 400/409/500 오류 상세 메시지
+     - 회원가입 후 localStorage에 saved 객체 정확히 저장
    ========================================= */
 
 const LS_SESSION = 'sajuon_current_user';
@@ -204,46 +210,6 @@ function setFieldError(id, msg) { const el = document.getElementById(id); if (el
 function clearFieldError(id)    { const el = document.getElementById(id); if (el) el.textContent = ''; }
 function clearAllErrors()       { document.querySelectorAll('.auth-field-error').forEach(el => el.textContent = ''); }
 
-/* ─── 이메일 인증 (클라이언트 시뮬레이션) ─── */
-let _verifyCode = '', _verifyEmail = '', _verifyTimer = null, _emailVerified = false;
-
-function sendEmailVerify() {
-  const email = document.getElementById('regEmail')?.value?.trim();
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    setFieldError('regEmailErr', '올바른 이메일을 입력해주세요'); return;
-  }
-  clearFieldError('regEmailErr');
-  _verifyCode  = String(Math.floor(100000 + Math.random() * 900000));
-  _verifyEmail = email;
-  const btn = document.getElementById('verifyEmailBtn');
-  const cf  = document.getElementById('verifyCodeField');
-  if (btn) { btn.disabled = true; btn.textContent = '재발송 (60s)'; }
-  if (cf)  cf.style.display = 'block';
-  showAuthToast(`📧 인증 코드: ${_verifyCode} (테스트 모드)`, 'info');
-  let sec = 60;
-  clearInterval(_verifyTimer);
-  _verifyTimer = setInterval(() => {
-    sec--;
-    if (btn) btn.textContent = `재발송 (${sec}s)`;
-    if (sec <= 0) { clearInterval(_verifyTimer); if (btn) { btn.disabled = false; btn.textContent = '재발송'; } }
-  }, 1000);
-}
-function checkEmailVerify() {
-  const input = document.getElementById('regVerifyCode')?.value?.trim();
-  const ok    = document.getElementById('verifySuccess');
-  const err   = document.getElementById('verifyErr');
-  if (input === _verifyCode) {
-    _emailVerified = true;
-    if (ok)  ok.textContent  = '✅ 이메일 인증이 완료되었습니다';
-    if (err) err.textContent = '';
-    document.getElementById('regEmail')?.classList.add('success');
-  } else {
-    _emailVerified = false;
-    if (err) err.textContent = '인증 코드가 일치하지 않습니다';
-    if (ok)  ok.textContent  = '';
-  }
-}
-
 /* ════════════════════════════════════════
    로그인
    ════════════════════════════════════════ */
@@ -427,11 +393,14 @@ async function handleRegister(e) {
     // DB에 저장 (핵심 — 실패 시 즉시 오류 표시)
     const saved = await apiPost('users', newUser);
 
+    // saved에 points가 없을 경우 newUser 값으로 보완
+    const finalUser = { ...newUser, ...saved, points: saved.points ?? FREE_PT };
+
     // 포인트 이력 저장 (실패해도 가입 자체는 성공 처리)
     try {
       await apiPost('point_history', {
         id:          genId(),
-        user_id:     saved.id,
+        user_id:     finalUser.id || saved.id,
         email:       email,
         type:        'charge',
         amount:      FREE_PT,
@@ -443,7 +412,7 @@ async function handleRegister(e) {
       console.warn('[회원가입] 포인트 이력 저장 실패 (가입은 성공):', ptErr);
     }
 
-    setCurrentUser(saved);
+    setCurrentUser(finalUser);
     toggleRegLoading(false);
 
     // 성공 화면
@@ -454,7 +423,7 @@ async function handleRegister(e) {
     if (regForm)        regForm.style.display        = 'none';
     if (successScreen)  successScreen.style.display  = 'block';
     if (tabs)           tabs.style.display           = 'none';
-    if (nameLabel)      nameLabel.textContent        = `${name}님, 운세ON 가입을 완료했습니다 🎉`;
+    if (nameLabel)      nameLabel.textContent        = `${finalUser.name || name}님, 운세ON 가입을 완료했습니다 🎉`;
 
     const autoTarget = sessionStorage.getItem('sajuon_auth_redirect') || 'chat.html';
     sessionStorage.removeItem('sajuon_auth_redirect');

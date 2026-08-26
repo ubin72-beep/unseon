@@ -1096,7 +1096,16 @@ function renderMembersAdmin(container) {
     const totalMembers  = users.length;
     const activeMembers = users.filter(u => u.status === 'active').length;
     const todayStr = new Date().toISOString().slice(0, 10);
-    const todayNew = users.filter(u => u.created_at_str && u.created_at_str.includes(new Date().toLocaleDateString('ko-KR').slice(0,8))).length;
+    const todayNew = users.filter(u => {
+      // created_at_str 또는 created_at 기준으로 오늘 가입 확인
+      if (u.created_at) {
+        try { return new Date(u.created_at).toISOString().slice(0,10) === todayStr; } catch {}
+      }
+      if (u.created_at_str) {
+        return u.created_at_str.includes(new Date().toLocaleDateString('ko-KR').replace(/\. /g,'.').replace('.','/').slice(0,6));
+      }
+      return false;
+    }).length;
     const mktAgree = users.filter(u => u.agree_marketing).length;
 
     const consultHistory = history.filter(h => h.type === 'use');

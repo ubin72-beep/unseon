@@ -22,9 +22,9 @@
 /* ──────────────────────────────────────────── */
 
 const KAKAO_CONFIG = {
-  IS_TEST: true,                        // ← false 로 바꾸면 실서비스
-  CID: 'TC0ONETIME',                    // ← 실서비스: 발급받은 CID 입력
-  ORIGIN: 'https://unseon.co.kr',       // ← 실제 도메인으로 변경
+  IS_TEST: false,                       // ✅ 실서비스 모드
+  CID: 'CT87314058',                   // ✅ 발급된 실제 CID
+  ORIGIN: 'https://unseon.co.kr',      // ✅ 실제 도메인
   get APPROVAL_URL() { return `${this.ORIGIN}/payment-complete.html?result=success`; },
   get FAIL_URL()     { return `${this.ORIGIN}/payment-complete.html?result=fail`; },
   get CANCEL_URL()   { return `${this.ORIGIN}/payment-complete.html?result=cancel`; },
@@ -329,19 +329,101 @@ function runRealKakaoPay(plan) {
   const orderId     = generateOrderId();
   const currentUser = getCurrentUserInfo();
 
+  if (!currentUser || !currentUser.id) {
+    showKakaoToast('❌ 로그인이 필요합니다.', 'error');
+    return;
+  }
+
   sessionStorage.setItem('kakao_pending_plan', JSON.stringify({
     planKey: selectedPlan, plan, orderId
   }));
   sessionStorage.setItem('kakao_order_id', orderId);
 
-  showLoadingOverlay('카카오페이 연결 중...');
+  showLoadingOverlay('카카오페이 결제창 연결 중...');
 
-  /* 현재: SDK/백엔드 미구성 → 테스트 모드로 폴백 */
-  setTimeout(() => {
+  /* ── 카카오페이 JavaScript SDK 결제 요청 ── */
+  if (typeof Kakao === 'undefined' || !Kakao.Payment) {
     hideLoadingOverlay();
-    showKakaoToast('⚙️ 결제 서버 연동 전입니다. 테스트 모드로 진행합니다.', 'warn');
-    setTimeout(() => runTestPayment(plan), 600);
-  }, 800);
+    showKakaoToast('❌ 카카오페이 SDK 로드 실패. 잠시 후 다시 시도해주세요.', 'error');
+    return;
+  }
+
+  try {
+    Kakao.Payment.create({
+      cid:          KAKAO_CONFIG.CID,
+      partner_order_id: orderId,
+      partner_user_id:  currentUser.id,
+      item_name:    plan.name,
+      quantity:     1,
+      total_amount: plan.amount,
+      tax_free_amount: 0,
+      approval_url: KAKAO_CONFIG.APPROVAL_URL + '&order_id=' + orderId,
+      fail_url:     KAKAO_CONFIG.FAIL_URL,
+      cancel_url:   KAKAO_CONFIG.CANCEL_URL,
+      success: function(response) {
+        hideLoadingOverlay();
+        /* pg_token을 받아서 결제 완료 처리 */
+        completePayment(plan, orderId, response.pg_token || ('KAKAO_REAL_' + Date.now()));
+      },
+      fail: function(err) {
+        hideLoadingOverlay();
+        console.error('[KakaoPay] 결제 실패:', err);
+        showKakaoToast('❌ 결제에 실패했습니다. 다시 시도해주세요.', 'error');
+        sessionStorage.removeItem('kakao_pending_plan');
+      }
+    });
+  } catch(e) {
+    hideLoadingOverlay();
+    console.error('[KakaoPay] SDK 오류:', e);
+    /* SDK 미지원 환경 → 리다이렉트 방식으로 폴백 */
+    _runKakaoRedirect(plan, orderId, currentUser);
+  }
+}
+
+/* ── 리다이렉트 방식 결제 (SDK 미지원 환경 폴백) ── */
+async function _runKakaoRedirect(plan, orderId, currentUser) {
+  showLoadingOverlay('카카오페이 결제 준비 중...');
+  try {
+    /* 카카오페이 결제 준비 API — 서버 프록시 경로 */
+    const res = await fetch('/api/payment/ready', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cid:               KAKAO_CONFIG.CID,
+        partner_order_id:  orderId,
+        partner_user_id:   currentUser.id,
+        item_name:         plan.name,
+        quantity:          1,
+        total_amount:      plan.amount,
+        tax_free_amount:   0,
+        approval_url:      KAKAO_CONFIG.APPROVAL_URL + '&order_id=' + orderId,
+        fail_url:          KAKAO_CONFIG.FAIL_URL,
+        cancel_url:        KAKAO_CONFIG.CANCEL_URL,
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error('결제 준비 API 오류: ' + res.status);
+    }
+
+    const data = await res.json();
+    hideLoadingOverlay();
+
+    /* tid 저장 후 카카오페이 결제창으로 이동 */
+    sessionStorage.setItem('kakao_tid', data.tid);
+    const isMob = isMobile();
+    const payUrl = isMob ? data.next_redirect_mobile_url : data.next_redirect_pc_url;
+    if (payUrl) {
+      window.location.href = payUrl;
+    } else {
+      throw new Error('결제 URL 없음');
+    }
+  } catch(e) {
+    hideLoadingOverlay();
+    console.error('[KakaoPay] 결제 준비 실패:', e);
+    showKakaoToast('❌ 결제 연결에 실패했습니다. 잠시 후 다시 시도해주세요.', 'error');
+    sessionStorage.removeItem('kakao_pending_plan');
+  }
 }
 
 function isMobile() {
